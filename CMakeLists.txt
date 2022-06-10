@@ -116,5 +116,5 @@ add_library(StrideParser
 target_compile_options(StrideParser PRIVATE -fPIC)
 target_include_directories(StrideParser PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-
+add_subdirectory(tests)
 
