@@ -62,12 +62,35 @@ std::vector<ASTNode> ASTFunctions::loadAllInDirectory(std::string path) {
   return nodes;
 }
 
+bool ASTFunctions::preprocess(ASTNode tree) {
+    bool ok = true;
+
+    // TODO insert external objects
+
+    ASTFunctions::resolveInheritance(tree);
+    ASTFunctions::processAnoymousDeclarations(tree);
+    ASTFunctions::fillDefaultProperties(tree);
+    ASTFunctions::resolveConstants(tree);
+    return ok;
+}
+
+bool ASTFunctions::resolveInheritance(ASTNode tree) {
+    bool ok = true;
+    for (const auto &node : tree->getChildren()) {
+        if (node->getNodeType() == AST::Declaration) {
+            auto decl = std::static_pointer_cast<DeclarationNode>(node);
+            ok &= ASTFunctions::resolveDeclarationInheritance(decl, tree);
+        }
+    }
+    return ok;
+}
+
 void ASTFunctions::insertDependentTypes(
     std::shared_ptr<DeclarationNode> typeDeclaration,
     std::map<std::string, std::vector<ASTNode>> &externalNodes, ASTNode tree) {
-  std::vector<std::shared_ptr<DeclarationNode>> blockList;
-  //    std::shared_ptr<DeclarationNode> existingDecl =
-  //    ASTQuery::findTypeDeclaration(typeDeclaration, ScopeStack(),
+    std::vector<std::shared_ptr<DeclarationNode>> blockList;
+    //    std::shared_ptr<DeclarationNode> existingDecl =
+    //    ASTQuery::findTypeDeclaration(typeDeclaration, ScopeStack(),
   //    m_tree);
   for (auto it = externalNodes.begin(); it != externalNodes.end(); it++) {
     // To avoid redundant checking here we should mark nodes that have already
@@ -472,6 +495,12 @@ void ASTFunctions::processAnoymousDeclarations(ASTNode tree) {
 
   for (const auto &node : newDecls) {
     tree->addChild(node);
+  }
+}
+
+void ASTFunctions::resolveConstants(ASTNode tree) {
+  for (const auto &node : tree->getChildren()) {
+    resolveConstantsInNode(node, {}, tree);
   }
 }
 
@@ -1120,7 +1149,7 @@ ASTFunctions::extractStreamDeclarations(std::shared_ptr<StreamNode> stream) {
   return streamDeclarations;
 }
 
-bool ASTFunctions::resolveInheritance(std::shared_ptr<DeclarationNode> decl,
+bool ASTFunctions::resolveDeclarationInheritance(std::shared_ptr<DeclarationNode> decl,
                                       ASTNode tree) {
   auto inheritsNode = decl->getPropertyValue("inherits");
   if (inheritsNode && inheritsNode->getNodeType() == AST::Block) {

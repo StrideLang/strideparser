@@ -22,9 +22,14 @@ public:
 
   static std::vector<ASTNode> loadAllInDirectory(std::string path);
 
+  // Apply all preprocessing to AST
+  static bool preprocess(ASTNode tree);
+
+  static bool resolveInheritance(ASTNode tree);
   // Insert properties from inherited types if not present
-  static bool resolveInheritance(std::shared_ptr<DeclarationNode> decl,
-                                 ASTNode tree);
+  static bool
+  resolveDeclarationInheritance(std::shared_ptr<DeclarationNode> decl,
+                                ASTNode tree);
 
   // Insert system and library objects used in tree from import trees.
   // externalNodes provides library and import nodes. The key is the namespace
@@ -56,6 +61,7 @@ public:
   // extracting definitions and a replacing with name
   static void processAnoymousDeclarations(ASTNode tree);
 
+  static void resolveConstants(ASTNode tree);
   // Recursively resolve constants
   static void resolveConstantsInNode(ASTNode node, ScopeStack scope,
                                      ASTNode tree);
