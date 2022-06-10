@@ -325,6 +325,10 @@ blockDef:
             free($2);
             free($1);
          }
+    |   anonymousDeclDef     {
+        COUT << "Resolving anonymous declaration ... " << ENDL;
+        COUT << "Streaming ... " << ENDL;
+    }
     ;
 
 blockType:
