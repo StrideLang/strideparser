@@ -56,13 +56,22 @@ set(PARSER_HEADERS
 if (WIN32)
 
   # On Windows you need a lot of magic to get flex and bison working.
-  # Download and install flex and bisno from:
+  # Download and install flex and bison from:
   # http://gnuwin32.sourceforge.net/packages/flex.htm
   # http://gnuwin32.sourceforge.net/packages/bison.htm
   # Bison is broken, must replace binary with: http://marin.jb.free.fr/bison/bison-2.4.1-modified.zip
 
   set(BISON_EXECUTABLE "C:/Program Files (x86)/GnuWin32/bin/bison.exe")
   set(FLEX_EXECUTABLE "C:/Program Files (x86)/GnuWin32/bin/flex.exe")
+
+  # Previous procedure appears to be broken. This now works:
+  # Download winflexbison from:
+  # https://sourceforge.net/projects/winflexbison/files/win_flex_bison-2.5.24.zip/download
+  # Point the following variables to the extracted fodler and binaries
+
+  set(BISON_EXECUTABLE "C:/Users/Andres/source/repos/win_flex_bison/win_bison.exe")
+  set(FLEX_EXECUTABLE "C:/Users/Andres/source/repos/win_flex_bison/win_flex.exe")
+
   set(FLEX_MyScanner_OUTPUTS "${CMAKE_CURRENT_BINARY_DIR}/lang_stride.lexer.cpp")
   set(BISON_MyParser_OUTPUTS "${CMAKE_CURRENT_BINARY_DIR}/lang_stride.parser.cpp")
   add_custom_command(
