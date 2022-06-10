@@ -1251,6 +1251,10 @@ void yyerror(const char *s){
 //    fprintf(stderr, "On file %s.\n", currentFile);
 
     cout << "Parser reported error: " << s << endl;
+
+    if (!yytext) {
+        yytext = "UNKNOWN";
+    }
     cout << "Unexpected token: " << yytext << " on line: " <<  yylineno <<  " in " << currentFile << endl;
 
     LangError newError;
