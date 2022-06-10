@@ -33,7 +33,7 @@ add_test(NAME strideparser_tests COMMAND strideparser_tests)
 
 target_link_libraries(strideparser_tests PUBLIC StrideParser gtest)
 target_compile_definitions(strideparser_tests PUBLIC
-  "-DTINC_TESTS_SOURCE_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}/data\"")
+  "-DTESTS_SOURCE_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}/data/\"")
 
 if (STRIDEPARSER_CODE_COVERAGE)
   set_target_properties(strideparser_tests PROPERTIES COMPILE_FLAGS "-fPIE -g -O0 -Wall -fprofile-arcs -ftest-coverage")
