@@ -20,8 +20,6 @@ public:
                            const char *sourceFilename = nullptr);
   static std::vector<LangError> getParseErrors();
 
-  static std::vector<ASTNode> loadAllInDirectory(std::string path);
-
   // Apply all preprocessing to AST
   static bool preprocess(ASTNode tree);
 
@@ -30,6 +28,8 @@ public:
   static bool
   resolveDeclarationInheritance(std::shared_ptr<DeclarationNode> decl,
                                 ASTNode tree);
+
+  static std::vector<ASTNode> loadAllInDirectory(std::string path);
 
   // Insert system and library objects used in tree from import trees.
   // externalNodes provides library and import nodes. The key is the namespace
