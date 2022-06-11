@@ -77,6 +77,7 @@ if (WIN32)
   add_custom_command(
     COMMENT "Generating BISON: -o${BISON_MyParser_OUTPUTS} ${CMAKE_CURRENT_SOURCE_DIR}/lang_stride.y"
           OUTPUT ${BISON_MyParser_OUTPUTS}
+          DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/lang_stride.y"
           COMMAND "${BISON_EXECUTABLE}"
           -d
           -o"${BISON_MyParser_OUTPUTS}"
@@ -85,13 +86,14 @@ if (WIN32)
 
   add_custom_command(
           OUTPUT ${FLEX_MyScanner_OUTPUTS}
-          COMMAND ${FLEX_EXECUTABLE}
+          DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/lang_stride.l"
+          COMMAND ${FLEX_EXECUTABLE} --wincompat
           -o"${FLEX_MyScanner_OUTPUTS}"
           "${CMAKE_CURRENT_SOURCE_DIR}/lang_stride.l"
           COMMENT "Generating lang_stride.lexer.cpp"
   )
 
-  include_directories("C:/Program Files (x86)/GnuWin32/include")
+#  include_directories("C:/GnuWin32/include")
 else()
   # On Linux you can use the standard cmake scripts
   if (APPLE)

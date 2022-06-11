@@ -156,7 +156,7 @@ TEST(Basic, BundleIndeces) {
   EXPECT_TRUE(nodes.at(0)->getNodeType() == AST::Declaration);
   DeclarationNode *block = static_cast<DeclarationNode *>(nodes.at(0).get());
   EXPECT_TRUE(block->getObjectType() == "constant");
-  EXPECT_TRUE(block->getLine() == 8);
+  EXPECT_EQ(block->getLine(), 8);
 
   EXPECT_TRUE(nodes.at(1)->getNodeType() == AST::BundleDeclaration);
   block = static_cast<DeclarationNode *>(nodes.at(1).get());
@@ -361,7 +361,7 @@ TEST(Basic, Lists) {
   EXPECT_TRUE(list->getNodeType() == AST::List);
   members = list->getChildren();
   EXPECT_TRUE(members.size() == 4);
-  for (ASTNode member : members) {
+  for (ASTNode &member : members) {
     ValueNode *value = static_cast<ValueNode *>(member.get());
     EXPECT_TRUE(value->getNodeType() == AST::Switch);
   }
@@ -376,7 +376,7 @@ TEST(Basic, Lists) {
   EXPECT_TRUE(list->getNodeType() == AST::List);
   members = list->getChildren();
   EXPECT_TRUE(members.size() == 4);
-  for (ASTNode member : members) {
+  for (ASTNode &member : members) {
     BlockNode *value = static_cast<BlockNode *>(member.get());
     EXPECT_TRUE(value->getNodeType() == AST::Bundle);
   }
@@ -391,7 +391,7 @@ TEST(Basic, Lists) {
   EXPECT_TRUE(list->getNodeType() == AST::List);
   members = list->getChildren();
   EXPECT_TRUE(members.size() == 4);
-  for (ASTNode member : members) {
+  for (ASTNode &member : members) {
     BlockNode *value = static_cast<BlockNode *>(member.get());
     EXPECT_TRUE(value->getNodeType() == AST::Block);
     EXPECT_TRUE(value->getScopeLevels() == 1);
@@ -588,12 +588,12 @@ TEST(Basic, Stream) {
   // Val1 >> Val2 ;
   StreamNode *node = static_cast<StreamNode *>(nodes.at(1).get());
   EXPECT_TRUE(node->getNodeType() == AST::Stream);
-  EXPECT_TRUE(node->getLine() == 3);
+  EXPECT_EQ(node->getLine(), 3);
   std::vector<ASTNode> streamParts = node->getChildren();
   EXPECT_TRUE(streamParts.size() == 2);
   AST *streamComp = streamParts.at(0).get();
   EXPECT_TRUE(streamComp->getNodeType() == AST::Block);
-  EXPECT_TRUE(streamComp->getLine() == 3);
+  EXPECT_EQ(streamComp->getLine(), 3);
   BlockNode *nameNode = static_cast<BlockNode *>(streamComp);
   EXPECT_TRUE(nameNode->getName() == "Val1");
   EXPECT_TRUE(nameNode->getLine() == 3);
@@ -748,7 +748,7 @@ TEST(Basic, Stream) {
   EXPECT_TRUE(node->getLine() == 14);
   bundle = static_cast<BundleNode *>(node->getLeft().get());
   EXPECT_TRUE(bundle->getName() == "BundleRange");
-  EXPECT_TRUE(bundle->getLine() == 14);
+  EXPECT_EQ(bundle->getLine(), 14);
   ListNode *index = static_cast<ListNode *>(bundle->index().get());
   EXPECT_TRUE(index->getNodeType() == AST::List);
   EXPECT_TRUE(index->getChildren().size() == 1);
@@ -1223,7 +1223,7 @@ TEST(Basic, Header) {
   EXPECT_TRUE(node->majorVersion() == 1);
   EXPECT_TRUE(node->minorVersion() == 1);
   EXPECT_TRUE(node->getChildren().size() == 0);
-  EXPECT_TRUE(node->getLine() == 1);
+  EXPECT_EQ(node->getLine(), 1);
 
   node = static_cast<SystemNode *>(nodes.at(1).get());
   EXPECT_TRUE(node->getNodeType() == AST::Platform);
