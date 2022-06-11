@@ -61,8 +61,8 @@ if (WIN32)
   # http://gnuwin32.sourceforge.net/packages/bison.htm
   # Bison is broken, must replace binary with: http://marin.jb.free.fr/bison/bison-2.4.1-modified.zip
 
-  set(BISON_EXECUTABLE "C:/Program Files (x86)/GnuWin32/bin/bison.exe")
-  set(FLEX_EXECUTABLE "C:/Program Files (x86)/GnuWin32/bin/flex.exe")
+#  set(BISON_EXECUTABLE "C:/GnuWin32/bin/bison.exe")
+#  set(FLEX_EXECUTABLE "C:/GnuWin32/bin/flex.exe")
 
   # Previous procedure appears to be broken. This now works:
   # Download winflexbison from:

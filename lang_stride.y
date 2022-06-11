@@ -19,10 +19,10 @@ using namespace std;
     extern "C" {
         int yylex();
         FILE *yyin;
-        int yylineno;
         char * yytext;
 //        int errno;        // THIS IS CAUSING A LINKING WARNING WITH MSVC 2015
     }
+    extern int yylineno;
 #endif
 
 extern void yyrestart (FILE *input_file );
@@ -1302,8 +1302,8 @@ AST *parse(const char *filename, const char*sourceFilename){
 
     tree_head = new AST;
     yyin = file;
-    yylineno = 1;
     yyrestart(file);
+    yylineno = 1;
     yyparse();
     fclose(file);
 
