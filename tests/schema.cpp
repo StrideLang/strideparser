@@ -95,3 +95,23 @@ TEST(Schema, StringLiterals) {
   EXPECT_EQ(errors[3].type, LangError::ConstraintFail);
   EXPECT_EQ(errors[3].lineNumber, 43);
 }
+
+TEST(Schema, ConstrainedList) {
+  auto strideroot = getenv("STRIDEROOT");
+  EXPECT_NE(strideroot, nullptr);
+  ASTNode tree;
+  tree = ASTFunctions::parseFile(TESTS_SOURCE_DIR
+                                 "schema/04_constrainedList.stride");
+  EXPECT_TRUE(tree != nullptr);
+  ASTFunctions::preprocess(tree);
+  std::vector<LangError> errors;
+  ASTValidation::validateTypes(tree, errors, {}, tree);
+
+  EXPECT_EQ(errors.size(), 3);
+  EXPECT_EQ(errors[0].type, LangError::ConstraintFail);
+  EXPECT_EQ(errors[0].lineNumber, 32);
+  EXPECT_EQ(errors[1].type, LangError::ConstraintFail);
+  EXPECT_EQ(errors[1].lineNumber, 36);
+  EXPECT_EQ(errors[2].type, LangError::ConstraintFail);
+  EXPECT_EQ(errors[2].lineNumber, 40);
+}

@@ -84,6 +84,11 @@ protected:
                             std::shared_ptr<DeclarationNode> declaration,
                             std::string portName, ASTNode portValue,
                             std::vector<LangError> &errors);
+  static void
+  validateConstrainedList(std::shared_ptr<DeclarationNode> constrainDecl,
+                          std::shared_ptr<DeclarationNode> declaration,
+                          std::string portName, ASTNode portValue,
+                          std::vector<LangError> &errors);
 };
 
 #endif // ASTVALIDATION_H
