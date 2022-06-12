@@ -428,6 +428,11 @@ void ASTValidation::validateTypesForDeclaration(
                 validTypeNames.push_back("_IntLiteral");
                 validTypeNames.push_back("_RealLiteral");
               }
+              if (constrainDecl->getObjectType() == "constrainedString") {
+                validateConstrainedString(constrainDecl, declaration, portName,
+                                          portValue, errors);
+                validTypeNames.push_back("_StringLiteral");
+              }
             }
           }
           std::string failedType;
@@ -694,7 +699,50 @@ void ASTValidation::validateConstrainedReal(
         }
       }
     }
-  } else {
-    std::cerr << "Failed constraint" << std::endl;
+  }
+}
+
+void ASTValidation::validateConstrainedString(
+    std::shared_ptr<DeclarationNode> constrainDecl,
+    std::shared_ptr<DeclarationNode> declaration, std::string portName,
+    ASTNode portValue, std::vector<LangError> &errors) {
+
+  if (portValue->getNodeType() == AST::String) {
+    auto codeValue =
+        std::static_pointer_cast<ValueNode>(portValue)->getStringValue();
+    if (auto maximumNode = constrainDecl->getPropertyValue("maxLength")) {
+      if (maximumNode->getNodeType() == AST::Int) {
+        auto value =
+            std::static_pointer_cast<ValueNode>(maximumNode)->getIntValue();
+        if (codeValue.size() > value) {
+          LangError error;
+          error.lineNumber = portValue->getLine();
+          error.filename = portValue->getFilename();
+          error.type = LangError::ConstraintFail;
+          error.errorTokens.push_back(declaration->getObjectType());
+          error.errorTokens.push_back(portName);
+          error.errorTokens.push_back(AST::toText(constrainDecl));
+          error.errorTokens.push_back(AST::toText(portValue));
+          errors.push_back(error);
+        }
+      }
+    }
+    if (auto minimumNode = constrainDecl->getPropertyValue("minLength")) {
+      if (minimumNode->getNodeType() == AST::Int) {
+        auto value =
+            std::static_pointer_cast<ValueNode>(minimumNode)->getIntValue();
+        if (codeValue.size() < value) {
+          LangError error;
+          error.lineNumber = portValue->getLine();
+          error.filename = portValue->getFilename();
+          error.type = LangError::ConstraintFail;
+          error.errorTokens.push_back(declaration->getObjectType());
+          error.errorTokens.push_back(portName);
+          error.errorTokens.push_back(AST::toText(constrainDecl));
+          error.errorTokens.push_back(AST::toText(portValue));
+          errors.push_back(error);
+        }
+      }
+    }
   }
 }
