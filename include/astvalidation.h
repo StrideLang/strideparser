@@ -68,6 +68,17 @@ protected:
                                           std::vector<LangError> &errors,
                                           ASTNode tree,
                                           std::string currentFramework);
+
+  static void
+  validateConstrainedInt(std::shared_ptr<DeclarationNode> constrainDecl,
+                         std::shared_ptr<DeclarationNode> declaration,
+                         std::string portName, ASTNode portValue,
+                         std::vector<LangError> &errors);
+  static void
+  validateConstrainedReal(std::shared_ptr<DeclarationNode> constrainDecl,
+                          std::shared_ptr<DeclarationNode> declaration,
+                          std::string portName, ASTNode portValue,
+                          std::vector<LangError> &errors);
 };
 
 #endif // ASTVALIDATION_H

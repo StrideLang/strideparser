@@ -73,7 +73,16 @@ bool ASTFunctions::preprocess(ASTNode tree) {
     auto libraryObjects = ASTFunctions::loadAllInDirectory(
         std::string(strideroot) + "/library/1.0");
 
-    ASTFunctions::insertRequiredObjects(tree, {{"", libraryObjects}});
+    auto typeDecl = ASTQuery::findTypeDeclarationByName(
+        "type", {{nullptr, libraryObjects}}, tree);
+    if (typeDecl) {
+      tree->addChild(typeDecl);
+
+      ASTFunctions::insertRequiredObjects(tree, {{"", libraryObjects}});
+    } else {
+      std::cerr << "Library does not contain definition for type" << std::endl;
+      return false;
+    }
   }
 
   ASTFunctions::resolveInheritance(tree);
@@ -237,11 +246,11 @@ void ASTFunctions::insertRequiredObjectsForNode(
         tree->addChild(typeDecl);
         // FIXME instead of removing we must make sure that objects are not
         // inserted in tree if already there
-        auto position =
-            std::find(it->second.begin(), it->second.end(), typeDecl);
-        if (position != it->second.end()) {
-          it->second.erase(position);
-        }
+        //        auto position =
+        //            std::find(it->second.begin(), it->second.end(), typeDecl);
+        //        if (position != it->second.end()) {
+        //          it->second.erase(position);
+        //        }
         insertRequiredObjectsForNode(typeDecl, objects, tree);
         insertDependentTypes(typeDecl, objects, tree);
       }

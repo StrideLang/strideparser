@@ -413,6 +413,21 @@ void ASTValidation::validateTypesForDeclaration(
                 std::string validTypeName = declaration->getName();
                 validTypeNames.push_back(validTypeName);
               }
+            } else if (validType->getNodeType() == AST::Declaration) {
+              auto constrainDecl =
+                  std::static_pointer_cast<DeclarationNode>(validType);
+
+              if (constrainDecl->getObjectType() == "constrainedInt") {
+                validateConstrainedInt(constrainDecl, declaration, portName,
+                                       portValue, errors);
+                validTypeNames.push_back("_IntLiteral");
+              }
+              if (constrainDecl->getObjectType() == "constrainedReal") {
+                validateConstrainedReal(constrainDecl, declaration, portName,
+                                        portValue, errors);
+                validTypeNames.push_back("_IntLiteral");
+                validTypeNames.push_back("_RealLiteral");
+              }
             }
           }
           std::string failedType;
@@ -496,5 +511,190 @@ void ASTValidation::validateTypesForDeclaration(
       validateTypes(property->getValue(), internalErrors, scopeStack, tree,
                     decl->getNamespaceList(), frameworkName);
     }
+  }
+}
+
+void ASTValidation::validateConstrainedInt(
+    std::shared_ptr<DeclarationNode> constrainDecl,
+    std::shared_ptr<DeclarationNode> declaration, std::string portName,
+    ASTNode portValue, std::vector<LangError> &errors) {
+
+  if (portValue->getNodeType() == AST::Int) {
+    auto codeValue =
+        std::static_pointer_cast<ValueNode>(portValue)->getIntValue();
+    if (auto maximumNode = constrainDecl->getPropertyValue("maximum")) {
+      if (maximumNode->getNodeType() == AST::Int) {
+        auto value =
+            std::static_pointer_cast<ValueNode>(maximumNode)->getIntValue();
+        if (codeValue > value) {
+          LangError error;
+          error.lineNumber = portValue->getLine();
+          error.filename = portValue->getFilename();
+          error.type = LangError::ConstraintFail;
+          error.errorTokens.push_back(declaration->getObjectType());
+          error.errorTokens.push_back(portName);
+          error.errorTokens.push_back(AST::toText(constrainDecl));
+          error.errorTokens.push_back(AST::toText(portValue));
+          errors.push_back(error);
+        }
+      }
+    }
+    if (auto minimumNode = constrainDecl->getPropertyValue("minimum")) {
+      if (minimumNode->getNodeType() == AST::Int) {
+        auto value =
+            std::static_pointer_cast<ValueNode>(minimumNode)->getIntValue();
+        if (codeValue < value) {
+          LangError error;
+          error.lineNumber = portValue->getLine();
+          error.filename = portValue->getFilename();
+          error.type = LangError::ConstraintFail;
+          error.errorTokens.push_back(declaration->getObjectType());
+          error.errorTokens.push_back(portName);
+          error.errorTokens.push_back(AST::toText(constrainDecl));
+          error.errorTokens.push_back(AST::toText(portValue));
+          errors.push_back(error);
+        }
+      }
+    }
+    if (auto exMaximumNode =
+            constrainDecl->getPropertyValue("exclusiveMaximum")) {
+      if (exMaximumNode->getNodeType() == AST::Int) {
+        auto value =
+            std::static_pointer_cast<ValueNode>(exMaximumNode)->getIntValue();
+        if (codeValue >= value) {
+          LangError error;
+          error.lineNumber = portValue->getLine();
+          error.filename = portValue->getFilename();
+          error.type = LangError::ConstraintFail;
+          error.errorTokens.push_back(declaration->getObjectType());
+          error.errorTokens.push_back(portName);
+          error.errorTokens.push_back(AST::toText(constrainDecl));
+          error.errorTokens.push_back(AST::toText(portValue));
+          errors.push_back(error);
+        }
+      }
+    }
+    if (auto exMinimumNode =
+            constrainDecl->getPropertyValue("exclusiveMinimum")) {
+      if (exMinimumNode->getNodeType() == AST::Int) {
+        auto value =
+            std::static_pointer_cast<ValueNode>(exMinimumNode)->getIntValue();
+        if (codeValue <= value) {
+          LangError error;
+          error.lineNumber = portValue->getLine();
+          error.filename = portValue->getFilename();
+          error.type = LangError::ConstraintFail;
+          error.errorTokens.push_back(declaration->getObjectType());
+          error.errorTokens.push_back(portName);
+          error.errorTokens.push_back(AST::toText(constrainDecl));
+          error.errorTokens.push_back(AST::toText(portValue));
+          errors.push_back(error);
+        }
+      }
+    }
+    if (auto multipleOfNode = constrainDecl->getPropertyValue("multipleOf")) {
+      if (multipleOfNode->getNodeType() == AST::Int) {
+        auto value =
+            std::static_pointer_cast<ValueNode>(multipleOfNode)->getIntValue();
+        if (codeValue % value != 0) {
+          LangError error;
+          error.lineNumber = portValue->getLine();
+          error.filename = portValue->getFilename();
+          error.type = LangError::ConstraintFail;
+          error.errorTokens.push_back(declaration->getObjectType());
+          error.errorTokens.push_back(portName);
+          error.errorTokens.push_back(AST::toText(constrainDecl));
+          error.errorTokens.push_back(AST::toText(portValue));
+          errors.push_back(error);
+        }
+      }
+    }
+  } else {
+    std::cerr << "Failed constraint" << std::endl;
+  }
+}
+
+void ASTValidation::validateConstrainedReal(
+    std::shared_ptr<DeclarationNode> constrainDecl,
+    std::shared_ptr<DeclarationNode> declaration, std::string portName,
+    ASTNode portValue, std::vector<LangError> &errors) {
+
+  if (portValue->getNodeType() == AST::Int ||
+      portValue->getNodeType() == AST::Real) {
+    auto codeValue = std::static_pointer_cast<ValueNode>(portValue)->toReal();
+    if (auto maximumNode = constrainDecl->getPropertyValue("maximum")) {
+      if (maximumNode->getNodeType() == AST::Int ||
+          maximumNode->getNodeType() == AST::Real) {
+        auto value = std::static_pointer_cast<ValueNode>(maximumNode)->toReal();
+        if (codeValue > value) {
+          LangError error;
+          error.lineNumber = portValue->getLine();
+          error.filename = portValue->getFilename();
+          error.type = LangError::ConstraintFail;
+          error.errorTokens.push_back(declaration->getObjectType());
+          error.errorTokens.push_back(portName);
+          error.errorTokens.push_back(AST::toText(constrainDecl));
+          error.errorTokens.push_back(AST::toText(portValue));
+          errors.push_back(error);
+        }
+      }
+    }
+    if (auto minimumNode = constrainDecl->getPropertyValue("minimum")) {
+      if (minimumNode->getNodeType() == AST::Int ||
+          minimumNode->getNodeType() == AST::Real) {
+        auto value = std::static_pointer_cast<ValueNode>(minimumNode)->toReal();
+        if (codeValue < value) {
+          LangError error;
+          error.lineNumber = portValue->getLine();
+          error.filename = portValue->getFilename();
+          error.type = LangError::ConstraintFail;
+          error.errorTokens.push_back(declaration->getObjectType());
+          error.errorTokens.push_back(portName);
+          error.errorTokens.push_back(AST::toText(constrainDecl));
+          error.errorTokens.push_back(AST::toText(portValue));
+          errors.push_back(error);
+        }
+      }
+    }
+    if (auto exMaximumNode =
+            constrainDecl->getPropertyValue("exclusiveMaximum")) {
+      if (exMaximumNode->getNodeType() == AST::Int ||
+          exMaximumNode->getNodeType() == AST::Real) {
+        auto value =
+            std::static_pointer_cast<ValueNode>(exMaximumNode)->toReal();
+        if (codeValue >= value) {
+          LangError error;
+          error.lineNumber = portValue->getLine();
+          error.filename = portValue->getFilename();
+          error.type = LangError::ConstraintFail;
+          error.errorTokens.push_back(declaration->getObjectType());
+          error.errorTokens.push_back(portName);
+          error.errorTokens.push_back(AST::toText(constrainDecl));
+          error.errorTokens.push_back(AST::toText(portValue));
+          errors.push_back(error);
+        }
+      }
+    }
+    if (auto exMinimumNode =
+            constrainDecl->getPropertyValue("exclusiveMinimum")) {
+      if (exMinimumNode->getNodeType() == AST::Int ||
+          exMinimumNode->getNodeType() == AST::Real) {
+        auto value =
+            std::static_pointer_cast<ValueNode>(exMinimumNode)->toReal();
+        if (codeValue <= value) {
+          LangError error;
+          error.lineNumber = portValue->getLine();
+          error.filename = portValue->getFilename();
+          error.type = LangError::ConstraintFail;
+          error.errorTokens.push_back(declaration->getObjectType());
+          error.errorTokens.push_back(portName);
+          error.errorTokens.push_back(AST::toText(constrainDecl));
+          error.errorTokens.push_back(AST::toText(portValue));
+          errors.push_back(error);
+        }
+      }
+    }
+  } else {
+    std::cerr << "Failed constraint" << std::endl;
   }
 }

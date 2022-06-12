@@ -19,6 +19,7 @@ endif()
 
 set(TEST_SOURCES main.cpp
   basic.cpp
+  schema.cpp
 )
 
 
