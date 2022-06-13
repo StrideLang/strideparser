@@ -66,11 +66,15 @@ std::vector<ASTNode> ASTFunctions::loadAllInDirectory(std::string path) {
 bool ASTFunctions::preprocess(ASTNode tree) {
   bool ok = true;
 
+  if (!tree) {
+    return false;
+  }
+
   // TODO insert external objects
 
   const char *strideroot = std::getenv("STRIDEROOT");
 
-  std::map<std::string, std::vector<ASTNode>> externalNodes;
+  StrideLibrary library;
   { // Process Imports
 
     std::vector<std::shared_ptr<ImportNode>> importList;
@@ -95,25 +99,20 @@ bool ASTFunctions::preprocess(ASTNode tree) {
         }
       }
     }
-    StrideLibrary library;
 
-    library.initializeLibrary(strideroot);
+    std::vector<std::string> importPaths;
+    std::filesystem::path filePath = tree->getFilename();
+    filePath.remove_filename();
+    importPaths.push_back(filePath.string());
 
-    //    for (const auto &import : importList) {
-    //      std::string importName = import->importName();
-    //      std::string importAlias = import->importAlias();
-    //      loadImportTree(importName, importAlias);
-    //    }
-  }
-
-  { // Load library
-    if (strideroot) {
-      auto libraryObjects = ASTFunctions::loadAllInDirectory(
-          std::string(strideroot) + "/library/1.0");
-      externalNodes[""].insert(externalNodes[""].begin(),
-                               libraryObjects.begin(), libraryObjects.end());
+    library.initializeLibrary(strideroot, importPaths);
+    for (const auto &import : importList) {
+      library.loadImport(import->importName(), import->importAlias());
     }
   }
+
+  std::map<std::string, std::vector<ASTNode>> externalNodes =
+      library.getLibraryMembers();
   ASTFunctions::insertRequiredObjects(tree, externalNodes);
 
   ASTFunctions::resolveInheritance(tree);
@@ -475,13 +474,14 @@ void ASTFunctions::fillDefaultPropertiesForNode(
       if (functionModule->getObjectType() == "module" ||
           functionModule->getObjectType() == "reaction" ||
           functionModule->getObjectType() == "loop") {
-        std::vector<ASTNode> typeProperties =
-            functionModule->getPropertyValue("ports")->getChildren();
+
         if (!functionModule->getPropertyValue("ports")) {
-          std::cerr << "ERROR: fillDefaultProperties() No type definition for "
+          std::cerr << "ERROR: fillDefaultProperties() No ports definition for "
                     << destFunc->getName() << std::endl;
           return;
         }
+        std::vector<ASTNode> typeProperties =
+            functionModule->getPropertyValue("ports")->getChildren();
         for (const auto &property : blockProperties) {
           fillDefaultPropertiesForNode(property->getValue(), scopeNodes);
         }

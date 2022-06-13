@@ -11,6 +11,7 @@ class ASTValidation {
 public:
   ASTValidation();
 
+  static std::vector<LangError> validate(ASTNode tree);
   // Verifies that types are declared for all nodes, and that the properties and
   // property types are allowed by the type declaration
   static void validateTypes(ASTNode node, std::vector<LangError> &errors,

@@ -9,6 +9,12 @@
 
 ASTValidation::ASTValidation() {}
 
+std::vector<LangError> ASTValidation::validate(ASTNode tree) {
+  std::vector<LangError> errors;
+  validateTypes(tree, errors, {}, tree);
+  return errors;
+}
+
 void ASTValidation::validateTypes(ASTNode node, std::vector<LangError> &errors,
                                   ScopeStack scopeStack, ASTNode tree,
                                   std::vector<std::string> parentNamespace,
@@ -837,7 +843,9 @@ std::string ASTValidation::getTypeName(ASTNode child, ScopeStack scopeStack,
     auto typeDeclaration = ASTQuery::findTypeDeclaration(
         std::static_pointer_cast<DeclarationNode>(child), scopeStack, tree,
         currentFramework);
-    return typeDeclaration->getName();
+    if (typeDeclaration) {
+      return typeDeclaration->getName();
+    }
   } else if (child->getNodeType() == AST::Block ||
              child->getNodeType() == AST::Bundle) {
     auto decl = ASTQuery::findDeclarationByName(
