@@ -7,6 +7,7 @@
 #include "functionnode.h"
 #include "portpropertynode.h"
 #include "streamnode.h"
+#include "stridelibrary.h"
 #include "valuenode.h"
 
 #include <algorithm>
@@ -69,21 +70,51 @@ bool ASTFunctions::preprocess(ASTNode tree) {
 
   const char *strideroot = std::getenv("STRIDEROOT");
 
-  if (strideroot) {
-    auto libraryObjects = ASTFunctions::loadAllInDirectory(
-        std::string(strideroot) + "/library/1.0");
+  std::map<std::string, std::vector<ASTNode>> externalNodes;
+  { // Process Imports
 
-    auto typeDecl = ASTQuery::findTypeDeclarationByName(
-        "type", {{nullptr, libraryObjects}}, tree);
-    if (typeDecl) {
-      tree->addChild(typeDecl);
+    std::vector<std::shared_ptr<ImportNode>> importList;
+    for (const ASTNode &node : tree->getChildren()) {
+      if (node->getNodeType() == AST::Import) {
+        std::shared_ptr<ImportNode> import =
+            std::static_pointer_cast<ImportNode>(node);
+        // TODO add namespace support here (e.g. import
+        // Platform::Filters::Filter)
+        bool imported = false;
+        for (const auto &importNode : importList) {
+          if ((std::static_pointer_cast<ImportNode>(importNode)->importName() ==
+               import->importName()) &&
+              (std::static_pointer_cast<ImportNode>(importNode)
+                   ->importAlias() == import->importAlias())) {
+            imported = true;
+            break;
+          }
+        }
+        if (!imported) {
+          importList.push_back(import);
+        }
+      }
+    }
+    StrideLibrary library;
 
-      ASTFunctions::insertRequiredObjects(tree, {{"", libraryObjects}});
-    } else {
-      std::cerr << "Library does not contain definition for type" << std::endl;
-      return false;
+    library.initializeLibrary(strideroot);
+
+    //    for (const auto &import : importList) {
+    //      std::string importName = import->importName();
+    //      std::string importAlias = import->importAlias();
+    //      loadImportTree(importName, importAlias);
+    //    }
+  }
+
+  { // Load library
+    if (strideroot) {
+      auto libraryObjects = ASTFunctions::loadAllInDirectory(
+          std::string(strideroot) + "/library/1.0");
+      externalNodes[""].insert(externalNodes[""].begin(),
+                               libraryObjects.begin(), libraryObjects.end());
     }
   }
+  ASTFunctions::insertRequiredObjects(tree, externalNodes);
 
   ASTFunctions::resolveInheritance(tree);
   ASTFunctions::processAnoymousDeclarations(tree);
@@ -862,9 +893,9 @@ ASTFunctions::reduceConstExpression(std::shared_ptr<ExpressionNode> expr,
   return nullptr;
 }
 
-int ASTFunctions::evaluateConstInteger(ASTNode node, ScopeStack scope,
-                                       ASTNode tree,
-                                       std::vector<LangError> *errors) {
+int64_t ASTFunctions::evaluateConstInteger(ASTNode node, ScopeStack scope,
+                                           ASTNode tree,
+                                           std::vector<LangError> *errors) {
   int result = 0;
   if (node->getNodeType() == AST::Int) {
     return static_cast<ValueNode *>(node.get())->getIntValue();

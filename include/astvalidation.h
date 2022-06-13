@@ -84,11 +84,23 @@ protected:
                             std::shared_ptr<DeclarationNode> declaration,
                             std::string portName, ASTNode portValue,
                             std::vector<LangError> &errors);
-  static void
-  validateConstrainedList(std::shared_ptr<DeclarationNode> constrainDecl,
-                          std::shared_ptr<DeclarationNode> declaration,
-                          std::string portName, ASTNode portValue,
-                          std::vector<LangError> &errors);
+  static void validateConstrainedList(
+      std::shared_ptr<DeclarationNode> constrainDecl,
+      std::shared_ptr<DeclarationNode> declaration, std::string portName,
+      ASTNode portValue, std::vector<LangError> &errors,
+      ScopeStack scopeStack = ScopeStack(), ASTNode tree = nullptr,
+      std::vector<std::string> parentNamespace = {},
+      std::string currentFramework = "");
+  static std::string getTypeName(ASTNode child,
+                                 ScopeStack scopeStack = ScopeStack(),
+                                 ASTNode tree = nullptr,
+                                 std::vector<std::string> parentNamespace = {},
+                                 std::string currentFramework = "");
+
+  static std::vector<std::string> getValidTypeNames(
+      std::vector<ASTNode> portTypesList, ScopeStack scopeStack = ScopeStack(),
+      ASTNode tree = nullptr, std::vector<std::string> parentNamespace = {},
+      std::string currentFramework = "");
 };
 
 #endif // ASTVALIDATION_H

@@ -76,8 +76,9 @@ public:
   reduceConstExpression(std::shared_ptr<ExpressionNode> expr, ScopeStack scope,
                         ASTNode tree);
 
-  static int evaluateConstInteger(ASTNode node, ScopeStack scope, ASTNode tree,
-                                  std::vector<LangError> *errors);
+  static int64_t evaluateConstInteger(ASTNode node, ScopeStack scope,
+                                      ASTNode tree,
+                                      std::vector<LangError> *errors);
   static double evaluateConstReal(ASTNode node, ScopeStack scope, ASTNode tree,
                                   std::vector<LangError> *errors);
   static std::string evaluateConstString(ASTNode node, ScopeStack scope,
