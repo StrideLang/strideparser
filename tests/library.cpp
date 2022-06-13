@@ -2,6 +2,7 @@
 
 #include "astfunctions.h"
 #include "astquery.h"
+#include "astvalidation.h"
 #include "stridelibrary.h"
 #include "strideparser.h"
 

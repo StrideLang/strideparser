@@ -14,6 +14,20 @@
 #include "rangenode.h"
 #include "valuenode.h"
 
+TEST(Schema, ObjectTypes) {
+  auto strideroot = getenv("STRIDEROOT");
+  EXPECT_NE(strideroot, nullptr);
+  ASTNode tree;
+  tree =
+      ASTFunctions::parseFile(TESTS_SOURCE_DIR "schema/05_objectTypes.stride");
+  EXPECT_TRUE(tree != nullptr);
+  ASTFunctions::preprocess(tree);
+  std::vector<LangError> errors;
+  ASTValidation::validateTypes(tree, errors, {}, tree);
+
+  EXPECT_EQ(errors.size(), 2);
+}
+
 TEST(Schema, IntLiterals) {
   auto strideroot = getenv("STRIDEROOT");
   EXPECT_NE(strideroot, nullptr);

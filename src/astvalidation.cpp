@@ -400,7 +400,8 @@ void ASTValidation::validateTypesForDeclaration(
               if (portValue->getNodeType() == AST::List) {
                 typeIsValid = true;
                 for (const auto &child : portValue->getChildren()) {
-                  auto typeName = getTypeName(child);
+                  auto typeName = getTypeName(child, scopeStack, tree, {},
+                                              currentFramework);
                   bool thisTypeIsValid = false;
                   for (const auto &validTypeName : validTypeNames) {
                     if (validTypeName == typeName) {
@@ -414,7 +415,8 @@ void ASTValidation::validateTypesForDeclaration(
                   typeIsValid &= thisTypeIsValid;
                 }
               } else {
-                auto typeName = getTypeName(portValue);
+                auto typeName = getTypeName(portValue, scopeStack, tree, {},
+                                            currentFramework);
                 for (const auto &validTypeName : validTypeNames) {
                   if (validTypeName == typeName || validTypeName == "") {
                     typeIsValid = true;
