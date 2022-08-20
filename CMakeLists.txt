@@ -26,6 +26,7 @@ set(PARSER_SRC
   src/scopenode.cpp
   src/platformnode.cpp
   src/portpropertynode.cpp
+  src/stridelibrary.cpp
 )
 
 set(PARSER_HEADERS
@@ -51,6 +52,7 @@ set(PARSER_HEADERS
   include/keywordnode.h
   include/platformnode.h
   include/portpropertynode.h
+  include/stridelibrary.h
 )
 
 if (WIN32)

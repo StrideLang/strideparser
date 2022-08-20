@@ -7,6 +7,7 @@
 #include "functionnode.h"
 #include "portpropertynode.h"
 #include "streamnode.h"
+#include "stridelibrary.h"
 #include "valuenode.h"
 
 #include <algorithm>
@@ -63,34 +64,81 @@ std::vector<ASTNode> ASTFunctions::loadAllInDirectory(std::string path) {
 }
 
 bool ASTFunctions::preprocess(ASTNode tree) {
-    bool ok = true;
+  bool ok = true;
 
-    // TODO insert external objects
+  if (!tree) {
+    return false;
+  }
 
-    ASTFunctions::resolveInheritance(tree);
-    ASTFunctions::processAnoymousDeclarations(tree);
-    ASTFunctions::fillDefaultProperties(tree);
-    ASTFunctions::resolveConstants(tree);
-    return ok;
+  // TODO insert external objects
+
+  const char *strideroot = std::getenv("STRIDEROOT");
+
+  StrideLibrary library;
+  { // Process Imports
+
+    std::vector<std::shared_ptr<ImportNode>> importList;
+    for (const ASTNode &node : tree->getChildren()) {
+      if (node->getNodeType() == AST::Import) {
+        std::shared_ptr<ImportNode> import =
+            std::static_pointer_cast<ImportNode>(node);
+        // TODO add namespace support here (e.g. import
+        // Platform::Filters::Filter)
+        bool imported = false;
+        for (const auto &importNode : importList) {
+          if ((std::static_pointer_cast<ImportNode>(importNode)->importName() ==
+               import->importName()) &&
+              (std::static_pointer_cast<ImportNode>(importNode)
+                   ->importAlias() == import->importAlias())) {
+            imported = true;
+            break;
+          }
+        }
+        if (!imported) {
+          importList.push_back(import);
+        }
+      }
+    }
+
+    std::vector<std::string> importPaths;
+    std::filesystem::path filePath = tree->getFilename();
+    filePath.remove_filename();
+    importPaths.push_back(filePath.string());
+
+    library.initializeLibrary(strideroot, importPaths);
+    for (const auto &import : importList) {
+      library.loadImport(import->importName(), import->importAlias());
+    }
+  }
+
+  std::map<std::string, std::vector<ASTNode>> externalNodes =
+      library.getLibraryMembers();
+  ASTFunctions::insertRequiredObjects(tree, externalNodes);
+
+  ASTFunctions::resolveInheritance(tree);
+  ASTFunctions::processAnoymousDeclarations(tree);
+  ASTFunctions::fillDefaultProperties(tree);
+  ASTFunctions::resolveConstants(tree);
+  return ok;
 }
 
 bool ASTFunctions::resolveInheritance(ASTNode tree) {
-    bool ok = true;
-    for (const auto &node : tree->getChildren()) {
-        if (node->getNodeType() == AST::Declaration) {
-            auto decl = std::static_pointer_cast<DeclarationNode>(node);
-            ok &= ASTFunctions::resolveDeclarationInheritance(decl, tree);
-        }
+  bool ok = true;
+  for (const auto &node : tree->getChildren()) {
+    if (node->getNodeType() == AST::Declaration) {
+      auto decl = std::static_pointer_cast<DeclarationNode>(node);
+      ok &= ASTFunctions::resolveDeclarationInheritance(decl, tree);
     }
-    return ok;
+  }
+  return ok;
 }
 
 void ASTFunctions::insertDependentTypes(
     std::shared_ptr<DeclarationNode> typeDeclaration,
     std::map<std::string, std::vector<ASTNode>> &externalNodes, ASTNode tree) {
-    std::vector<std::shared_ptr<DeclarationNode>> blockList;
-    //    std::shared_ptr<DeclarationNode> existingDecl =
-    //    ASTQuery::findTypeDeclaration(typeDeclaration, ScopeStack(),
+  std::vector<std::shared_ptr<DeclarationNode>> blockList;
+  //    std::shared_ptr<DeclarationNode> existingDecl =
+  //    ASTQuery::findTypeDeclaration(typeDeclaration, ScopeStack(),
   //    m_tree);
   for (auto it = externalNodes.begin(); it != externalNodes.end(); it++) {
     // To avoid redundant checking here we should mark nodes that have already
@@ -228,11 +276,11 @@ void ASTFunctions::insertRequiredObjectsForNode(
         tree->addChild(typeDecl);
         // FIXME instead of removing we must make sure that objects are not
         // inserted in tree if already there
-        auto position =
-            std::find(it->second.begin(), it->second.end(), typeDecl);
-        if (position != it->second.end()) {
-          it->second.erase(position);
-        }
+        //        auto position =
+        //            std::find(it->second.begin(), it->second.end(), typeDecl);
+        //        if (position != it->second.end()) {
+        //          it->second.erase(position);
+        //        }
         insertRequiredObjectsForNode(typeDecl, objects, tree);
         insertDependentTypes(typeDecl, objects, tree);
       }
@@ -426,13 +474,14 @@ void ASTFunctions::fillDefaultPropertiesForNode(
       if (functionModule->getObjectType() == "module" ||
           functionModule->getObjectType() == "reaction" ||
           functionModule->getObjectType() == "loop") {
-        std::vector<ASTNode> typeProperties =
-            functionModule->getPropertyValue("ports")->getChildren();
+
         if (!functionModule->getPropertyValue("ports")) {
-          std::cerr << "ERROR: fillDefaultProperties() No type definition for "
+          std::cerr << "ERROR: fillDefaultProperties() No ports definition for "
                     << destFunc->getName() << std::endl;
           return;
         }
+        std::vector<ASTNode> typeProperties =
+            functionModule->getPropertyValue("ports")->getChildren();
         for (const auto &property : blockProperties) {
           fillDefaultPropertiesForNode(property->getValue(), scopeNodes);
         }
@@ -844,9 +893,9 @@ ASTFunctions::reduceConstExpression(std::shared_ptr<ExpressionNode> expr,
   return nullptr;
 }
 
-int ASTFunctions::evaluateConstInteger(ASTNode node, ScopeStack scope,
-                                       ASTNode tree,
-                                       std::vector<LangError> *errors) {
+int64_t ASTFunctions::evaluateConstInteger(ASTNode node, ScopeStack scope,
+                                           ASTNode tree,
+                                           std::vector<LangError> *errors) {
   int result = 0;
   if (node->getNodeType() == AST::Int) {
     return static_cast<ValueNode *>(node.get())->getIntValue();
@@ -1149,8 +1198,8 @@ ASTFunctions::extractStreamDeclarations(std::shared_ptr<StreamNode> stream) {
   return streamDeclarations;
 }
 
-bool ASTFunctions::resolveDeclarationInheritance(std::shared_ptr<DeclarationNode> decl,
-                                      ASTNode tree) {
+bool ASTFunctions::resolveDeclarationInheritance(
+    std::shared_ptr<DeclarationNode> decl, ASTNode tree) {
   auto inheritsNode = decl->getPropertyValue("inherits");
   if (inheritsNode && inheritsNode->getNodeType() == AST::Block) {
     auto inheritedName =

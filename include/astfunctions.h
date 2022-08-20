@@ -20,8 +20,6 @@ public:
                            const char *sourceFilename = nullptr);
   static std::vector<LangError> getParseErrors();
 
-  static std::vector<ASTNode> loadAllInDirectory(std::string path);
-
   // Apply all preprocessing to AST
   static bool preprocess(ASTNode tree);
 
@@ -30,6 +28,8 @@ public:
   static bool
   resolveDeclarationInheritance(std::shared_ptr<DeclarationNode> decl,
                                 ASTNode tree);
+
+  static std::vector<ASTNode> loadAllInDirectory(std::string path);
 
   // Insert system and library objects used in tree from import trees.
   // externalNodes provides library and import nodes. The key is the namespace
@@ -76,8 +76,9 @@ public:
   reduceConstExpression(std::shared_ptr<ExpressionNode> expr, ScopeStack scope,
                         ASTNode tree);
 
-  static int evaluateConstInteger(ASTNode node, ScopeStack scope, ASTNode tree,
-                                  std::vector<LangError> *errors);
+  static int64_t evaluateConstInteger(ASTNode node, ScopeStack scope,
+                                      ASTNode tree,
+                                      std::vector<LangError> *errors);
   static double evaluateConstReal(ASTNode node, ScopeStack scope, ASTNode tree,
                                   std::vector<LangError> *errors);
   static std::string evaluateConstString(ASTNode node, ScopeStack scope,

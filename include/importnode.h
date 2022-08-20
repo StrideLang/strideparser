@@ -39,25 +39,26 @@
 
 #include "ast.h"
 
-class ImportNode : public AST
-{
+class ImportNode : public AST {
 public:
-    ImportNode(std::string name, ASTNode scope, const char *filename, int line, std::string alias = std::string());
-    ImportNode(std::string name, const char *filename, int line, std::string alias = std::string());
+  ImportNode(std::string name, ASTNode scope, const char *filename, int line,
+             std::string alias = std::string());
+  ImportNode(std::string name, const char *filename, int line,
+             std::string alias = std::string());
 
-    std::string importName() const;
-    void setImportName(const std::string &importName);
+  std::string importName() const;
+  void setImportName(const std::string &importName);
 
-    std::string importAlias() const;
-    void setImportAlias(const std::string &importAlias);
+  std::string importAlias() const;
+  void setImportAlias(const std::string &importAlias);
 
-    virtual void resolveScope(ASTNode scope) override;
+  virtual void resolveScope(ASTNode scope) override;
 
-    virtual ASTNode deepCopy() override;
+  virtual ASTNode deepCopy() override;
 
 private:
-    std::string m_importName;
-    std::string m_importAlias;
+  std::string m_importName;
+  std::string m_importAlias;
 };
 
 #endif // IMPORTNODE_H

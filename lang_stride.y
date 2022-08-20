@@ -1301,6 +1301,7 @@ AST *parse(const char *filename, const char*sourceFilename){
     COUT << "===========" << ENDL;
 
     tree_head = new AST;
+    tree_head->setFilename(filename);
     yyin = file;
     yyrestart(file);
     yylineno = 1;

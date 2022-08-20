@@ -32,24 +32,23 @@
     Authors: Andres Cabrera and Joseph Tilbian
 */
 
-#ifndef STREAMPARSER_H
-#define STREAMPARSER_H
+#ifndef STRIDEPARSER_H
+#define STRIDEPARSER_H
 
 #include "ast.h"
-#include "declarationnode.h"
+#include "blocknode.h"
 #include "bundlenode.h"
+#include "declarationnode.h"
 #include "expressionnode.h"
 #include "functionnode.h"
-#include "listnode.h"
-#include "blocknode.h"
-#include "platformnode.h"
-#include "propertynode.h"
-#include "streamnode.h"
-#include "valuenode.h"
 #include "importnode.h"
+#include "listnode.h"
+#include "platformnode.h"
+#include "portpropertynode.h"
+#include "propertynode.h"
 #include "rangenode.h"
 #include "scopenode.h"
-#include "portpropertynode.h"
+#include "streamnode.h"
+#include "valuenode.h"
 
-#endif // STREAMPARSER_H
-
+#endif // STRIDEPARSER_H

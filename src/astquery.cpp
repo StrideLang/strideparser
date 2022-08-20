@@ -566,14 +566,23 @@ ASTQuery::getValidTypesForPort(std::shared_ptr<DeclarationNode> typeDeclaration,
     DeclarationNode *portNode = static_cast<DeclarationNode *>(node.get());
     ValueNode *name =
         static_cast<ValueNode *>(portNode->getPropertyValue("name").get());
-    assert(name->getNodeType() == AST::String);
-    if (name->getStringValue() == portName) {
-      ListNode *typesPort =
-          static_cast<ListNode *>(portNode->getPropertyValue("types").get());
-      assert(typesPort->getNodeType() == AST::List);
-      for (const ASTNode &type : typesPort->getChildren()) {
-        validTypes.push_back(type);
+    if (name && name->getNodeType() == AST::String) {
+      assert(name->getNodeType() == AST::String);
+      if (name->getStringValue() == portName) {
+        ListNode *typesPort =
+            static_cast<ListNode *>(portNode->getPropertyValue("types").get());
+        if (typesPort && typesPort->getNodeType() == AST::List) {
+          for (const ASTNode &type : typesPort->getChildren()) {
+            validTypes.push_back(type);
+          }
+        } else {
+          std::cerr << __FILE__ << ":" << __LINE__
+                    << "Expecting list for types port" << std::endl;
+        }
       }
+    } else {
+      std::cerr << __FILE__ << ":" << __LINE__
+                << "Expecting string literal for name" << std::endl;
     }
   }
   return validTypes;

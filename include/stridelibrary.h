@@ -32,42 +32,53 @@
     Authors: Andres Cabrera and Joseph Tilbian
 */
 
-#ifndef LANGERROR_H
-#define LANGERROR_H
+#ifndef STRIDELIBRARY_HPP
+#define STRIDELIBRARY_HPP
 
-#include <string>
+#include <map>
 #include <vector>
 
-class LangError {
-public:
-  LangError();
+#include "declarationnode.h"
+#include "langerror.h"
 
-  typedef enum {
-    Syntax,
-    UnknownType,
-    InvalidType,
-    InvalidPort,
-    InvalidPortType,
-    InvalidIndexType,
-    BundleSizeMismatch,
-    ArrayIndexOutOfRange,
-    DuplicateSymbol,
-    InconsistentList,
-    StreamMemberSizeMismatch,
-    UndeclaredSymbol,
-    SystemError,
-    UnknownPlatform,
-    SystemRedefinition,
-    UnresolvedRate,
-    ConstraintFail, // TODO Needs more careful though on error tokens.
-    None
-  } ErrorType;
-
-  ErrorType type;
-  std::vector<std::string> errorTokens;
-  std::string filename;
-  int lineNumber;
-  std::string getErrorText();
+struct LibraryTree {
+  std::string importName;
+  std::string importAs;
+  std::vector<ASTNode> nodes;
+  std::vector<std::string> namespaces;
 };
 
-#endif // LANGERROR_H
+class StrideLibrary {
+public:
+  StrideLibrary();
+  ~StrideLibrary();
+
+  void initializeLibrary(std::string strideRootPath,
+                         std::vector<std::string> includePaths = {});
+
+  std::shared_ptr<DeclarationNode> findTypeInLibrary(std::string typeName);
+
+  bool isValidBlock(DeclarationNode *block);
+
+  std::map<std::string, std::vector<ASTNode>> getLibraryMembers();
+
+  std::vector<ASTNode> loadImport(std::string importName, std::string importAs);
+
+private:
+  bool isValidProperty(std::shared_ptr<PropertyNode> property,
+                       DeclarationNode *type);
+  std::vector<DeclarationNode *> getParentTypes(DeclarationNode *type);
+
+  void readLibrary(std::string rootDir);
+
+  std::vector<LibraryTree>
+      m_libraryTrees; // List of root and imported library trees
+
+  std::string m_libraryPath;
+
+  int m_majorVersion;
+  int m_minorVersion;
+  std::vector<std::string> m_includePaths;
+};
+
+#endif // STRIDELIBRARY_HPP
