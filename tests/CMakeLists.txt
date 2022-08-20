@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.8)
 project(StrideParser_tests)
 
-option(BUILD_STRIDEPARSER_TESTS "Build and run unit test for the Stride parser" OFF)
+option(STRIDEPARSER_BUILD_TESTS "Build and run unit test for the Stride parser" OFF)
 
 # Get and build googletest
 if (NOT gtest)
