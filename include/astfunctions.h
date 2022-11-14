@@ -19,9 +19,10 @@ public:
   static ASTNode parseFile(const char *fileName,
                            const char *sourceFilename = nullptr);
   static std::vector<LangError> getParseErrors();
+  static std::string getDefaultStrideRoot();
 
   // Apply all preprocessing to AST
-  static bool preprocess(ASTNode tree);
+  static bool preprocess(ASTNode tree, ScopeStack *platformScope = nullptr);
 
   static bool resolveInheritance(ASTNode tree);
   // Insert properties from inherited types if not present
@@ -35,10 +36,12 @@ public:
   // externalNodes provides library and import nodes. The key is the namespace
   // they are imported into
   static void insertRequiredObjects( //**
-      ASTNode tree, std::map<std::string, std::vector<ASTNode>> externalNodes);
+      ASTNode tree, std::map<std::string, std::vector<ASTNode>> externalNodes,
+      ScopeStack *platformScope = nullptr);
   static void insertRequiredObjectsForNode( //**
       ASTNode node, std::map<std::string, std::vector<ASTNode>> &objects,
-      ASTNode tree, std::string currentFramework = "");
+      ASTNode tree, ScopeStack *platformScope = nullptr,
+      std::string currentFramework = "");
 
   // Insert system and library types required in declaration
   // externalNodes provides library and import nodes. The key is the namespace

@@ -15,8 +15,7 @@
 #include "valuenode.h"
 
 TEST(Schema, ObjectTypes) {
-  auto strideroot = getenv("STRIDEROOT");
-  EXPECT_NE(strideroot, nullptr);
+  auto strideroot = ASTFunctions::getDefaultStrideRoot();
   ASTNode tree;
   tree =
       ASTFunctions::parseFile(TESTS_SOURCE_DIR "schema/05_objectTypes.stride");
@@ -29,8 +28,7 @@ TEST(Schema, ObjectTypes) {
 }
 
 TEST(Schema, IntLiterals) {
-  auto strideroot = getenv("STRIDEROOT");
-  EXPECT_NE(strideroot, nullptr);
+  auto strideroot = ASTFunctions::getDefaultStrideRoot();
   ASTNode tree;
   tree =
       ASTFunctions::parseFile(TESTS_SOURCE_DIR "schema/01_intliterals.stride");
@@ -63,8 +61,7 @@ TEST(Schema, IntLiterals) {
 }
 
 TEST(Schema, RealLiterals) {
-  auto strideroot = getenv("STRIDEROOT");
-  EXPECT_NE(strideroot, nullptr);
+  auto strideroot = ASTFunctions::getDefaultStrideRoot();
   ASTNode tree;
   tree =
       ASTFunctions::parseFile(TESTS_SOURCE_DIR "schema/02_realliterals.stride");
@@ -89,8 +86,7 @@ TEST(Schema, RealLiterals) {
 }
 
 TEST(Schema, StringLiterals) {
-  auto strideroot = getenv("STRIDEROOT");
-  EXPECT_NE(strideroot, nullptr);
+  auto strideroot = ASTFunctions::getDefaultStrideRoot();
   ASTNode tree;
   tree = ASTFunctions::parseFile(TESTS_SOURCE_DIR
                                  "schema/03_stringliterals.stride");
@@ -111,8 +107,7 @@ TEST(Schema, StringLiterals) {
 }
 
 TEST(Schema, ConstrainedList) {
-  auto strideroot = getenv("STRIDEROOT");
-  EXPECT_NE(strideroot, nullptr);
+  auto strideroot = ASTFunctions::getDefaultStrideRoot();
   ASTNode tree;
   tree = ASTFunctions::parseFile(TESTS_SOURCE_DIR
                                  "schema/04_constrainedList.stride");

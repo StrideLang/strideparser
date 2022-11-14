@@ -26,11 +26,25 @@ ASTNode ASTFunctions::parseFile(const char *fileName,
 
 std::vector<LangError> ASTFunctions::getParseErrors() { return getErrors(); }
 
+std::string ASTFunctions::getDefaultStrideRoot() {
+  auto strideroot = getenv("STRIDEROOT");
+  if (strideroot) {
+    return std::string(strideroot);
+  } else {
+    auto abspath = std::filesystem::canonical(
+        std::filesystem::absolute(std::filesystem::current_path().string() +
+                                  "/../../../Stride/strideroot"));
+    //    std::cout << abspath.string() << std::endl;
+    return abspath.string();
+  }
+}
+
 void ASTFunctions::insertRequiredObjects(
-    ASTNode tree, std::map<std::string, std::vector<ASTNode>> externalNodes) {
+    ASTNode tree, std::map<std::string, std::vector<ASTNode>> externalNodes,
+    ScopeStack *platformScope) {
   auto children = tree->getChildren();
   for (const ASTNode &object : children) {
-    insertRequiredObjectsForNode(object, externalNodes, tree);
+    insertRequiredObjectsForNode(object, externalNodes, tree, platformScope);
   }
 }
 
@@ -63,7 +77,7 @@ std::vector<ASTNode> ASTFunctions::loadAllInDirectory(std::string path) {
   return nodes;
 }
 
-bool ASTFunctions::preprocess(ASTNode tree) {
+bool ASTFunctions::preprocess(ASTNode tree, ScopeStack *platformScope) {
   bool ok = true;
 
   if (!tree) {
@@ -72,7 +86,7 @@ bool ASTFunctions::preprocess(ASTNode tree) {
 
   // TODO insert external objects
 
-  const char *strideroot = std::getenv("STRIDEROOT");
+  auto strideroot = ASTFunctions::getDefaultStrideRoot();
 
   StrideLibrary library;
   { // Process Imports
@@ -113,7 +127,7 @@ bool ASTFunctions::preprocess(ASTNode tree) {
 
   std::map<std::string, std::vector<ASTNode>> externalNodes =
       library.getLibraryMembers();
-  ASTFunctions::insertRequiredObjects(tree, externalNodes);
+  ASTFunctions::insertRequiredObjects(tree, externalNodes, platformScope);
 
   ASTFunctions::resolveInheritance(tree);
   ASTFunctions::processAnoymousDeclarations(tree);
@@ -166,23 +180,29 @@ void ASTFunctions::insertDependentTypes(
 
 void ASTFunctions::insertRequiredObjectsForNode(
     ASTNode node, std::map<std::string, std::vector<ASTNode>> &objects,
-    ASTNode tree, std::string currentFramework) {
+    ASTNode tree, ScopeStack *platformScope, std::string currentFramework) {
   std::vector<std::shared_ptr<DeclarationNode>> blockList;
   if (node->getNodeType() == AST::List) {
     for (const ASTNode &child : node->getChildren()) {
-      insertRequiredObjectsForNode(child, objects, tree, currentFramework);
+      insertRequiredObjectsForNode(child, objects, tree, platformScope,
+                                   currentFramework);
     }
   } else if (node->getNodeType() == AST::Stream) {
     StreamNode *stream = static_cast<StreamNode *>(node.get());
-    insertRequiredObjectsForNode(stream->getLeft(), objects, tree);
-    insertRequiredObjectsForNode(stream->getRight(), objects, tree);
+    insertRequiredObjectsForNode(stream->getLeft(), objects, tree,
+                                 platformScope);
+    insertRequiredObjectsForNode(stream->getRight(), objects, tree,
+                                 platformScope);
   } else if (node->getNodeType() == AST::Expression) {
     ExpressionNode *expr = static_cast<ExpressionNode *>(node.get());
     if (expr->isUnary()) {
-      insertRequiredObjectsForNode(expr->getValue(), objects, tree);
+      insertRequiredObjectsForNode(expr->getValue(), objects, tree,
+                                   platformScope);
     } else {
-      insertRequiredObjectsForNode(expr->getLeft(), objects, tree);
-      insertRequiredObjectsForNode(expr->getRight(), objects, tree);
+      insertRequiredObjectsForNode(expr->getLeft(), objects, tree,
+                                   platformScope);
+      insertRequiredObjectsForNode(expr->getRight(), objects, tree,
+                                   platformScope);
     }
   } else if (node->getNodeType() == AST::Function) {
     FunctionNode *func = static_cast<FunctionNode *>(node.get());
@@ -192,21 +212,35 @@ void ASTFunctions::insertRequiredObjectsForNode(
       //            {it->first}, currentFramework);
       // for now, insert all declarations from all frameworks.
       // FIXME check outer domain and framework to only import needed modules
+      {
+        bool allocated = false;
+        if (!platformScope) {
+          allocated = true;
+          platformScope = new ScopeStack();
+        }
+        platformScope->push_back({nullptr, it->second});
 
-      std::vector<std::shared_ptr<DeclarationNode>> alldecls =
-          ASTQuery::findAllDeclarations(
-              func->getName(), {{nullptr, it->second}}, nullptr,
-              func->getNamespaceList(), currentFramework);
-      for (const auto &decl : alldecls) {
-        if (std::find(blockList.begin(), blockList.end(), decl) ==
-            blockList.end()) {
-          blockList.push_back(decl);
+        std::vector<std::shared_ptr<DeclarationNode>> alldecls =
+            ASTQuery::findAllDeclarations(func->getName(), *platformScope,
+                                          nullptr, func->getNamespaceList(),
+                                          currentFramework);
+        platformScope->pop_back();
+        if (allocated) {
+          delete platformScope;
+          platformScope = nullptr;
+        }
+        for (const auto &decl : alldecls) {
+          if (std::find(blockList.begin(), blockList.end(), decl) ==
+              blockList.end()) {
+            blockList.push_back(decl);
+          }
         }
       }
     }
     // Look for declarations of blocks present in function properties
     for (const auto &property : func->getProperties()) {
-      insertRequiredObjectsForNode(property->getValue(), objects, tree);
+      insertRequiredObjectsForNode(property->getValue(), objects, tree,
+                                   platformScope);
     }
     for (const std::shared_ptr<DeclarationNode> &usedBlock : blockList) {
       // Add declarations to tree if not there
@@ -224,7 +258,7 @@ void ASTFunctions::insertRequiredObjectsForNode(
       auto namespaceTreeNode = usedBlock->getCompilerProperty("namespaceTree");
       std::vector<std::string> namespaceTree;
       if (namespaceTreeNode) {
-        for (auto node : namespaceTreeNode->getChildren()) {
+        for (const auto &node : namespaceTreeNode->getChildren()) {
           namespaceTree.push_back(
               std::static_pointer_cast<ValueNode>(node)->getStringValue());
         }
@@ -237,7 +271,7 @@ void ASTFunctions::insertRequiredObjectsForNode(
                                            tree, namespaceTree, fw)) {
         tree->addChild(usedBlock);
       }
-      insertRequiredObjectsForNode(usedBlock, objects, tree, fw);
+      insertRequiredObjectsForNode(usedBlock, objects, tree, platformScope, fw);
     }
   } else if (node->getNodeType() == AST::Declaration ||
              node->getNodeType() == AST::BundleDeclaration) {
@@ -265,24 +299,38 @@ void ASTFunctions::insertRequiredObjectsForNode(
           declaration->getObjectType(), {}, tree, {it->first}, framework);
       //      for (auto objectTree : it->second) {
       // FIXME get namespaces for declaration, not objects to insert
-      auto typeDecl = ASTQuery::findTypeDeclarationByName(
-          declaration->getObjectType(), {{nullptr, it->second}}, nullptr, {},
-          framework);
-      if (!typeDecl) { // try root namespace
-        typeDecl = ASTQuery::findTypeDeclarationByName(
-            declaration->getObjectType(), {{nullptr, it->second}}, nullptr, {});
-      }
-      if (typeDecl && !existingTypeDecl) {
-        tree->addChild(typeDecl);
-        // FIXME instead of removing we must make sure that objects are not
-        // inserted in tree if already there
-        //        auto position =
-        //            std::find(it->second.begin(), it->second.end(), typeDecl);
-        //        if (position != it->second.end()) {
-        //          it->second.erase(position);
-        //        }
-        insertRequiredObjectsForNode(typeDecl, objects, tree);
-        insertDependentTypes(typeDecl, objects, tree);
+      {
+        bool allocated = false;
+        if (!platformScope) {
+          allocated = true;
+          platformScope = new ScopeStack();
+        }
+        platformScope->push_back({nullptr, it->second});
+        auto typeDecl = ASTQuery::findTypeDeclarationByName(
+            declaration->getObjectType(), *platformScope, nullptr, {},
+            framework);
+        if (!typeDecl) { // try root namespace
+          typeDecl = ASTQuery::findTypeDeclarationByName(
+              declaration->getObjectType(), *platformScope, nullptr, {});
+        }
+        platformScope->pop_back();
+        if (typeDecl && !existingTypeDecl) {
+          tree->addChild(typeDecl);
+          // FIXME instead of removing we must make sure that objects are not
+          // inserted in tree if already there
+          //        auto position =
+          //            std::find(it->second.begin(), it->second.end(),
+          //            typeDecl);
+          //        if (position != it->second.end()) {
+          //          it->second.erase(position);
+          //        }
+          insertRequiredObjectsForNode(typeDecl, objects, tree, platformScope);
+          insertDependentTypes(typeDecl, objects, tree);
+          if (allocated) {
+            delete platformScope;
+            platformScope = nullptr;
+          }
+        }
       }
       //      }
     }
@@ -301,12 +349,12 @@ void ASTFunctions::insertRequiredObjectsForNode(
             // Constraints play by their own rules.
           }
           insertRequiredObjectsForNode(property->getValue(), objects, tree,
-                                       framework);
+                                       platformScope, framework);
         }
         // Process index for bundle declarations
         if (node->getNodeType() == AST::BundleDeclaration) {
           insertRequiredObjectsForNode(declaration->getBundle()->index(),
-                                       objects, tree, framework);
+                                       objects, tree, platformScope, framework);
         }
       }
     }
@@ -325,7 +373,7 @@ void ASTFunctions::insertRequiredObjectsForNode(
             name->getName(), {{nullptr, it->second}}, nullptr,
             name->getNamespaceList(), currentFramework);
 
-        for (auto newDecl : newDeclarations) {
+        for (const auto &newDecl : newDeclarations) {
           if (std::find(blockList.begin(), blockList.end(), declaration) ==
               blockList.end()) {
             blockList.push_back(newDecl);
@@ -354,7 +402,7 @@ void ASTFunctions::insertRequiredObjectsForNode(
         if (!existingDeclaration) {
           tree->addChild(usedBlock);
         }
-        insertRequiredObjectsForNode(usedBlock, objects, tree);
+        insertRequiredObjectsForNode(usedBlock, objects, tree, platformScope);
       }
     }
   } else if (node->getNodeType() == AST::Bundle) {
@@ -393,13 +441,14 @@ void ASTFunctions::insertRequiredObjectsForNode(
         if (!existingDeclaration) {
           tree->addChild(usedBlock);
         }
-        insertRequiredObjectsForNode(usedBlock, objects, tree);
+        insertRequiredObjectsForNode(usedBlock, objects, tree, platformScope);
       }
     }
   } else if (node->getNodeType() == AST::Property) {
     std::shared_ptr<PropertyNode> prop =
         std::static_pointer_cast<PropertyNode>(node);
-    insertRequiredObjectsForNode(prop->getValue(), objects, tree);
+    insertRequiredObjectsForNode(prop->getValue(), objects, tree,
+                                 platformScope);
   }
 }
 
