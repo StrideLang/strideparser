@@ -88,6 +88,7 @@ public:
                                          ASTNode tree,
                                          std::string currentFramework,
                                          std::vector<LangError> *errors);
+
   // Type defaults
   static double
   getDefaultForTypeAsDouble(std::string type, std::string port,
@@ -100,7 +101,7 @@ public:
                              std::vector<std::string> namespaces);
 
 protected:
-  // Anonymous declaration helpre functions
+  // Anonymous declaration helper functions
   static std::vector<ASTNode>
   processAnonDeclsForScope(const std::vector<ASTNode> scopeTree);
   // Look for declarations in a stream, extract them and replace them with a
