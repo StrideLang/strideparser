@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.8)
 project(StrideParser_tests)
 
-option(BUILD_STRIDEPARSER_TESTS "Build and run unit test for the Stride parser" OFF)
+option(STRIDEPARSER_BUILD_TESTS "Build and run unit test for the Stride parser" OFF)
 
 # Get and build googletest
 if (NOT gtest)
@@ -10,7 +10,7 @@ if (NOT gtest)
     FetchContent_Declare(
     googletest
     GIT_REPOSITORY https://github.com/google/googletest.git
-    GIT_TAG        release-1.10.0
+    GIT_TAG        release-1.12.0
     )
     set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
     FetchContent_MakeAvailable(googletest)
@@ -19,6 +19,8 @@ endif()
 
 set(TEST_SOURCES main.cpp
   basic.cpp
+  schema.cpp
+  library.cpp
 )
 
 

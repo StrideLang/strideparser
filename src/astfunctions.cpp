@@ -1,14 +1,14 @@
-#include "stride/parser/astfunctions.h"
-#include "stride/parser/astquery.h"
-#include "stride/parser/astruntime.h"
+#include "astfunctions.h"
+#include "astquery.h"
+#include "astruntime.h"
 
-#include "stride/parser/blocknode.h"
-#include "stride/parser/expressionnode.h"
-#include "stride/parser/functionnode.h"
-#include "stride/parser/propertynode.h"
-#include "stride/parser/streamnode.h"
-#include "stride/parser/stridelibrary.h"
-#include "stride/parser/valuenode.h"
+#include "blocknode.h"
+#include "expressionnode.h"
+#include "functionnode.h"
+#include "portpropertynode.h"
+#include "streamnode.h"
+#include "stridelibrary.h"
+#include "valuenode.h"
 
 #include <algorithm>
 #include <cassert>

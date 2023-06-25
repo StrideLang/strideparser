@@ -77,7 +77,7 @@ void BundleNode::setIndex(std::shared_ptr<ListNode> index) {
 std::vector<size_t> BundleNode::getIndeces() {
   auto indexList = index();
   std::vector<size_t> indeces;
-  for (auto listNode : indexList->getChildren()) {
+  for (const auto &listNode : indexList->getChildren()) {
     if (listNode->getNodeType() == AST::Int) {
       indeces.push_back(
           static_pointer_cast<ValueNode>(listNode)->getIntValue());

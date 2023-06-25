@@ -96,6 +96,7 @@ std::string LangError::getErrorText() {
     errorText += "Rate Unresolved for '" + errorTokens[0] + "'";
     break;
   case ConstraintFail:
+
     errorText += errorTokens[3] + " [Failed Constraint in Module '" +
                  errorTokens[0] + "' in " + errorTokens[1] + ":" +
                  errorTokens[2] + "]";

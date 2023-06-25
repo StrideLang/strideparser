@@ -1,10 +1,10 @@
 #include "gtest/gtest.h"
 
-#include "stride/parser/astfunctions.h"
-#include "stride/parser/astquery.h"
-#include "stride/parser/astvalidation.h"
-#include "stride/parser/stridelibrary.h"
-#include "stride/parser/strideparser.h"
+#include "astfunctions.h"
+#include "astquery.h"
+#include "astvalidation.h"
+#include "stridelibrary.h"
+#include "strideparser.h"
 
 TEST(Library, ImportRaw) {
   StrideLibrary library;
