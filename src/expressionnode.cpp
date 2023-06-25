@@ -34,8 +34,8 @@
 
 #include <cassert>
 
-#include "expressionnode.h"
-#include "listnode.h"
+#include "stride/parser/expressionnode.h"
+#include "stride/parser/listnode.h"
 
 using namespace std;
 

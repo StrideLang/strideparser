@@ -34,8 +34,8 @@
 
 #include <cassert>
 
-#include "streamnode.h"
-#include "listnode.h"
+#include "stride/parser/streamnode.h"
+#include "stride/parser/listnode.h"
 
 StreamNode::StreamNode(ASTNode left, ASTNode right, const char *filename, int line) :
     AST(AST::Stream, filename, line)

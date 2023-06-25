@@ -11,6 +11,7 @@ class ASTValidation {
 public:
   ASTValidation();
 
+  static std::vector<LangError> validate(ASTNode tree);
   // Verifies that types are declared for all nodes, and that the properties and
   // property types are allowed by the type declaration
   static void validateTypes(ASTNode node, std::vector<LangError> &errors,
@@ -68,6 +69,39 @@ protected:
                                           std::vector<LangError> &errors,
                                           ASTNode tree,
                                           std::string currentFramework);
+
+  static void
+  validateConstrainedInt(std::shared_ptr<DeclarationNode> constrainDecl,
+                         std::shared_ptr<DeclarationNode> declaration,
+                         std::string portName, ASTNode portValue,
+                         std::vector<LangError> &errors);
+  static void
+  validateConstrainedReal(std::shared_ptr<DeclarationNode> constrainDecl,
+                          std::shared_ptr<DeclarationNode> declaration,
+                          std::string portName, ASTNode portValue,
+                          std::vector<LangError> &errors);
+  static void
+  validateConstrainedString(std::shared_ptr<DeclarationNode> constrainDecl,
+                            std::shared_ptr<DeclarationNode> declaration,
+                            std::string portName, ASTNode portValue,
+                            std::vector<LangError> &errors);
+  static void validateConstrainedList(
+      std::shared_ptr<DeclarationNode> constrainDecl,
+      std::shared_ptr<DeclarationNode> declaration, std::string portName,
+      ASTNode portValue, std::vector<LangError> &errors,
+      ScopeStack scopeStack = ScopeStack(), ASTNode tree = nullptr,
+      std::vector<std::string> parentNamespace = {},
+      std::string currentFramework = "");
+  static std::string getTypeName(ASTNode child,
+                                 ScopeStack scopeStack = ScopeStack(),
+                                 ASTNode tree = nullptr,
+                                 std::vector<std::string> parentNamespace = {},
+                                 std::string currentFramework = "");
+
+  static std::vector<std::string> getValidTypeNames(
+      std::vector<ASTNode> portTypesList, ScopeStack scopeStack = ScopeStack(),
+      ASTNode tree = nullptr, std::vector<std::string> parentNamespace = {},
+      std::string currentFramework = "");
 };
 
 #endif // ASTVALIDATION_H

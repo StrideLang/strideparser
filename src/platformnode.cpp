@@ -37,7 +37,7 @@
 #include <sstream>
 #include <vector>
 
-#include "platformnode.h"
+#include "stride/parser/platformnode.h"
 
 SystemNode::SystemNode(std::string platformName, int majorVersion,
                        int minorVersion, const char *filename, int line,

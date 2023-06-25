@@ -1,7 +1,7 @@
-#include "astquery.h"
-#include "strideparser.h"
+#include "stride/parser/astquery.h"
+#include "stride/parser/strideparser.h"
 
-#include "astfunctions.h"
+#include "stride/parser/astfunctions.h"
 
 #include <algorithm>
 #include <cassert>

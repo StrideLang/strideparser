@@ -32,7 +32,7 @@
     Authors: Andres Cabrera and Joseph Tilbian
 */
 
-#include "scopenode.h"
+#include "stride/parser/scopenode.h"
 
 using namespace std;
 

@@ -34,11 +34,11 @@
 
 #include <cassert>
 
-#include "bundlenode.h"
-#include "listnode.h"
-#include "rangenode.h"
-#include "scopenode.h"
-#include "valuenode.h"
+#include "stride/parser/bundlenode.h"
+#include "stride/parser/listnode.h"
+#include "stride/parser/rangenode.h"
+#include "stride/parser/scopenode.h"
+#include "stride/parser/valuenode.h"
 
 using namespace std;
 

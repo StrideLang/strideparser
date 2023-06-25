@@ -32,32 +32,42 @@
     Authors: Andres Cabrera and Joseph Tilbian
 */
 
-#ifndef IMPORTNODE_H
-#define IMPORTNODE_H
+#ifndef LANGERROR_H
+#define LANGERROR_H
 
 #include <string>
+#include <vector>
 
-#include "ast.h"
-
-class ImportNode : public AST
-{
+class LangError {
 public:
-    ImportNode(std::string name, ASTNode scope, const char *filename, int line, std::string alias = std::string());
-    ImportNode(std::string name, const char *filename, int line, std::string alias = std::string());
+  LangError();
 
-    std::string importName() const;
-    void setImportName(const std::string &importName);
+  typedef enum {
+    Syntax,
+    UnknownType,
+    InvalidType,
+    InvalidPort,
+    InvalidPortType,
+    InvalidIndexType,
+    BundleSizeMismatch,
+    ArrayIndexOutOfRange,
+    DuplicateSymbol,
+    InconsistentList,
+    StreamMemberSizeMismatch,
+    UndeclaredSymbol,
+    SystemError,
+    UnknownPlatform,
+    SystemRedefinition,
+    UnresolvedRate,
+    ConstraintFail, // TODO Needs more careful though on error tokens.
+    None
+  } ErrorType;
 
-    std::string importAlias() const;
-    void setImportAlias(const std::string &importAlias);
-
-    virtual void resolveScope(ASTNode scope) override;
-
-    virtual ASTNode deepCopy() override;
-
-private:
-    std::string m_importName;
-    std::string m_importAlias;
+  ErrorType type;
+  std::vector<std::string> errorTokens;
+  std::string filename;
+  int lineNumber;
+  std::string getErrorText();
 };
 
-#endif // IMPORTNODE_H
+#endif // LANGERROR_H

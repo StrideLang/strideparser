@@ -32,7 +32,7 @@
     Authors: Andres Cabrera and Joseph Tilbian
 */
 
-#include "keywordnode.h"
+#include "stride/parser/keywordnode.h"
 
 using namespace std;
 

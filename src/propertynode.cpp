@@ -34,8 +34,8 @@
 
 #include <cassert>
 
-#include "propertynode.h"
-#include "listnode.h"
+#include "stride/parser/propertynode.h"
+#include "stride/parser/listnode.h"
 
 using namespace std;
 

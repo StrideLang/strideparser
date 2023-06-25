@@ -35,14 +35,14 @@
 #include <algorithm>
 #include <cassert>
 
-#include "ast.h"
-#include "blocknode.h"
-#include "declarationnode.h"
-#include "functionnode.h"
-#include "listnode.h"
-#include "propertynode.h"
-#include "streamnode.h"
-#include "valuenode.h"
+#include "stride/parser/ast.h"
+#include "stride/parser/blocknode.h"
+#include "stride/parser/declarationnode.h"
+#include "stride/parser/functionnode.h"
+#include "stride/parser/listnode.h"
+#include "stride/parser/propertynode.h"
+#include "stride/parser/streamnode.h"
+#include "stride/parser/valuenode.h"
 
 using namespace std;
 

@@ -32,7 +32,7 @@
     Authors: Andres Cabrera and Joseph Tilbian
 */
 
-#include "langerror.h"
+#include "stride/parser/langerror.h"
 
 #include <sstream>
 

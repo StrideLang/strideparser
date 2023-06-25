@@ -36,8 +36,8 @@
 #include <iomanip>
 #include <sstream>
 
-#include "listnode.h"
-#include "valuenode.h"
+#include "stride/parser/listnode.h"
+#include "stride/parser/valuenode.h"
 
 using namespace std;
 

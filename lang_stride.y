@@ -5,7 +5,7 @@
 #include <cerrno>   // For error codes
 #include <cstring>  // For strerror
 
-#include "ast.h"
+#include "stride/parser/ast.h"
 
 using namespace std;
 
@@ -64,22 +64,22 @@ NullStream nstream;
 
 %}
 
-%code requires { #include "ast.h" }
-%code requires { #include "blocknode.h" }
-%code requires { #include "bundlenode.h" }
-%code requires { #include "declarationnode.h" }
-%code requires { #include "expressionnode.h" }
-%code requires { #include "functionnode.h" }
-%code requires { #include "importnode.h" }
-%code requires { #include "keywordnode.h" }
-%code requires { #include "listnode.h" }
-%code requires { #include "platformnode.h" }
-%code requires { #include "portpropertynode.h" }
-%code requires { #include "propertynode.h" }
-%code requires { #include "rangenode.h" }
-%code requires { #include "scopenode.h" }
-%code requires { #include "streamnode.h" }
-%code requires { #include "valuenode.h" }
+%code requires { #include "stride/parser/ast.h" }
+%code requires { #include "stride/parser/blocknode.h" }
+%code requires { #include "stride/parser/bundlenode.h" }
+%code requires { #include "stride/parser/declarationnode.h" }
+%code requires { #include "stride/parser/expressionnode.h" }
+%code requires { #include "stride/parser/functionnode.h" }
+%code requires { #include "stride/parser/importnode.h" }
+%code requires { #include "stride/parser/keywordnode.h" }
+%code requires { #include "stride/parser/listnode.h" }
+%code requires { #include "stride/parser/platformnode.h" }
+%code requires { #include "stride/parser/portpropertynode.h" }
+%code requires { #include "stride/parser/propertynode.h" }
+%code requires { #include "stride/parser/rangenode.h" }
+%code requires { #include "stride/parser/scopenode.h" }
+%code requires { #include "stride/parser/streamnode.h" }
+%code requires { #include "stride/parser/valuenode.h" }
 
 %union {
     int64_t     ival;

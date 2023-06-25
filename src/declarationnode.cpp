@@ -35,9 +35,9 @@
 #include <algorithm>
 #include <cassert>
 
-#include "blocknode.h"
-#include "declarationnode.h"
-#include "valuenode.h"
+#include "stride/parser/blocknode.h"
+#include "stride/parser/declarationnode.h"
+#include "stride/parser/valuenode.h"
 
 using namespace std;
 

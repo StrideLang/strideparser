@@ -34,10 +34,10 @@
 
 #include <cassert>
 
-#include "functionnode.h"
-#include "scopenode.h"
-#include "valuenode.h"
-#include "listnode.h"
+#include "stride/parser/functionnode.h"
+#include "stride/parser/scopenode.h"
+#include "stride/parser/valuenode.h"
+#include "stride/parser/listnode.h"
 
 using namespace std;
 

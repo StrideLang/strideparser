@@ -32,7 +32,7 @@
     Authors: Andres Cabrera and Joseph Tilbian
 */
 
-#include "listnode.h"
+#include "stride/parser/listnode.h"
 
 using namespace std;
 

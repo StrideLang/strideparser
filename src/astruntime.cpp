@@ -1,4 +1,4 @@
-#include "astruntime.h"
+#include "stride/parser/astruntime.h"
 
 #include <cassert>
 #include <iostream>

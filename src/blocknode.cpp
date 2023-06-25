@@ -34,9 +34,9 @@
 
 #include <cassert>
 
-#include "blocknode.h"
-#include "scopenode.h"
-#include "listnode.h"
+#include "stride/parser/blocknode.h"
+#include "stride/parser/scopenode.h"
+#include "stride/parser/listnode.h"
 
 using namespace std;
 

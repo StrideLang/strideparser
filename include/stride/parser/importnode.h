@@ -32,38 +32,33 @@
     Authors: Andres Cabrera and Joseph Tilbian
 */
 
-#include <cassert>
+#ifndef IMPORTNODE_H
+#define IMPORTNODE_H
 
-#include "stride/parser/rangenode.h"
-#include "stride/parser/listnode.h"
+#include <string>
 
-RangeNode::RangeNode(ASTNode start, ASTNode end, const char *filename, int line):
-    AST(AST::Range, filename, line)
-{
-    addChild(start);
-    addChild(end);
-}
+#include "ast.h"
 
-ASTNode RangeNode::startIndex() const
-{
-    return m_children.at(0);
-}
+class ImportNode : public AST {
+public:
+  ImportNode(std::string name, ASTNode scope, const char *filename, int line,
+             std::string alias = std::string());
+  ImportNode(std::string name, const char *filename, int line,
+             std::string alias = std::string());
 
-ASTNode RangeNode::endIndex() const
-{
-    return m_children.at(1);
-}
+  std::string importName() const;
+  void setImportName(const std::string &importName);
 
-ASTNode RangeNode::deepCopy()
-{
-    auto newRangeNode = std::make_shared<RangeNode>(startIndex(), endIndex(),
-                                         m_filename.data(), m_line);
+  std::string importAlias() const;
+  void setImportAlias(const std::string &importAlias);
 
-//    if (this->m_CompilerProperties) {
-//        newRangeNode->m_CompilerProperties = std::static_pointer_cast<ListNode>(this->m_CompilerProperties->deepCopy());
-//    } else {
-//        newRangeNode->m_CompilerProperties = nullptr;
-//    }
-    return newRangeNode;
-}
+  virtual void resolveScope(ASTNode scope) override;
 
+  virtual ASTNode deepCopy() override;
+
+private:
+  std::string m_importName;
+  std::string m_importAlias;
+};
+
+#endif // IMPORTNODE_H

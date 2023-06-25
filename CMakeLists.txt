@@ -26,31 +26,33 @@ set(PARSER_SRC
   src/scopenode.cpp
   src/platformnode.cpp
   src/portpropertynode.cpp
+  src/stridelibrary.cpp
 )
 
 set(PARSER_HEADERS
-  include/ast.h
-  include/astfunctions.h
-  include/astquery.h
-  include/astruntime.h
-  include/astvalidation.h
-  include/streamnode.h
-  include/valuenode.h
-  include/bundlenode.h
-  include/propertynode.h
-  include/functionnode.h
-  include/expressionnode.h
-  include/listnode.h
-  include/importnode.h
-  include/rangenode.h
-  include/langerror.h
-  include/strideparser.h
-  include/declarationnode.h
-  include/blocknode.h
-  include/scopenode.h
-  include/keywordnode.h
-  include/platformnode.h
-  include/portpropertynode.h
+  include/stride/parser/ast.h
+  include/stride/parser/astfunctions.h
+  include/stride/parser/astquery.h
+  include/stride/parser/astruntime.h
+  include/stride/parser/astvalidation.h
+  include/stride/parser/streamnode.h
+  include/stride/parser/valuenode.h
+  include/stride/parser/bundlenode.h
+  include/stride/parser/propertynode.h
+  include/stride/parser/functionnode.h
+  include/stride/parser/expressionnode.h
+  include/stride/parser/listnode.h
+  include/stride/parser/importnode.h
+  include/stride/parser/rangenode.h
+  include/stride/parser/langerror.h
+  include/stride/parser/strideparser.h
+  include/stride/parser/declarationnode.h
+  include/stride/parser/blocknode.h
+  include/stride/parser/scopenode.h
+  include/stride/parser/keywordnode.h
+  include/stride/parser/platformnode.h
+  include/stride/parser/propertynode.h
+  include/stride/parser/stridelibrary.h
 )
 
 if (WIN32)

@@ -32,30 +32,28 @@
     Authors: Andres Cabrera and Joseph Tilbian
 */
 
-#include "portpropertynode.h"
-#include "listnode.h"
+#include "stride/parser/portpropertynode.h"
+#include "stride/parser/listnode.h"
 
 using namespace std;
 
-PortPropertyNode::PortPropertyNode(string name, string port, const char *filename, int line) :
-    AST(AST::PortProperty, filename, line)
-{
-    m_name = name;
-    m_port = port;
+PortPropertyNode::PortPropertyNode(string name, string port,
+                                   const char *filename, int line)
+    : AST(AST::PortProperty, filename, line) {
+  m_name = name;
+  m_port = port;
 }
 
-PortPropertyNode::~PortPropertyNode()
-{
+PortPropertyNode::~PortPropertyNode() {}
 
-}
-
-ASTNode PortPropertyNode::deepCopy()
-{
-    std::shared_ptr<PortPropertyNode> newPortPropertyNode = make_shared<PortPropertyNode>(m_name, m_port, m_filename.data(), m_line);
-//    if (this->m_CompilerProperties) {
-//        newPortPropertyNode->m_CompilerProperties = std::static_pointer_cast<ListNode>(this->m_CompilerProperties->deepCopy());
-//    } else {
-//        newPortPropertyNode->m_CompilerProperties = nullptr;
-//    }
-    return newPortPropertyNode;
+ASTNode PortPropertyNode::deepCopy() {
+  std::shared_ptr<PortPropertyNode> newPortPropertyNode =
+      make_shared<PortPropertyNode>(m_name, m_port, m_filename.data(), m_line);
+  //    if (this->m_CompilerProperties) {
+  //        newPortPropertyNode->m_CompilerProperties =
+  //        std::static_pointer_cast<ListNode>(this->m_CompilerProperties->deepCopy());
+  //    } else {
+  //        newPortPropertyNode->m_CompilerProperties = nullptr;
+  //    }
+  return newPortPropertyNode;
 }
