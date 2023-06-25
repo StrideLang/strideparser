@@ -32,15 +32,11 @@
     Authors: Andres Cabrera and Joseph Tilbian
 */
 
-#include "ast.h"
-#include "astfunctions.h"
-#include "astquery.h"
-#include "valuenode.h"
-
-//#include "coderesolver.h"
-//#include "codevalidator.h"
-#include "stridelibrary.h"
-//#include "stridesystem.hpp"
+#include "stride/parser/stridelibrary.h"
+#include "stride/parser/ast.h"
+#include "stride/parser/astfunctions.h"
+#include "stride/parser/astquery.h"
+#include "stride/parser/valuenode.h"
 
 #include <cassert>
 #include <filesystem>
