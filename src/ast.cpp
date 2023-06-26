@@ -60,6 +60,14 @@ AST::AST(Token token, const char *filename, int line, vector<string> scope) {
 
 AST::~AST() {}
 
+extern AST *parse(const char *fileName, const char *sourceFilename);
+extern std::vector<LangError> getErrors();
+
+ASTNode AST::parseFile(const char *fileName, const char *sourceFilename) {
+  return std::shared_ptr<AST>(parse(fileName, sourceFilename));
+}
+
+std::vector<LangError> AST::getParseErrors() { return getErrors(); }
 void AST::addChild(ASTNode t) { m_children.push_back(t); }
 
 void AST::setChildren(vector<ASTNode> &newChildren) {

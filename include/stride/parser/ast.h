@@ -85,23 +85,24 @@ public:
       std::vector<std::string> scope = std::vector<std::string>());
   virtual ~AST();
 
+  // parsing
+  static ASTNode parseFile(const char *fileName,
+                           const char *sourceFilename = nullptr);
+  static std::vector<LangError> getParseErrors();
+
+  //
   Token getNodeType() const { return m_token; }
-  virtual void addChild(ASTNode t);
-  //    void giveChildren(ASTNode p); // Move all children nodes to be children
-  //    of "parent" and make parent a child of this class
   bool isNil() { return m_token == AST::None; }
 
+  virtual void addChild(ASTNode t);
   std::vector<ASTNode> getChildren() const { return m_children; }
   virtual void setChildren(std::vector<ASTNode> &newChildren);
-
-  int getLine() const { return m_line; }
-
-  //    virtual void deleteChildren();
 
   virtual ASTNode deepCopy();
 
   std::string getFilename() const;
   void setFilename(const std::string &filename);
+  int getLine() const { return m_line; }
 
   void addScope(std::string newScope);
   void setRootScope(std::string scopeName);

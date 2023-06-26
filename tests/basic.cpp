@@ -1,7 +1,6 @@
 #include "gtest/gtest.h"
 
 #include "stride/parser/ast.h"
-#include "stride/parser/astfunctions.h"
 #include "stride/parser/blocknode.h"
 #include "stride/parser/bundlenode.h"
 #include "stride/parser/declarationnode.h"
@@ -10,12 +9,13 @@
 #include "stride/parser/importnode.h"
 #include "stride/parser/platformnode.h"
 #include "stride/parser/rangenode.h"
+#include "stride/parser/streamnode.h"
 #include "stride/parser/valuenode.h"
 
 /*
 TEST(Basic, ModuleDomains) {
     ASTNode tree;
-    tree = ASTFunctions::parseFile(BUILDPATH
+    tree = AST::parseFile(BUILDPATH
                                    "/tests/data/12_modules_domains.stride");
     EXPECT_TRUE(tree != nullptr);
     CodeResolver resolver(tree, STRIDEROOT);
@@ -92,7 +92,7 @@ TEST(Basic, ModuleDomains) {
 
 void ParserTest::testModules() {
     ASTNode tree;
-    tree = ASTFunctions::parseFile(TESTS_SOURCE_DIR "basic/11_modules.stride");
+    tree = AST::parseFile(TESTS_SOURCE_DIR "basic/11_modules.stride");
     EXPECT_TRUE(tree != nullptr);
     CodeResolver resolver(tree, STRIDEROOT);
     resolver.process();
@@ -148,8 +148,7 @@ nullptr); EXPECT_TRUE(decl);
 
 TEST(Basic, BundleIndeces) {
   ASTNode tree;
-  tree = ASTFunctions::parseFile(TESTS_SOURCE_DIR
-                                 "basic/07_bundle_indeces.stride");
+  tree = AST::parseFile(TESTS_SOURCE_DIR "basic/07_bundle_indeces.stride");
   EXPECT_NE(tree, nullptr);
   std::vector<ASTNode> nodes = tree->getChildren();
   EXPECT_TRUE(nodes.size() == 23);
@@ -304,7 +303,7 @@ TEST(Basic, BundleIndeces) {
 
 TEST(Basic, Lists) {
   ASTNode tree;
-  tree = ASTFunctions::parseFile(TESTS_SOURCE_DIR "basic/09_lists.stride");
+  tree = AST::parseFile(TESTS_SOURCE_DIR "basic/09_lists.stride");
   EXPECT_TRUE(tree != nullptr);
   std::vector<ASTNode> nodes = tree->getChildren();
 
@@ -463,8 +462,7 @@ TEST(Basic, Lists) {
 
 TEST(Basic, NoneSwitch) {
   ASTNode tree;
-  tree = ASTFunctions::parseFile(TESTS_SOURCE_DIR
-                                 "basic/06_basic_noneswitch.stride");
+  tree = AST::parseFile(TESTS_SOURCE_DIR "basic/06_basic_noneswitch.stride");
   EXPECT_TRUE(tree != nullptr);
   std::vector<ASTNode> nodes = tree->getChildren();
   EXPECT_TRUE(nodes.size() == 2);
@@ -510,8 +508,7 @@ TEST(Basic, NoneSwitch) {
 
 TEST(Basic, Functions) {
   ASTNode tree;
-  tree = ASTFunctions::parseFile(TESTS_SOURCE_DIR
-                                 "basic/05_basic_functions.stride");
+  tree = AST::parseFile(TESTS_SOURCE_DIR "basic/05_basic_functions.stride");
   EXPECT_TRUE(tree != nullptr);
   std::vector<ASTNode> nodes = tree->getChildren();
 
@@ -584,8 +581,7 @@ TEST(Basic, Functions) {
 
 TEST(Basic, Stream) {
   ASTNode tree;
-  tree =
-      ASTFunctions::parseFile(TESTS_SOURCE_DIR "basic/04_basic_stream.stride");
+  tree = AST::parseFile(TESTS_SOURCE_DIR "basic/04_basic_stream.stride");
   EXPECT_TRUE(tree != nullptr);
   std::vector<ASTNode> nodes = tree->getChildren();
 
@@ -844,8 +840,7 @@ TEST(Basic, Stream) {
 
 TEST(Basic, Bundle) {
   ASTNode tree;
-  tree =
-      ASTFunctions::parseFile(TESTS_SOURCE_DIR "basic/03_basic_bundle.stride");
+  tree = AST::parseFile(TESTS_SOURCE_DIR "basic/03_basic_bundle.stride");
   EXPECT_TRUE(tree != nullptr);
   std::vector<ASTNode> nodes = tree->getChildren();
   EXPECT_TRUE(nodes.size() == 8);
@@ -1105,8 +1100,7 @@ TEST(Basic, Bundle) {
 
 TEST(Basic, Blocks) {
   ASTNode tree;
-  tree =
-      ASTFunctions::parseFile(TESTS_SOURCE_DIR "basic/02_basic_blocks.stride");
+  tree = AST::parseFile(TESTS_SOURCE_DIR "basic/02_basic_blocks.stride");
   EXPECT_TRUE(tree != nullptr);
   std::vector<ASTNode> nodes = tree->getChildren();
   EXPECT_TRUE(nodes.size() == 5);
@@ -1219,7 +1213,7 @@ TEST(Basic, Blocks) {
 
 TEST(Basic, Header) {
   ASTNode tree;
-  tree = ASTFunctions::parseFile(TESTS_SOURCE_DIR "basic/01_header.stride");
+  tree = AST::parseFile(TESTS_SOURCE_DIR "basic/01_header.stride");
 
   EXPECT_TRUE(tree != nullptr);
   std::vector<ASTNode> nodes = tree->getChildren();

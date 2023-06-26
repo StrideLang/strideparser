@@ -6,10 +6,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(PARSER_SRC
   src/ast.cpp
-  src/astfunctions.cpp
-  src/astquery.cpp
-  src/astvalidation.cpp
-  src/astruntime.cpp
   src/streamnode.cpp
   src/valuenode.cpp
   src/bundlenode.cpp
@@ -26,15 +22,10 @@ set(PARSER_SRC
   src/scopenode.cpp
   src/platformnode.cpp
   src/portpropertynode.cpp
-  src/stridelibrary.cpp
 )
 
 set(PARSER_HEADERS
   include/stride/parser/ast.h
-  include/stride/parser/astfunctions.h
-  include/stride/parser/astquery.h
-  include/stride/parser/astruntime.h
-  include/stride/parser/astvalidation.h
   include/stride/parser/streamnode.h
   include/stride/parser/valuenode.h
   include/stride/parser/bundlenode.h
@@ -52,7 +43,6 @@ set(PARSER_HEADERS
   include/stride/parser/keywordnode.h
   include/stride/parser/platformnode.h
   include/stride/parser/propertynode.h
-  include/stride/parser/stridelibrary.h
 )
 
 if (WIN32)
