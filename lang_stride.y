@@ -42,9 +42,10 @@ const char * currentFile;
 
 std::vector<LangError> getErrors();
 
-//#define DEBUG
+// Uncomment for verbose parsing
+//#define STRIDE_DEBUG_PARSER
 
-#ifdef DEBUG
+#ifdef STRIDE_DEBUG_PARSER
 #define COUT cout
 #define ENDL endl
 #else
@@ -548,23 +549,21 @@ functionDef:
 // =================================
 //  ANONYMOUS DECLARATION DEFINITION
 // =================================
- anonymousDeclDef:
-
+anonymousDeclDef:
         WORD blockType                    {
-        string word;
-        word.append($1); /* string constructor leaks otherwise! */
-        string uvar = "___Anonymous___" + std::to_string(anonymous_counter++);
-        
-        auto decl = new DeclarationNode(uvar, word, std::shared_ptr<AST>($2),
-                                        currentFile, yyloc.first_line);
-        decl->setCompilerProperty("anonymous", std::make_shared<ValueNode>(true, __FILE__, __LINE__));
-        $$ = decl;
-        COUT << "Block: " << $1 << ", Labelled: " << uvar << ENDL;
-        free($1);
-    }
+            string word;
+            word.append($1); /* string constructor leaks otherwise! */
+            string uvar = "___Anonymous___" + std::to_string(anonymous_counter++);
 
-
+            auto decl = new DeclarationNode(uvar, word, std::shared_ptr<AST>($2),
+                                            currentFile, yyloc.first_line);
+            decl->setCompilerProperty("anonymous", std::make_shared<ValueNode>(true, __FILE__, __LINE__));
+            $$ = decl;
+            COUT << "Block: " << $1 << ", Labelled: " << uvar << ENDL;
+            free($1);
+        }
     ;
+
 // =================================
 //  PROPERTIES DEFINITION
 // =================================
