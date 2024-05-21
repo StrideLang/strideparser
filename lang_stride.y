@@ -665,6 +665,17 @@ portPropertyDef:
         }
     ;
 
+portPropertyDef:
+        DOT WORD   {
+            string s; // empty block name for "this"
+            string p;
+            p.append($2); /* string constructor leaks otherwise! */
+            $$ = new PortPropertyNode(s, p, currentFile, yyloc.first_line);
+            COUT << "Port Property for THIS: " << $2 << ENDL;
+            free($2);
+        }
+    ;
+
 // =================================
 //  VALUE LIST DEFINITION
 // =================================
@@ -1251,10 +1262,14 @@ void yyerror(const char *s){
 
     cout << "Parser reported error: " << s << endl;
 
+    cout << "Unexpected token: ";
     if (!yytext) {
-        yytext = "UNKNOWN";
+        cout << "UNKNOWN";
+    } else {
+        cout << yytext;
     }
-    cout << "Unexpected token: " << yytext << " on line: " <<  yylineno <<  " in " << currentFile << endl;
+
+    cout << " on line: " <<  yylineno <<  " in " << currentFile << endl;
 
     LangError newError;
     newError.type = LangError::Syntax;

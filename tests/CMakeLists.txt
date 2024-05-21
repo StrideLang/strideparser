@@ -19,6 +19,10 @@ endif()
 
 set(TEST_SOURCES main.cpp
   basic.cpp
+  block.cpp
+  bundle.cpp
+  function.cpp
+  stream.cpp
 )
 
 

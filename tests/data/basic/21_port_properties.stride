@@ -1,0 +1,12 @@
+use DesktopAudio version 1.0
+
+anytype AnyType {
+    firstport: Block
+    secondport: [List, List]
+    thirdport: .firstport
+    lastport: Block.port
+}
+
+
+
+
