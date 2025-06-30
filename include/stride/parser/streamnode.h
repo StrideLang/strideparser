@@ -55,4 +55,15 @@ public:
 private:
 };
 
+class StreamNodeIterator {
+public:
+  StreamNodeIterator(std::shared_ptr<StreamNode> stream);
+
+  ASTNode next();
+
+private:
+  std::shared_ptr<StreamNode> mStream;
+  ASTNode mLastNode;
+};
+
 #endif // STREAMNODE_H

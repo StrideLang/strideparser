@@ -34,48 +34,66 @@
 
 #include <cassert>
 
-#include "stride/parser/streamnode.h"
 #include "stride/parser/listnode.h"
+#include "stride/parser/streamnode.h"
 
-StreamNode::StreamNode(ASTNode left, ASTNode right, const char *filename, int line) :
-    AST(AST::Stream, filename, line)
-{
-//    assert(left); assert(right);
-    assert(left->getNodeType() != AST:: Stream); // This is not allowed
-    addChild(left);
-    addChild(right);
+StreamNode::StreamNode(ASTNode left, ASTNode right, const char *filename,
+                       int line)
+    : AST(AST::Stream, filename, line) {
+  //    assert(left); assert(right);
+  assert(left->getNodeType() != AST::Stream); // This is not allowed
+  addChild(left);
+  addChild(right);
 }
 
-StreamNode::~StreamNode()
-{
+StreamNode::~StreamNode() {}
 
+void StreamNode::setLeft(ASTNode newLeft) {
+  //    ASTNode oldLeft = m_children.at(0);
+  //    oldLeft->deleteChildren();
+  //    oldLeft.reset();
+  m_children.at(0) = newLeft;
 }
 
-void StreamNode::setLeft(ASTNode newLeft)
-{
-//    ASTNode oldLeft = m_children.at(0);
-//    oldLeft->deleteChildren();
-//    oldLeft.reset();
-    m_children.at(0) = newLeft;
+void StreamNode::setRight(ASTNode newRight) {
+  //    ASTNode oldRight = m_children.at(1);
+  //    oldRight->deleteChildren();
+  //    oldRight.reset();
+  m_children.at(1) = newRight;
 }
 
-void StreamNode::setRight(ASTNode newRight)
-{
-//    ASTNode oldRight = m_children.at(1);
-//    oldRight->deleteChildren();
-//    oldRight.reset();
-    m_children.at(1) = newRight;
+ASTNode StreamNode::deepCopy() {
+  std::shared_ptr<StreamNode> newStream = std::make_shared<StreamNode>(
+      m_children.at(0)->deepCopy(), m_children.at(1)->deepCopy(),
+      m_filename.data(), m_line);
+
+  //    if (this->m_CompilerProperties) {
+  //        newStream->m_CompilerProperties =
+  //        std::static_pointer_cast<ListNode>(this->m_CompilerProperties->deepCopy());
+  //    } else {
+  //        newStream->m_CompilerProperties = nullptr;
+  //    }
+  return newStream;
 }
 
-ASTNode StreamNode::deepCopy()
-{
-    std::shared_ptr<StreamNode> newStream = std::make_shared<StreamNode>(m_children.at(0)->deepCopy(), m_children.at(1)->deepCopy(), m_filename.data(), m_line);
-
-//    if (this->m_CompilerProperties) {
-//        newStream->m_CompilerProperties = std::static_pointer_cast<ListNode>(this->m_CompilerProperties->deepCopy());
-//    } else {
-//        newStream->m_CompilerProperties = nullptr;
-//    }
-    return newStream;
+StreamNodeIterator::StreamNodeIterator(std::shared_ptr<StreamNode> stream) {
+  mStream = stream;
 }
 
+ASTNode StreamNodeIterator::next() {
+  ASTNode next;
+  if (mStream) {
+    next = mStream->getLeft();
+    if (mStream->getRight()->getNodeType() == AST::Stream) {
+      mStream = std::static_pointer_cast<StreamNode>(mStream->getRight());
+    } else {
+      mLastNode = mStream->getRight();
+      mStream = nullptr;
+    }
+  } else if (mLastNode) {
+    next = mLastNode;
+    mLastNode = nullptr;
+  }
+
+  return next;
+}
