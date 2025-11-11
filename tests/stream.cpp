@@ -528,3 +528,27 @@ TEST(Stream, Iterator) {
 
   // EXPECT_TRUE(l->getLine() == 20);
 }
+
+TEST(Stream, Builder) {
+  StreamNodeBuilder builder;
+  builder.addNode(std::make_shared<BlockNode>("Name1", __FILE__, __LINE__));
+  builder.addNode(std::make_shared<BlockNode>("Name2", __FILE__, __LINE__));
+  builder.addNode(std::make_shared<BlockNode>("Name3", __FILE__, __LINE__));
+  builder.addNode(std::make_shared<BlockNode>("Name4", __FILE__, __LINE__));
+  builder.addNode(std::make_shared<BlockNode>("Name5", __FILE__, __LINE__));
+  auto stream = builder.build();
+  EXPECT_TRUE(stream->getLeft());
+  EXPECT_EQ(std::static_pointer_cast<BlockNode>(stream->getLeft())->getName(),
+            "Name1");
+  stream = std::static_pointer_cast<StreamNode>(stream->getRight());
+  EXPECT_EQ(std::static_pointer_cast<BlockNode>(stream->getLeft())->getName(),
+            "Name2");
+  stream = std::static_pointer_cast<StreamNode>(stream->getRight());
+  EXPECT_EQ(std::static_pointer_cast<BlockNode>(stream->getLeft())->getName(),
+            "Name3");
+  stream = std::static_pointer_cast<StreamNode>(stream->getRight());
+  EXPECT_EQ(std::static_pointer_cast<BlockNode>(stream->getLeft())->getName(),
+            "Name4");
+  auto node = std::static_pointer_cast<BlockNode>(stream->getRight());
+  EXPECT_EQ(node->getName(), "Name5");
+}

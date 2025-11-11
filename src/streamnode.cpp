@@ -48,19 +48,9 @@ StreamNode::StreamNode(ASTNode left, ASTNode right, const char *filename,
 
 StreamNode::~StreamNode() {}
 
-void StreamNode::setLeft(ASTNode newLeft) {
-  //    ASTNode oldLeft = m_children.at(0);
-  //    oldLeft->deleteChildren();
-  //    oldLeft.reset();
-  m_children.at(0) = newLeft;
-}
+void StreamNode::setLeft(ASTNode newLeft) { m_children.at(0) = newLeft; }
 
-void StreamNode::setRight(ASTNode newRight) {
-  //    ASTNode oldRight = m_children.at(1);
-  //    oldRight->deleteChildren();
-  //    oldRight.reset();
-  m_children.at(1) = newRight;
-}
+void StreamNode::setRight(ASTNode newRight) { m_children.at(1) = newRight; }
 
 ASTNode StreamNode::deepCopy() {
   std::shared_ptr<StreamNode> newStream = std::make_shared<StreamNode>(
@@ -96,4 +86,27 @@ ASTNode StreamNodeIterator::next() {
   }
 
   return next;
+}
+
+void StreamNodeBuilder::addNode(ASTNode node) { mStreamNodes.push_back(node); }
+
+std::shared_ptr<StreamNode> StreamNodeBuilder::build() {
+  std::shared_ptr<StreamNode> stream;
+  std::shared_ptr<StreamNode> streamHead;
+  for (int i = 0; i < mStreamNodes.size() - 1; i++) {
+
+    auto newStream = std::make_shared<StreamNode>(mStreamNodes[i], nullptr,
+                                                  __FILE__, __LINE__);
+    if (streamHead) {
+      stream->setRight(newStream);
+    } else {
+      streamHead = newStream;
+    }
+    stream = newStream;
+  }
+  if (stream) {
+    stream->setRight(mStreamNodes.back());
+  }
+  mStreamNodes.clear();
+  return streamHead;
 }

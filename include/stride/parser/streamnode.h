@@ -66,4 +66,15 @@ private:
   ASTNode mLastNode;
 };
 
+class StreamNodeBuilder {
+public:
+  void addNode(ASTNode node);
+
+  std::shared_ptr<StreamNode> build();
+
+private:
+  std::vector<ASTNode> mStreamNodes;
+  ASTNode mLastNode;
+};
+
 #endif // STREAMNODE_H
