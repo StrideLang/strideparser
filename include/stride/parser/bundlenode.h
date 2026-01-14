@@ -40,27 +40,31 @@
 #include "ast.h"
 #include "listnode.h"
 
-class BundleNode : public AST
-{
+namespace strd {
+class BundleNode : public AST {
 public:
-    BundleNode(std::string name, std::shared_ptr<ListNode> indexList,
-               const char *filename, int line,
-               std::vector<std::string> scope = std::vector<std::string>());
-    BundleNode(std::string name, ASTNode scope, std::shared_ptr<ListNode> indexList, const char *filename, int line);
-    virtual ~BundleNode();
+  BundleNode(std::string name, std::shared_ptr<ListNode> indexList,
+             const char *filename, int line,
+             std::vector<std::string> scope = std::vector<std::string>());
+  BundleNode(std::string name, ASTNode scope,
+             std::shared_ptr<ListNode> indexList, const char *filename,
+             int line);
+  virtual ~BundleNode();
 
-    std::string getName() const;
-    std::shared_ptr<ListNode> index() const;
+  std::string getName() const;
+  std::shared_ptr<ListNode> index() const;
 
-    void setIndex(std::shared_ptr<ListNode> index);
-    std::vector<size_t> getIndeces();
+  void setIndex(std::shared_ptr<ListNode> index);
+  std::vector<size_t> getIndeces();
 
-    virtual void resolveScope(ASTNode scope) override;
+  virtual void resolveScope(ASTNode scope) override;
 
-    virtual ASTNode deepCopy() override;
+  virtual ASTNode deepCopy() override;
 
 private:
-    std::string m_name;
+  std::string m_name;
 };
+
+} // namespace strd
 
 #endif // BUNDLENODE_H

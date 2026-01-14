@@ -38,6 +38,7 @@
 #include <string>
 #include <vector>
 
+namespace strd {
 class LangError {
 public:
   LangError();
@@ -69,5 +70,6 @@ public:
   int lineNumber;
   std::string getErrorText();
 };
+} // namespace strd
 
 #endif // LANGERROR_H

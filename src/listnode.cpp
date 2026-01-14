@@ -35,89 +35,78 @@
 #include "stride/parser/listnode.h"
 
 using namespace std;
+using namespace strd;
 
-ListNode::ListNode(const char *filename, int line) :
-    AST(AST::List, filename, line)
-{
+ListNode::ListNode(const char *filename, int line)
+    : AST(AST::List, filename, line) {}
+
+ListNode::ListNode(ASTNode newMember, const char *filename, int line)
+    : AST(AST::List, filename, line) {
+  if (newMember) {
+    addChild(newMember);
+  }
 }
 
-ListNode::ListNode(ASTNode newMember, const char *filename, int line) :
-    AST(AST::List, filename, line)
-{
-    if (newMember) {
-        addChild(newMember);
+ListNode::~ListNode() {}
+
+void ListNode::stealMembers(ListNode *list) {
+  for (const auto &child : list->getChildren()) {
+    this->addChild(child);
+  }
+  //    list->deleteChildren();
+}
+
+AST::Token ListNode::getListType() {
+  vector<ASTNode> children = getChildren();
+  if (children.size() == 0) {
+    return AST::Invalid;
+  }
+  Token type = children.at(0)->getNodeType();
+
+  for (unsigned int i = 1; i < children.size(); i++) {
+    Token nextType = children.at(i)->getNodeType();
+    if (type == AST::Int && nextType == AST::Real) {
+      type = AST::Real;
+    } else if (type == AST::Real && nextType == AST::Int) {
+      // Consider int as real
+    } else if (nextType != type) {
+      return AST::Invalid;
     }
+  }
+  return type;
 }
 
-ListNode::~ListNode()
-{
+int ListNode::size() { return m_children.size(); }
 
-}
-
-void ListNode::stealMembers(ListNode *list)
-{
-    for(auto child: list->getChildren()) {
-        this->addChild(child);
+void ListNode::replaceMember(ASTNode replacement, ASTNode member) {
+  //    vector<AST *> children = getChildren();
+  for (unsigned int i = 0; i < m_children.size(); i++) {
+    if (m_children.at(i) == member) {
+      m_children.at(i) = replacement;
+      //            member->deleteChildren();
+      //            member.reset();
+      return;
     }
-//    list->deleteChildren();
+  }
 }
 
-AST::Token ListNode::getListType()
-{
-    vector<ASTNode> children = getChildren();
-    if (children.size() == 0) {
-        return AST::Invalid;
+ASTNode ListNode::deepCopy() {
+  vector<ASTNode> children = getChildren();
+  std::shared_ptr<ListNode> newList;
+  if (children.size() > 0) {
+    newList = std::make_shared<ListNode>(children.at(0)->deepCopy(),
+                                         m_filename.data(), m_line);
+    for (unsigned int i = 1; i < children.size(); i++) {
+      newList->addChild(children.at(i)->deepCopy());
     }
-    Token type = children.at(0)->getNodeType();
-
-    for(unsigned int i = 1; i < children.size(); i++) {
-        Token nextType = children.at(i)->getNodeType();
-        if (type == AST::Int && nextType == AST::Real) {
-            type = AST::Real;
-        } else if (type == AST::Real && nextType == AST::Int) {
-            // Consider int as real
-        } else if(nextType != type) {
-            return AST::Invalid;
-        }
-    }
-    return type;
+  } else {
+    newList = std::make_shared<ListNode>(nullptr, m_filename.data(), m_line);
+  }
+  //    if (this->m_CompilerProperties) {
+  //        newList->m_CompilerProperties =
+  //        std::static_pointer_cast<ListNode>(this->m_CompilerProperties->deepCopy());
+  //    } else {
+  //        newList->m_CompilerProperties = nullptr;
+  //    }
+  return newList;
 }
-
-int ListNode::size()
-{
-    return m_children.size();
-}
-
-void ListNode::replaceMember(ASTNode replacement, ASTNode member)
-{
-//    vector<AST *> children = getChildren();
-    for(unsigned int i = 0; i < m_children.size(); i++) {
-        if (m_children.at(i) == member) {
-            m_children.at(i) = replacement;
-//            member->deleteChildren();
-//            member.reset();
-            return;
-        }
-    }
-}
-
-ASTNode ListNode::deepCopy()
-{
-    vector<ASTNode> children = getChildren();
-    std::shared_ptr<ListNode> newList;
-    if (children.size() > 0) {
-        newList = std::make_shared<ListNode>(children.at(0)->deepCopy(), m_filename.data(), m_line);
-        for(unsigned int i = 1; i < children.size(); i++) {
-            newList->addChild(children.at(i)->deepCopy());
-        }
-    } else {
-        newList = std::make_shared<ListNode>(nullptr, m_filename.data(), m_line);
-    }
-//    if (this->m_CompilerProperties) {
-//        newList->m_CompilerProperties = std::static_pointer_cast<ListNode>(this->m_CompilerProperties->deepCopy());
-//    } else {
-//        newList->m_CompilerProperties = nullptr;
-//    }
-    return newList;
-}
-

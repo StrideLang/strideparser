@@ -37,17 +37,18 @@
 
 #include "ast.h"
 
-class KeywordNode : public AST
-{
+namespace strd {
+class KeywordNode : public AST {
 public:
-    KeywordNode(std::string keyword, const char *filename, int line);
+  KeywordNode(std::string keyword, const char *filename, int line);
 
-    std::string keyword() {return m_kw;}
+  std::string keyword() { return m_kw; }
 
-//    virtual AST *deepCopy();
+  //    virtual AST *deepCopy();
 
 private:
-    std::string m_kw;
+  std::string m_kw;
 };
+} // namespace strd
 
 #endif // KEYWORDNODE_H

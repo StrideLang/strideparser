@@ -35,11 +35,10 @@
 #ifndef RANGENODE_H
 #define RANGENODE_H
 
-
 #include "ast.h"
 
-class RangeNode : public AST
-{
+namespace strd {
+class RangeNode : public AST {
 public:
   RangeNode(ASTNode start, ASTNode end, const char *filename, int line);
 
@@ -48,7 +47,7 @@ public:
   virtual ASTNode deepCopy() override;
 
 private:
-
 };
+} // namespace strd
 
 #endif // RANGENODE_H

@@ -35,17 +35,25 @@
 #include <cassert>
 
 #include "stride/parser/importnode.h"
-#include "stride/parser/listnode.h"
 #include "stride/parser/scopenode.h"
 
 using namespace std;
+using namespace strd;
 
 ImportNode::ImportNode(string name, ASTNode scope, const char *filename,
                        int line, string alias)
     : AST(AST::Import, filename, line) {
   m_importName = name;
   m_importAlias = alias;
-  resolveScope(scope);
+  // resolveScope(scope);
+  if (scope) {
+    for (unsigned int i = 0; i < scope->getChildren().size(); i++) {
+      assert(scope->getChildren().at(i)->getNodeType() == AST::Scope);
+      m_scope.push_back(
+          (static_cast<ScopeNode *>(scope->getChildren().at(i).get()))
+              ->getName());
+    }
+  }
 }
 
 ImportNode::ImportNode(string name, const char *filename, int line,

@@ -12,6 +12,8 @@
 #include "stride/parser/streamnode.h"
 #include "stride/parser/valuenode.h"
 
+using namespace strd;
+
 /*
 TEST(Basic, ModuleDomains) {
     ASTNode tree;

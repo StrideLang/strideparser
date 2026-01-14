@@ -39,6 +39,7 @@
 
 #include "ast.h"
 
+namespace strd {
 class ImportNode : public AST {
 public:
   ImportNode(std::string name, ASTNode scope, const char *filename, int line,
@@ -60,5 +61,6 @@ private:
   std::string m_importName;
   std::string m_importAlias;
 };
+} // namespace strd
 
 #endif // IMPORTNODE_H

@@ -35,14 +35,11 @@
 #include "stride/parser/scopenode.h"
 
 using namespace std;
+using namespace strd;
 
-ScopeNode::ScopeNode(string name, const char *filename, int line) :
-    AST(AST::Scope, filename, line)
-{
-    m_name = name;
+ScopeNode::ScopeNode(string name, const char *filename, int line)
+    : AST(AST::Scope, filename, line) {
+  m_name = name;
 }
 
-ScopeNode::~ScopeNode()
-{
-
-}
+ScopeNode::~ScopeNode() {}

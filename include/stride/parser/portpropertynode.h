@@ -39,6 +39,8 @@
 
 #include "ast.h"
 
+namespace strd {
+
 class PortPropertyNode : public AST
 {
 public:
@@ -54,6 +56,6 @@ private:
     std::string m_name;
     std::string m_port;
 };
-
+} //namespace strd
 
 #endif // PORTPROPERTYNODE_H

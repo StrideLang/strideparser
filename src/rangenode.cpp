@@ -35,35 +35,28 @@
 #include <cassert>
 
 #include "stride/parser/rangenode.h"
-#include "stride/parser/listnode.h"
 
-RangeNode::RangeNode(ASTNode start, ASTNode end, const char *filename, int line):
-    AST(AST::Range, filename, line)
-{
-    addChild(start);
-    addChild(end);
+using namespace strd;
+
+RangeNode::RangeNode(ASTNode start, ASTNode end, const char *filename, int line)
+    : AST(AST::Range, filename, line) {
+  addChild(start);
+  addChild(end);
 }
 
-ASTNode RangeNode::startIndex() const
-{
-    return m_children.at(0);
+ASTNode RangeNode::startIndex() const { return m_children.at(0); }
+
+ASTNode RangeNode::endIndex() const { return m_children.at(1); }
+
+ASTNode RangeNode::deepCopy() {
+  auto newRangeNode = std::make_shared<RangeNode>(startIndex(), endIndex(),
+                                                  m_filename.data(), m_line);
+
+  //    if (this->m_CompilerProperties) {
+  //        newRangeNode->m_CompilerProperties =
+  //        std::static_pointer_cast<ListNode>(this->m_CompilerProperties->deepCopy());
+  //    } else {
+  //        newRangeNode->m_CompilerProperties = nullptr;
+  //    }
+  return newRangeNode;
 }
-
-ASTNode RangeNode::endIndex() const
-{
-    return m_children.at(1);
-}
-
-ASTNode RangeNode::deepCopy()
-{
-    auto newRangeNode = std::make_shared<RangeNode>(startIndex(), endIndex(),
-                                         m_filename.data(), m_line);
-
-//    if (this->m_CompilerProperties) {
-//        newRangeNode->m_CompilerProperties = std::static_pointer_cast<ListNode>(this->m_CompilerProperties->deepCopy());
-//    } else {
-//        newRangeNode->m_CompilerProperties = nullptr;
-//    }
-    return newRangeNode;
-}
-

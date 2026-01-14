@@ -37,44 +37,47 @@
 
 #include "ast.h"
 
-class ExpressionNode : public AST
-{
+namespace strd {
+class ExpressionNode : public AST {
 public:
-    typedef enum {
-        Multiply,
-        Divide,
-        Add,
-        Subtract,
-        And,
-        Or,
-        UnaryMinus,
-        LogicalNot,
-        BitAnd,
-        BitOr,
-        BitNot
-    } ExpressionType;
+  typedef enum {
+    Multiply,
+    Divide,
+    Add,
+    Subtract,
+    And,
+    Or,
+    UnaryMinus,
+    LogicalNot,
+    BitAnd,
+    BitOr,
+    BitNot
+  } ExpressionType;
 
-    ExpressionNode(ExpressionType type, ASTNode left, ASTNode right, const char *filename, int line);
-    ExpressionNode(ExpressionType type, ASTNode value, const char *filename, int line);
-    ~ExpressionNode();
+  ExpressionNode(ExpressionType type, ASTNode left, ASTNode right,
+                 const char *filename, int line);
+  ExpressionNode(ExpressionType type, ASTNode value, const char *filename,
+                 int line);
+  ~ExpressionNode();
 
-    bool isUnary() const;
+  bool isUnary() const;
 
-    ASTNode getLeft() const;
-    ASTNode getRight() const;
+  ASTNode getLeft() const;
+  ASTNode getRight() const;
 
-    void replaceLeft(ASTNode newLeft);
-    void replaceRight(ASTNode newRight);
-    void replaceValue(ASTNode newValue);
+  void replaceLeft(ASTNode newLeft);
+  void replaceRight(ASTNode newRight);
+  void replaceValue(ASTNode newValue);
 
-    ASTNode getValue() const;
+  ASTNode getValue() const;
 
-    ExpressionType getExpressionType() const;
-    std::string getExpressionTypeString() const;
-    virtual ASTNode deepCopy() override;
+  ExpressionType getExpressionType() const;
+  std::string getExpressionTypeString() const;
+  virtual ASTNode deepCopy() override;
 
 private:
-    ExpressionType m_type;
+  ExpressionType m_type;
 };
+} // namespace strd
 
 #endif // EXPRESSIONNODE_H

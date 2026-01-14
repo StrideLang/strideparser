@@ -32,12 +32,11 @@
     Authors: Andres Cabrera and Joseph Tilbian
 */
 
-#include <cstdlib>
-#include <iostream>
-#include <sstream>
 #include <vector>
 
 #include "stride/parser/platformnode.h"
+
+using namespace strd;
 
 SystemNode::SystemNode(std::string platformName, int majorVersion,
                        int minorVersion, const char *filename, int line,

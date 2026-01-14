@@ -36,6 +36,8 @@
 
 #include <sstream>
 
+using namespace strd;
+
 LangError::LangError() {}
 
 std::string LangError::getErrorText() {

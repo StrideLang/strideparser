@@ -35,40 +35,36 @@
 #include <cassert>
 
 #include "stride/parser/propertynode.h"
-#include "stride/parser/listnode.h"
 
 using namespace std;
+using namespace strd;
 
-PropertyNode::PropertyNode(string name, ASTNode value, const char *filename, int line):
-    AST(AST::Property, filename, line)
-{
-    assert(value != nullptr);
-    m_name = name;
-    addChild(value);
+PropertyNode::PropertyNode(string name, ASTNode value, const char *filename,
+                           int line)
+    : AST(AST::Property, filename, line) {
+  assert(value != nullptr);
+  m_name = name;
+  addChild(value);
 }
 
-PropertyNode::~PropertyNode()
-{
+PropertyNode::~PropertyNode() {}
 
+void PropertyNode::replaceValue(ASTNode newValue) {
+  if (m_children.size() > 0) {
+    m_children.at(0) = newValue;
+  } else {
+    addChild(newValue);
+  }
 }
 
-void PropertyNode::replaceValue(ASTNode newValue)
-{
-    if (m_children.size() > 0) {
-        m_children.at(0) = newValue;
-    } else {
-        addChild(newValue);
-    }
+ASTNode PropertyNode::deepCopy() {
+  auto newNode = std::make_shared<PropertyNode>(
+      m_name, m_children.at(0)->deepCopy(), m_filename.data(), m_line);
+  //    if (this->m_CompilerProperties) {
+  //        newNode->m_CompilerProperties =
+  //        std::static_pointer_cast<ListNode>(this->m_CompilerProperties->deepCopy());
+  //    } else {
+  //        newNode->m_CompilerProperties = nullptr;
+  //    }
+  return newNode;
 }
-
-ASTNode PropertyNode::deepCopy()
-{
-    auto newNode = std::make_shared<PropertyNode>(m_name, m_children.at(0)->deepCopy(), m_filename.data(), m_line);
-//    if (this->m_CompilerProperties) {
-//        newNode->m_CompilerProperties = std::static_pointer_cast<ListNode>(this->m_CompilerProperties->deepCopy());
-//    } else {
-//        newNode->m_CompilerProperties = nullptr;
-//    }
-    return newNode;
-}
-

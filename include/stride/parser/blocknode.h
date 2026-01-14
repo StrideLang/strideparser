@@ -39,21 +39,24 @@
 
 #include "ast.h"
 
-class BlockNode : public AST
-{
+namespace strd {
+class BlockNode : public AST {
 public:
-    BlockNode(std::string name, const char *filename, int line, std::vector<std::string> scope = std::vector<std::string>());
-    BlockNode(std::string name, ASTNode scope, const char *filename, int line);
+  BlockNode(std::string name, const char *filename, int line,
+            std::vector<std::string> scope = std::vector<std::string>());
+  BlockNode(std::string name, ASTNode scope, const char *filename, int line);
 
-    ~BlockNode() override;
+  ~BlockNode() override;
 
-    std::string getName() const {return m_name;}
+  std::string getName() const { return m_name; }
 
-    virtual ASTNode deepCopy() override;
+  virtual ASTNode deepCopy() override;
 
 private:
-    void resolveScope(ASTNode scope) override;
-    std::string m_name;
+  void resolveScope(ASTNode scope) override;
+  std::string m_name;
 };
+
+} // namespace strd
 
 #endif // BLOCKNODE_H

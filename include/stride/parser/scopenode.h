@@ -39,16 +39,17 @@
 
 #include "ast.h"
 
-class ScopeNode : public AST
-{
+namespace strd {
+class ScopeNode : public AST {
 public:
-    ScopeNode(std::string name, const char *filename, int line);
-    ~ScopeNode();
+  ScopeNode(std::string name, const char *filename, int line);
+  ~ScopeNode();
 
-    std::string getName() const {return m_name;}
+  std::string getName() const { return m_name; }
 
 private:
-    std::string m_name;
+  std::string m_name;
 };
+} // namespace strd
 
 #endif // SCOPENODE_H

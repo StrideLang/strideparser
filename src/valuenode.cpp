@@ -40,6 +40,7 @@
 #include "stride/parser/valuenode.h"
 
 using namespace std;
+using namespace strd;
 
 ValueNode::ValueNode(const char *filename, int line)
     : AST(AST::None, filename, line) {

@@ -39,6 +39,7 @@
 
 #include "ast.h"
 
+namespace strd {
 class SystemNode : public AST {
 public:
   SystemNode(std::string platformName, int majorVersion, int minorVersion,
@@ -64,5 +65,6 @@ private:
   std::string m_systemName;
   std::vector<std::string> m_targetPlatforms;
 };
+} // namespace strd
 
 #endif // PLATFORMNODE_H

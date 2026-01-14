@@ -8,6 +8,7 @@
 #include "stride/parser/ast.h"
 
 using namespace std;
+using namespace strd;
 
 #ifdef __GNUC__
     extern "C" int yylex();
@@ -86,20 +87,20 @@ NullStream nstream;
     int64_t     ival;
     double  fval;
     char    *sval;
-    AST     *ast;
-    SystemNode *systemNode;
-    DeclarationNode *declarationNode;
-    StreamNode *streamNode;
-    PropertyNode *propertyNode;
-    BundleNode *bundleNode;
-    FunctionNode *functionNode;
-    ExpressionNode *expressionNode;
-    ListNode *listNode;
-    ImportNode *importNode;
-    RangeNode *rangeNode;
-    KeywordNode *keywordNode;
-    ScopeNode *scopeNode;
-    PortPropertyNode *portPropertyNode;
+    strd::AST     *ast;
+    strd::SystemNode *systemNode;
+    strd::DeclarationNode *declarationNode;
+    strd::StreamNode *streamNode;
+    strd::PropertyNode *propertyNode;
+    strd::BundleNode *bundleNode;
+    strd::FunctionNode *functionNode;
+    strd::ExpressionNode *expressionNode;
+    strd::ListNode *listNode;
+    strd::ImportNode *importNode;
+    strd::RangeNode *rangeNode;
+    strd::KeywordNode *keywordNode;
+    strd::ScopeNode *scopeNode;
+    strd::PortPropertyNode *portPropertyNode;
 }
 
 /* declare types for nodes */

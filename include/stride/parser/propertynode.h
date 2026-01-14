@@ -39,20 +39,21 @@
 
 #include "ast.h"
 
-class PropertyNode : public AST
-{
+namespace strd {
+class PropertyNode : public AST {
 public:
-    PropertyNode(std::string name, ASTNode value, const char *filename, int line);
-    ~PropertyNode();
+  PropertyNode(std::string name, ASTNode value, const char *filename, int line);
+  ~PropertyNode();
 
-    std::string getName() const { return m_name; }
-    ASTNode getValue() const { return m_children[0]; }
-    void replaceValue(ASTNode newValue);
+  std::string getName() const { return m_name; }
+  ASTNode getValue() const { return m_children[0]; }
+  void replaceValue(ASTNode newValue);
 
-    virtual ASTNode deepCopy() override;
+  virtual ASTNode deepCopy() override;
 
 private:
-    std::string m_name;
+  std::string m_name;
 };
+} // namespace strd
 
 #endif // PROPERTYNODE_H

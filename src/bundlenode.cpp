@@ -41,6 +41,7 @@
 #include "stride/parser/valuenode.h"
 
 using namespace std;
+using namespace strd;
 
 BundleNode::BundleNode(string name, std::shared_ptr<ListNode> indexList,
                        const char *filename, int line, vector<string> scope)

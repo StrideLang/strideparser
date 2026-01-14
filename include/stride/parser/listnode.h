@@ -37,21 +37,22 @@
 
 #include "ast.h"
 
-class ListNode : public AST
-{
+namespace strd {
+class ListNode : public AST {
 public:
-    ListNode(const char *filename, int line);
-    ListNode(ASTNode newMember, const char *filename, int line);
-    ~ListNode() override;
+  ListNode(const char *filename, int line);
+  ListNode(ASTNode newMember, const char *filename, int line);
+  ~ListNode() override;
 
-    void stealMembers(ListNode *list);
-    Token getListType();
+  void stealMembers(ListNode *list);
+  Token getListType();
 
-    int size();
+  int size();
 
-    void replaceMember(ASTNode replacement, ASTNode member);
+  void replaceMember(ASTNode replacement, ASTNode member);
 
-    virtual ASTNode deepCopy() override;
+  virtual ASTNode deepCopy() override;
 };
+} // namespace strd
 
 #endif // LISTNODE_H

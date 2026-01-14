@@ -40,6 +40,7 @@
 #include "stride/parser/valuenode.h"
 
 using namespace std;
+using namespace strd;
 
 DeclarationNode::DeclarationNode(string name, string objectType,
                                  ASTNode propertiesList, const char *filename,

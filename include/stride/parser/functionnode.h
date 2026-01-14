@@ -40,41 +40,43 @@
 #include "ast.h"
 #include "propertynode.h"
 
-class FunctionNode : public AST
-{
+namespace strd {
+class FunctionNode : public AST {
 public:
+  FunctionNode(std::string name, ASTNode propertiesList, const char *filename,
+               int line);
+  FunctionNode(std::string name, ASTNode scope, ASTNode propertiesList,
+               const char *filename, int line);
+  ~FunctionNode();
 
-    FunctionNode(std::string name, ASTNode propertiesList, const char *filename, int line);
-    FunctionNode(std::string name, ASTNode scope, ASTNode propertiesList, const char *filename, int line);
-    ~FunctionNode();
+  virtual void addChild(ASTNode t) override;
+  virtual void setChildren(std::vector<ASTNode> &newChildren) override;
+  //    virtual void deleteChildren() override;
 
-    virtual void addChild(ASTNode t) override;
-    virtual void setChildren(std::vector<ASTNode > &newChildren) override;
-//    virtual void deleteChildren() override;
+  std::string getName() const { return m_name; }
+  std::vector<std::shared_ptr<PropertyNode>> getProperties() const;
 
-    std::string getName() const { return m_name; }
-    std::vector<std::shared_ptr<PropertyNode>> getProperties() const;
+  void addProperty(std::shared_ptr<PropertyNode> newProperty);
+  ASTNode getPropertyValue(std::string propertyName);
+  void setPropertyValue(std::string propertyName, ASTNode value);
+  bool replacePropertyValue(std::string propertyName, ASTNode newValue);
 
-    void addProperty(std::shared_ptr<PropertyNode> newProperty);
-    ASTNode getPropertyValue(std::string propertyName);
-    void setPropertyValue(std::string propertyName, ASTNode value);
-    bool replacePropertyValue(std::string propertyName, ASTNode newValue);
+  ASTNode getDomain();
+  void setDomainString(std::string domain);
 
-    ASTNode getDomain();
-    void setDomainString(std::string domain);
+  virtual void resolveScope(ASTNode scope) override;
 
-    virtual void resolveScope(ASTNode scope) override;
+  virtual ASTNode deepCopy() override;
 
-    virtual ASTNode deepCopy() override;
-
-    // FIXME We should provide input and output rates for functions.
-    double getRate() const;
-    void setRate(double rate);
+  // FIXME We should provide input and output rates for functions.
+  double getRate() const;
+  void setRate(double rate);
 
 private:
-    double m_rate;
-    std::string m_name;
-    std::vector<std::shared_ptr<PropertyNode>> m_properties;
+  double m_rate;
+  std::string m_name;
+  std::vector<std::shared_ptr<PropertyNode>> m_properties;
 };
+} // namespace strd
 
 #endif // FUNCTIONNODE_H

@@ -12,6 +12,8 @@
 #include "stride/parser/streamnode.h"
 #include "stride/parser/valuenode.h"
 
+using namespace strd;
+
 TEST(Stream, Basic) {
   ASTNode tree;
   tree = AST::parseFile(TESTS_SOURCE_DIR "basic/04_basic_stream.stride");

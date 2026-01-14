@@ -33,9 +33,9 @@
 */
 
 #include "stride/parser/portpropertynode.h"
-#include "stride/parser/listnode.h"
 
 using namespace std;
+using namespace strd;
 
 PortPropertyNode::PortPropertyNode(string name, string port,
                                    const char *filename, int line)

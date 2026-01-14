@@ -35,50 +35,49 @@
 #include <cassert>
 
 #include "stride/parser/blocknode.h"
-#include "stride/parser/scopenode.h"
 #include "stride/parser/listnode.h"
+#include "stride/parser/scopenode.h"
 
 using namespace std;
+using namespace strd;
 
-BlockNode::BlockNode(string name, const char *filename, int line, vector<string> scope) :
-    AST(AST::Block, filename, line, scope)
-{
-    m_name = name;
+BlockNode::BlockNode(string name, const char *filename, int line,
+                     vector<string> scope)
+    : AST(AST::Block, filename, line, scope) {
+  m_name = name;
 
-    m_CompilerProperties = make_shared<ListNode>(__FILE__, __LINE__);
+  m_CompilerProperties = make_shared<ListNode>(__FILE__, __LINE__);
 }
 
-BlockNode::BlockNode(string name, ASTNode scope, const char *filename, int line) :
-    AST(AST::Block, filename, line)
-{
-    m_name = name;
-    resolveScope(scope);
+BlockNode::BlockNode(string name, ASTNode scope, const char *filename, int line)
+    : AST(AST::Block, filename, line) {
+  m_name = name;
+  resolveScope(scope);
 
-    m_CompilerProperties = make_shared<ListNode>(__FILE__, __LINE__);
+  m_CompilerProperties = make_shared<ListNode>(__FILE__, __LINE__);
 }
 
-BlockNode::~BlockNode()
-{
+BlockNode::~BlockNode() {}
 
-}
-
-void BlockNode::resolveScope(ASTNode scope)
-{
-    if (scope) {
-        for (unsigned int i = 0; i < scope->getChildren().size(); i++) {
-            assert(scope->getChildren().at(i)->getNodeType() == AST::Scope);
-            m_scope.push_back((static_cast<ScopeNode *>(scope->getChildren().at(i).get()))->getName());
-        }
+void BlockNode::resolveScope(ASTNode scope) {
+  if (scope) {
+    for (unsigned int i = 0; i < scope->getChildren().size(); i++) {
+      assert(scope->getChildren().at(i)->getNodeType() == AST::Scope);
+      m_scope.push_back(
+          (static_cast<ScopeNode *>(scope->getChildren().at(i).get()))
+              ->getName());
     }
+  }
 }
 
-ASTNode BlockNode::deepCopy()
-{
-    std::shared_ptr<BlockNode> newNode = std::make_shared<BlockNode>(m_name, m_filename.data(), m_line, m_scope);
-//    if (this->m_CompilerProperties) {
-//        newNode->m_CompilerProperties = std::static_pointer_cast<ListNode>(this->m_CompilerProperties->deepCopy());
-//    } else {
-//        newNode->m_CompilerProperties = nullptr;
-//    }
-    return newNode;
+ASTNode BlockNode::deepCopy() {
+  std::shared_ptr<BlockNode> newNode =
+      std::make_shared<BlockNode>(m_name, m_filename.data(), m_line, m_scope);
+  //    if (this->m_CompilerProperties) {
+  //        newNode->m_CompilerProperties =
+  //        std::static_pointer_cast<ListNode>(this->m_CompilerProperties->deepCopy());
+  //    } else {
+  //        newNode->m_CompilerProperties = nullptr;
+  //    }
+  return newNode;
 }

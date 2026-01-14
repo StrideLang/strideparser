@@ -39,6 +39,7 @@
 
 #include "langerror.h"
 
+namespace strd {
 class AST;
 class ListNode;
 class PropertyNode;
@@ -130,5 +131,6 @@ protected:
   std::vector<std::string> m_scope;
   std::shared_ptr<ListNode> m_CompilerProperties;
 };
+} // namespace strd
 
 #endif // AST_H

@@ -39,6 +39,7 @@
 
 #include "ast.h"
 
+namespace strd {
 class ValueNode : public AST {
   friend class ASTRuntime; // runtime can set the internal value
 public:
@@ -76,5 +77,6 @@ private:
 
   ASTNode m_domain{nullptr};
 };
+} // namespace strd
 
 #endif // VALUENODE_H

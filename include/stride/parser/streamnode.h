@@ -37,6 +37,7 @@
 
 #include "ast.h"
 
+namespace strd {
 class StreamNode : public AST {
 public:
   StreamNode(ASTNode left, ASTNode right, const char *filename, int line);
@@ -76,5 +77,6 @@ private:
   std::vector<ASTNode> mStreamNodes;
   ASTNode mLastNode;
 };
+} // namespace strd
 
 #endif // STREAMNODE_H

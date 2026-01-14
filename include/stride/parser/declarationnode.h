@@ -41,6 +41,7 @@
 #include "bundlenode.h"
 #include "propertynode.h"
 
+namespace strd {
 class DeclarationNode : public AST {
 public:
   DeclarationNode(std::string name, std::string objectType,
@@ -71,5 +72,7 @@ private:
   std::string m_objectType;
   std::vector<std::shared_ptr<PropertyNode>> m_properties;
 };
+
+} // namespace strd
 
 #endif // DECLARATIONNODE_H

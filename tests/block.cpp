@@ -13,6 +13,8 @@
 #include "stride/parser/streamnode.h"
 #include "stride/parser/valuenode.h"
 
+using namespace strd;
+
 TEST(BlockDeclaration, Declaration) {
   ASTNode tree;
   tree = AST::parseFile(TESTS_SOURCE_DIR "basic/02_basic_blocks.stride");
