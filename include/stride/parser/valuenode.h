@@ -36,6 +36,7 @@
 #define VALUENODE_H
 
 #include <string>
+#include <variant>
 
 #include "ast.h"
 
@@ -74,10 +75,9 @@ public:
   ASTNode getDomain();
 
 private:
-  int64_t m_intValue;
-  double m_floatValue;
-  std::string m_stringValue;
-  bool m_switch;
+  void setBoolValue(bool value);
+  using ValueVariant = std::variant<int64_t, double, std::string, bool>;
+  ValueVariant m_value;
 
   ASTNode m_domain{nullptr};
 };

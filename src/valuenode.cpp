@@ -49,37 +49,37 @@ ValueNode::ValueNode(const char *filename, int line)
 
 ValueNode::ValueNode(int64_t value, const char *filename, int line)
     : AST(AST::Int, filename, line) {
-  m_intValue = value;
+  m_value = value;
   m_CompilerProperties = make_shared<ListNode>(__FILE__, __LINE__);
 }
 
 ValueNode::ValueNode(float value, const char *filename, int line)
     : AST(AST::Real, filename, line) {
-  m_floatValue = double(value);
+  m_value = double(value);
   m_CompilerProperties = make_shared<ListNode>(__FILE__, __LINE__);
 }
 
 ValueNode::ValueNode(double value, const char *filename, int line)
     : AST(AST::Real, filename, line) {
-  m_floatValue = value;
+  m_value = value;
   m_CompilerProperties = make_shared<ListNode>(__FILE__, __LINE__);
 }
 
 ValueNode::ValueNode(const char *value, const char *filename, int line)
     : AST(AST::String, filename, line) {
-  m_stringValue = value;
+  m_value = string(value); // Assign const char* to std::string in variant
   m_CompilerProperties = make_shared<ListNode>(__FILE__, __LINE__);
 }
 
 ValueNode::ValueNode(string value, const char *filename, int line)
     : AST(AST::String, filename, line) {
-  m_stringValue = value;
+  m_value = value;
   m_CompilerProperties = make_shared<ListNode>(__FILE__, __LINE__);
 }
 
 ValueNode::ValueNode(bool value, const char *filename, int line)
     : AST(AST::Switch, filename, line) {
-  m_switch = value;
+  m_value = value;
   m_CompilerProperties = make_shared<ListNode>(__FILE__, __LINE__);
 }
 
@@ -87,39 +87,39 @@ ValueNode::~ValueNode() {}
 
 int64_t ValueNode::getIntValue() const {
   assert(getNodeType() == AST::Int);
-  return m_intValue;
+  return std::get<int64_t>(m_value);
 }
 
 double ValueNode::getRealValue() const {
   assert(getNodeType() == AST::Real);
-  return m_floatValue;
+  return std::get<double>(m_value);
 }
 
 double ValueNode::toReal() const {
   if (getNodeType() == AST::Real) {
-    return m_floatValue;
+    return std::get<double>(m_value);
   } else if (getNodeType() == AST::Int) {
-    return m_intValue;
+    return (double)std::get<int64_t>(m_value);
   }
   return 0;
 }
 
 string ValueNode::getStringValue() const {
   assert(getNodeType() == AST::String);
-  return m_stringValue;
+  return std::get<string>(m_value);
 }
 
 string ValueNode::toString() const {
   if (getNodeType() == AST::Real) {
     stringstream s;
-    s << std::setprecision(16) << m_floatValue;
+    s << std::setprecision(16) << std::get<double>(m_value);
     return s.str();
   } else if (getNodeType() == AST::Int) {
-    return std::to_string(m_intValue);
+    return std::to_string(std::get<int64_t>(m_value));
   } else if (getNodeType() == AST::String) {
-    return m_stringValue;
+    return std::get<string>(m_value);
   } else if (getNodeType() == AST::Switch) {
-    if (m_switch) {
+    if (std::get<bool>(m_value)) {
       return "On";
     } else {
       return "Off";
@@ -130,7 +130,7 @@ string ValueNode::toString() const {
 
 bool ValueNode::getSwitchValue() const {
   assert(getNodeType() == AST::Switch);
-  return m_switch;
+  return std::get<bool>(m_value);
 }
 
 string ValueNode::toText(int indentOffset, int indentSize, bool newLine) const {
@@ -138,13 +138,13 @@ string ValueNode::toText(int indentOffset, int indentSize, bool newLine) const {
   (void)indentSize;
   string outText;
   if (getNodeType() == AST::Int) {
-    outText += std::to_string(getIntValue());
+    outText += std::to_string(std::get<int64_t>(m_value));
   } else if (getNodeType() == AST::Real) {
-    outText += std::to_string(getRealValue());
+    outText += std::to_string(std::get<double>(m_value));
   } else if (getNodeType() == AST::String) {
-    outText += "\"" + getStringValue() + "\"";
+    outText += "\"" + std::get<string>(m_value) + "\"";
   } else if (getNodeType() == AST::Switch) {
-    outText += (getSwitchValue() ? "on " : "off ");
+    outText += (std::get<bool>(m_value) ? "on " : "off ");
   }
   if (newLine) {
     outText += "\n";
@@ -155,17 +155,17 @@ string ValueNode::toText(int indentOffset, int indentSize, bool newLine) const {
 ASTNode ValueNode::deepCopy() {
   // TODO newNode->m_CompilerProperties = this->m_CompilerProperties;
   if (getNodeType() == AST::Int) {
-    return std::make_shared<ValueNode>(getIntValue(), m_filename.c_str(),
-                                       getLine());
+    return std::make_shared<ValueNode>(std::get<int64_t>(m_value),
+                                       m_filename.c_str(), getLine());
   } else if (getNodeType() == AST::Real) {
-    return std::make_shared<ValueNode>(getRealValue(), m_filename.c_str(),
-                                       getLine());
+    return std::make_shared<ValueNode>(std::get<double>(m_value),
+                                       m_filename.c_str(), getLine());
   } else if (getNodeType() == AST::String) {
-    return std::make_shared<ValueNode>(getStringValue(), m_filename.c_str(),
-                                       getLine());
+    return std::make_shared<ValueNode>(std::get<string>(m_value),
+                                       m_filename.c_str(), getLine());
   } else if (getNodeType() == AST::Switch) {
-    return std::make_shared<ValueNode>(getSwitchValue(), m_filename.c_str(),
-                                       getLine());
+    return std::make_shared<ValueNode>(std::get<bool>(m_value),
+                                       m_filename.c_str(), getLine());
   } else if (getNodeType() == AST::None) {
     return std::make_shared<ValueNode>(m_filename.data(), getLine());
   } else {
@@ -177,3 +177,8 @@ ASTNode ValueNode::deepCopy() {
 void ValueNode::setDomain(ASTNode domain) { m_domain = domain; }
 
 ASTNode ValueNode::getDomain() { return m_domain; }
+
+void ValueNode::setBoolValue(bool value) {
+    assert(getNodeType() == AST::Switch);
+    m_value = value;
+}
