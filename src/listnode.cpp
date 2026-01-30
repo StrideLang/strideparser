@@ -33,6 +33,7 @@
 */
 
 #include "stride/parser/listnode.h"
+#include <algorithm>
 
 using namespace std;
 using namespace strd;
@@ -48,6 +49,49 @@ ListNode::ListNode(ASTNode newMember, const char *filename, int line)
 }
 
 ListNode::~ListNode() {}
+
+string ListNode::toText(int indentOffset, int indentSize, bool newLine) const {
+  string outText = "[ ";
+  int currentColumn = indentOffset + indentSize;
+  if (m_children.size() > 1) {
+    outText += "\n";
+  }
+  for (const auto &elem : m_children) {
+    auto newText = elem->toText(indentOffset + indentSize, indentSize, false);
+    if (elem->getNodeType() != AST::Stream) {
+      outText += newText + ", ";
+    } else {
+      outText += newText + "  ";
+    }
+
+    if (elem->getNodeType() == AST::Declaration ||
+        elem->getNodeType() == AST::BundleDeclaration) {
+      outText += "\n";
+    }
+    currentColumn += newText.size();
+    if (currentColumn > 80 ||
+        (std::find(newText.begin(), newText.end(), '\n') != newText.end())) {
+      outText += "\n";
+      currentColumn = indentOffset + indentSize;
+    }
+  }
+  if (m_children.size() > 0) {
+    while (outText.size() > 0 && outText.back() == '\n') {
+      outText.resize(outText.size() - 1);
+    }
+    if (outText.size() >= 2) {
+      outText.resize(outText.size() - 2);
+    }
+  }
+  if (m_children.size() > 1) {
+    outText += "\n";
+  }
+  outText += " ]";
+  if (newLine) {
+    outText += "\n";
+  }
+  return outText;
+}
 
 void ListNode::stealMembers(ListNode *list) {
   for (const auto &child : list->getChildren()) {

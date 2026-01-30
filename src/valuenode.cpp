@@ -65,6 +65,12 @@ ValueNode::ValueNode(double value, const char *filename, int line)
   m_CompilerProperties = make_shared<ListNode>(__FILE__, __LINE__);
 }
 
+ValueNode::ValueNode(const char *value, const char *filename, int line)
+    : AST(AST::String, filename, line) {
+  m_stringValue = value;
+  m_CompilerProperties = make_shared<ListNode>(__FILE__, __LINE__);
+}
+
 ValueNode::ValueNode(string value, const char *filename, int line)
     : AST(AST::String, filename, line) {
   m_stringValue = value;
@@ -125,6 +131,25 @@ string ValueNode::toString() const {
 bool ValueNode::getSwitchValue() const {
   assert(getNodeType() == AST::Switch);
   return m_switch;
+}
+
+string ValueNode::toText(int indentOffset, int indentSize, bool newLine) const {
+  (void)indentOffset;
+  (void)indentSize;
+  string outText;
+  if (getNodeType() == AST::Int) {
+    outText += std::to_string(getIntValue());
+  } else if (getNodeType() == AST::Real) {
+    outText += std::to_string(getRealValue());
+  } else if (getNodeType() == AST::String) {
+    outText += "\"" + getStringValue() + "\"";
+  } else if (getNodeType() == AST::Switch) {
+    outText += (getSwitchValue() ? "on " : "off ");
+  }
+  if (newLine) {
+    outText += "\n";
+  }
+  return outText;
 }
 
 ASTNode ValueNode::deepCopy() {

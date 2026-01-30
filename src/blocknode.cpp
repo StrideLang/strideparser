@@ -59,6 +59,22 @@ BlockNode::BlockNode(string name, ASTNode scope, const char *filename, int line)
 
 BlockNode::~BlockNode() {}
 
+string BlockNode::getName() const { return m_name; }
+
+string BlockNode::toText(int indentOffset, int indentSize, bool newLine) const {
+  (void)indentOffset;
+  (void)indentSize;
+  string outText;
+  if (getNamespaceList().size() > 0) {
+    // FIXME namespace
+  }
+  outText += m_name;
+  if (newLine) {
+    outText += "\n";
+  }
+  return outText;
+}
+
 void BlockNode::resolveScope(ASTNode scope) {
   if (scope) {
     for (unsigned int i = 0; i < scope->getChildren().size(); i++) {

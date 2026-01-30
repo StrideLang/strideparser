@@ -47,6 +47,7 @@ public:
   ValueNode(int64_t value, const char *filename, int line);
   ValueNode(float value, const char *filename, int line);
   ValueNode(double value, const char *filename, int line);
+  ValueNode(const char *value, const char *filename, int line);
   ValueNode(std::string value, const char *filename, int line);
   ValueNode(bool value, const char *filename, int line);
   ~ValueNode() override;
@@ -62,6 +63,9 @@ public:
   std::string toString() const;
 
   bool getSwitchValue() const;
+
+  virtual std::string toText(int indentOffset = 0, int indentSize = 2,
+                             bool newLine = true) const override;
 
   virtual ASTNode deepCopy() override;
 

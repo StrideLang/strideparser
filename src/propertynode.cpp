@@ -49,6 +49,22 @@ PropertyNode::PropertyNode(string name, ASTNode value, const char *filename,
 
 PropertyNode::~PropertyNode() {}
 
+string PropertyNode::toText(int indentOffset, int indentSize,
+                            bool newLine) const {
+  string outText;
+  string indentBase = "";
+
+  for (auto i = 0; i < indentOffset; i++) {
+    indentBase += " ";
+  }
+  outText += indentBase + m_name + ": ";
+  outText += getValue()->toText(indentOffset + indentSize, indentSize, false);
+  if (newLine) {
+    outText += "\n";
+  }
+  return outText;
+}
+
 void PropertyNode::replaceValue(ASTNode newValue) {
   if (m_children.size() > 0) {
     m_children.at(0) = newValue;

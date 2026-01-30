@@ -170,6 +170,41 @@ void DeclarationNode::setDomainString(string domain) {
 
 string DeclarationNode::getObjectType() const { return m_objectType; }
 
+string DeclarationNode::toText(int indentOffset, int indentSize,
+                               bool newLine) const {
+  string outText;
+  string indentBase = "";
+
+  for (auto i = 0; i < indentOffset; i++) {
+    indentBase += " ";
+  }
+  outText += indentBase;
+  if (getNamespaceList().size() > 0) {
+    // FIXME namespace
+  }
+  outText += m_objectType + " ";
+  auto isAnonymous = getCompilerProperty("anonymous");
+  if (!isAnonymous) {
+    outText += getName() + " ";
+  }
+  outText += "{";
+  if (m_properties.size() > 0) {
+    outText += "\n";
+  }
+  for (auto &prop : m_properties) {
+    outText += prop->toText(indentOffset + indentSize);
+  }
+  if (m_properties.size() > 0) {
+    outText += indentBase + "}";
+  } else {
+    outText += "}";
+  }
+  if (newLine) {
+    outText += "\n";
+  }
+  return outText;
+}
+
 ASTNode DeclarationNode::deepCopy() {
   ASTNode newProps = std::make_shared<AST>();
   std::shared_ptr<DeclarationNode> node;

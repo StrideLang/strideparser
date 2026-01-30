@@ -48,7 +48,8 @@ public:
   std::string getName() const { return m_name; }
   ASTNode getValue() const { return m_children[0]; }
   void replaceValue(ASTNode newValue);
-
+  virtual std::string toText(int indentOffset = 0, int indentSize = 2,
+                             bool newLine = true) const override;
   virtual ASTNode deepCopy() override;
 
 private:

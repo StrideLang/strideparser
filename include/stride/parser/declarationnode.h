@@ -65,6 +65,8 @@ public:
   void setDomainString(std::string domain);
 
   std::string getObjectType() const;
+  virtual std::string toText(int indentOffset = 0, int indentSize = 2,
+                             bool newLine = true) const override;
   virtual ASTNode deepCopy() override;
 
 private:

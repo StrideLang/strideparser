@@ -49,6 +49,49 @@ StreamNode::StreamNode(ASTNode left, ASTNode right, const char *filename,
 
 StreamNode::~StreamNode() {}
 
+std::string StreamNode::toText(int indentOffset, int indentSize,
+                               bool newLine) const {
+  std::string outText;
+  std::string indentBase = "";
+  for (auto i = 0; i < indentOffset; i++) {
+    indentBase += " ";
+  }
+
+  const StreamNode *currentStream = this;
+  ASTNode currentContent = getLeft();
+  int counter = indentSize;
+
+  while (true) {
+    auto newText = currentContent->toText(indentOffset, indentSize, false);
+    counter += newText.size();
+    if (counter >= 80) {
+      outText += "\n" + indentBase;
+      counter = indentSize;
+    }
+    outText += newText;
+
+    if (!currentStream) {
+      outText += ";";
+      break;
+    }
+
+    outText += " >> ";
+    ASTNode right = currentStream->getRight();
+    if (right->getNodeType() == AST::Stream) {
+      currentStream = static_cast<const StreamNode *>(right.get());
+      currentContent = currentStream->getLeft();
+    } else {
+      currentContent = right;
+      currentStream = nullptr;
+    }
+  }
+
+  if (newLine) {
+    outText += "\n";
+  }
+  return outText;
+}
+
 void StreamNode::setLeft(ASTNode newLeft) { m_children.at(0) = newLeft; }
 
 void StreamNode::setRight(ASTNode newRight) { m_children.at(1) = newRight; }

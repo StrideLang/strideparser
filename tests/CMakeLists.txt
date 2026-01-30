@@ -23,6 +23,7 @@ set(TEST_SOURCES main.cpp
   bundle.cpp
   function.cpp
   stream.cpp
+  totext_test.cpp
 )
 
 

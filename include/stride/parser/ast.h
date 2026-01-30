@@ -110,14 +110,17 @@ public:
   size_t getScopeLevels();
   std::string getScopeAt(unsigned int scopeLevel);
 
-  std::vector<std::string> getNamespaceList();
+  std::vector<std::string> getNamespaceList() const;
   void setNamespaceList(std::vector<std::string> list);
 
   void setCompilerProperty(std::string propertyName, ASTNode value);
-  ASTNode getCompilerProperty(std::string propertyName);
+  ASTNode getCompilerProperty(std::string propertyName) const;
   void appendToPropertyValue(std::string propertyName, ASTNode value);
 
   // Code processing
+  virtual std::string toText(int indentOffset = 0, int indentSize = 2,
+                             bool newLine = true) const;
+
   static std::string toText(ASTNode node, int indentOffset = 0,
                             int indentSize = 2, bool newLine = true);
 

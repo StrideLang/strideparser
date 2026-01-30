@@ -113,7 +113,7 @@ string AST::getScopeAt(unsigned int scopeLevel) {
   return m_scope.at(scopeLevel);
 }
 
-vector<string> AST::getNamespaceList() { return m_scope; }
+vector<string> AST::getNamespaceList() const { return m_scope; }
 
 void AST::setNamespaceList(vector<string> list) { m_scope = list; }
 
@@ -137,7 +137,7 @@ void AST::setCompilerProperty(string propertyName, ASTNode value) {
   m_CompilerProperties->addChild(newProp);
 }
 
-ASTNode AST::getCompilerProperty(string propertyName) {
+ASTNode AST::getCompilerProperty(string propertyName) const {
   if (!m_CompilerProperties) {
     return nullptr;
   }
@@ -180,141 +180,24 @@ void AST::appendToPropertyValue(string propertyName, ASTNode value) {
   m_CompilerProperties->addChild(newProperty);
 }
 
-string AST::toText(ASTNode node, int indentOffset, int indentSize,
-                   bool newLine) {
+string AST::toText(int indentOffset, int indentSize, bool newLine) const {
   std::string outText;
-  std::string indentBase = "";
-
-  for (auto i = 0; i < indentOffset; i++) {
-    indentBase += " ";
-  }
-  if (node->getNodeType() == AST::Declaration) {
-    auto decl = std::static_pointer_cast<DeclarationNode>(node);
-    outText += indentBase;
-    if (decl->getNamespaceList().size() > 0) {
-      // FIXME namespace
-    }
-    outText += decl->getObjectType() + " ";
-    auto isAnonymous = node->getCompilerProperty("anonymous");
-    if (!isAnonymous) {
-      outText += decl->getName() + " ";
-    }
-    outText += "{";
-    if (decl->getProperties().size() > 0) {
-      outText += "\n";
-    }
-    for (auto &prop : decl->getProperties()) {
-      outText += AST::toText(prop, indentOffset + indentSize);
-    }
-    if (decl->getProperties().size() > 0) {
-      outText += indentBase + "}";
-    } else {
-      outText += "}";
-    }
-  } else if (node->getNodeType() == AST::Block) {
-    auto block = std::static_pointer_cast<BlockNode>(node);
-    if (block->getNamespaceList().size() > 0) {
-      //      outText +=
-      // FIXME namespace
-    }
-    outText += block->getName(); //+"\n";
-  } else if (node->getNodeType() == AST::Property) {
-    auto pp = std::static_pointer_cast<PropertyNode>(node);
-    outText += indentBase + pp->getName() + ": ";
-    outText += AST::toText(pp->getValue(), indentOffset + indentSize,
-                           indentSize, false);
-    //    outText += "\n";
-  } else if (node->getNodeType() == AST::List) {
-    auto list = std::static_pointer_cast<ListNode>(node);
-    outText += "[ ";
-    int currentColumn = indentOffset + indentSize;
-    if (list->getChildren().size() > 1) {
-      outText += "\n";
-    }
-    for (const auto &elem : list->getChildren()) {
-      auto newText =
-          AST::toText(elem, indentOffset + indentSize, indentSize, false);
-      if (elem->getNodeType() != AST::Stream) {
-        outText += newText + ", ";
-      } else {
-        outText += newText + "  ";
-      }
-
-      if (elem->getNodeType() == AST::Declaration ||
-          elem->getNodeType() == AST::BundleDeclaration) {
-        outText += "\n";
-      }
-      currentColumn += newText.size();
-      if (currentColumn > 80 ||
-          (std::find(newText.begin(), newText.end(), '\n') != newText.end())) {
-        outText += "\n";
-        currentColumn = indentOffset + indentSize;
-      }
-    }
-    if (list->getChildren().size() > 0) {
-      while (outText.size() > 0 && outText.back() == '\n') {
-        outText.resize(outText.size() - 1);
-      }
-      outText.resize(outText.size() - 2);
-    }
-    if (list->getChildren().size() > 1) {
-      outText += "\n";
-    }
-    outText += " ]";
-
-  } else if (node->getNodeType() == AST::Function) {
-    outText += std::static_pointer_cast<FunctionNode>(node)->getName() + "(";
-    for (const auto &prop :
-         std::static_pointer_cast<FunctionNode>(node)->getProperties()) {
-      outText += AST::toText(prop, indentOffset, indentSize, false) + " ";
-    }
-    outText += ")";
-  } else if (node->getNodeType() == AST::Stream) {
-    auto stream = std::static_pointer_cast<StreamNode>(node);
-    auto streamNode = stream->getLeft();
-    int counter = indentSize;
-    while (true) {
-      auto newText = AST::toText(streamNode, indentOffset, indentSize, false);
-      counter += newText.size();
-      if (counter >= 80) {
-        outText += "\n" + indentBase;
-        counter = indentSize;
-      }
-      outText += newText;
-      if (!stream) {
-        outText += ";";
-        break;
-      }
-      streamNode = stream->getRight();
-      if (streamNode->getNodeType() == AST::Stream) {
-        stream = std::static_pointer_cast<StreamNode>(streamNode);
-        streamNode = stream->getLeft();
-      } else {
-        stream = nullptr;
-      }
-      outText += " >> ";
-    }
-  } else if (node->getNodeType() == AST::Int) {
-    outText +=
-        std::to_string(static_pointer_cast<ValueNode>(node)->getIntValue());
-  } else if (node->getNodeType() == AST::Real) {
-    outText +=
-        std::to_string(static_pointer_cast<ValueNode>(node)->getRealValue());
-  } else if (node->getNodeType() == AST::String) {
-    outText +=
-        "\"" + static_pointer_cast<ValueNode>(node)->getStringValue() + "\"";
-  } else if (node->getNodeType() == AST::Switch) {
-    outText +=
-        (std::static_pointer_cast<ValueNode>(node)->getSwitchValue() ? "on "
-                                                                     : "off ");
-  } else if (node->getNodeType() == AST::None) {
+  if (m_token == AST::None) {
     // Root tree
-    for (const auto &child : node->getChildren()) {
-      outText += AST::toText(child);
+    for (const auto &child : m_children) {
+      outText += child->toText(indentOffset, indentSize, true);
     }
   }
   if (newLine) {
     outText += "\n";
   }
   return outText;
+}
+
+string AST::toText(ASTNode node, int indentOffset, int indentSize,
+                   bool newLine) {
+  if (!node) {
+    return "";
+  }
+  return node->toText(indentOffset, indentSize, newLine);
 }

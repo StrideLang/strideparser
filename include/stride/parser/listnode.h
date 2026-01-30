@@ -51,6 +51,9 @@ public:
 
   void replaceMember(ASTNode replacement, ASTNode member);
 
+  virtual std::string toText(int indentOffset = 0, int indentSize = 2,
+                             bool newLine = true) const override;
+
   virtual ASTNode deepCopy() override;
 };
 } // namespace strd

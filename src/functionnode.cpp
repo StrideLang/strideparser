@@ -164,6 +164,21 @@ void FunctionNode::resolveScope(ASTNode scope) {
   }
 }
 
+string FunctionNode::toText(int indentOffset, int indentSize,
+                            bool newLine) const {
+  (void)indentOffset;
+  (void)indentSize;
+  string outText = m_name + "(";
+  for (const auto &prop : m_properties) {
+    outText += prop->toText(0, indentSize, false) + " ";
+  }
+  outText += ")";
+  if (newLine) {
+    outText += "\n";
+  }
+  return outText;
+}
+
 ASTNode FunctionNode::deepCopy() {
   AST *newProps = new AST();
   for (unsigned int i = 0; i < m_properties.size(); i++) {
