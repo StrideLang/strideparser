@@ -33,15 +33,23 @@
 */
 
 #include "stride/parser/keywordnode.h"
+#include "stride/parser/listnode.h"
 
-using namespace std;
 using namespace strd;
 
-KeywordNode::KeywordNode(string keyword, const char *filename, int line)
+KeywordNode::KeywordNode(std::string keyword, const char *filename, int line)
     : AST(AST::Keyword, filename, line) {
   m_kw = keyword;
 }
 
-// AST *KeywordNode::deepCopy() {
-//    return new KeywordNode(keyword(), m_filename.data(), getLine());
-//}
+ASTNode KeywordNode::deepCopy() {
+  auto newNode =
+      std::make_shared<KeywordNode>(m_kw, m_filename.data(), getLine());
+  if (this->m_CompilerProperties) {
+    newNode->m_CompilerProperties = std::static_pointer_cast<ListNode>(
+        this->m_CompilerProperties->deepCopy());
+  } else {
+    newNode->m_CompilerProperties = nullptr;
+  }
+  return newNode;
+}

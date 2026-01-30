@@ -44,7 +44,6 @@
 #include "stride/parser/streamnode.h"
 #include "stride/parser/valuenode.h"
 
-using namespace std;
 using namespace strd;
 
 AST::AST() {
@@ -52,7 +51,8 @@ AST::AST() {
   m_line = -1;
 }
 
-AST::AST(Token token, const char *filename, int line, vector<string> scope) {
+AST::AST(Token token, const char *filename, int line,
+         std::vector<std::string> scope) {
   m_token = token;
   m_filename.append(filename);
   m_line = line;
@@ -71,7 +71,7 @@ ASTNode AST::parseFile(const char *fileName, const char *sourceFilename) {
 std::vector<LangError> AST::getParseErrors() { return getErrors(); }
 void AST::addChild(ASTNode t) { m_children.push_back(t); }
 
-void AST::setChildren(vector<ASTNode> &newChildren) {
+void AST::setChildren(std::vector<ASTNode> &newChildren) {
   m_children = newChildren;
 }
 
@@ -81,27 +81,27 @@ ASTNode AST::deepCopy() {
   for (unsigned int i = 0; i < m_children.size(); i++) {
     newNode->addChild(m_children.at(i)->deepCopy());
   }
-  //    if (this->m_CompilerProperties) {
-  //        newNode->m_CompilerProperties =
-  //        std::static_pointer_cast<ListNode>(this->m_CompilerProperties->deepCopy());
-  //    } else {
-  //        newNode->m_CompilerProperties = nullptr;
-  //    }
+  if (this->m_CompilerProperties) {
+    newNode->m_CompilerProperties = std::static_pointer_cast<ListNode>(
+        this->m_CompilerProperties->deepCopy());
+  } else {
+    newNode->m_CompilerProperties = nullptr;
+  }
   return newNode;
 }
 
-string AST::getFilename() const { return m_filename; }
+std::string AST::getFilename() const { return m_filename; }
 
-void AST::setFilename(const string &filename) { m_filename = filename; }
+void AST::setFilename(const std::string &filename) { m_filename = filename; }
 
 void AST::resolveScope(ASTNode scope) {
   (void)scope;    // To remove warning
   assert(0 == 1); // Each type should resolve its scope
 }
 
-void AST::addScope(string newScope) { m_scope.push_back(newScope); }
+void AST::addScope(std::string newScope) { m_scope.push_back(newScope); }
 
-void AST::setRootScope(string scopeName) {
+void AST::setRootScope(std::string scopeName) {
   if (scopeName != "") {
     m_scope.insert(m_scope.begin(), scopeName);
   }
@@ -109,22 +109,22 @@ void AST::setRootScope(string scopeName) {
 
 size_t AST::getScopeLevels() { return m_scope.size(); }
 
-string AST::getScopeAt(unsigned int scopeLevel) {
+std::string AST::getScopeAt(unsigned int scopeLevel) {
   return m_scope.at(scopeLevel);
 }
 
-vector<string> AST::getNamespaceList() const { return m_scope; }
+std::vector<std::string> AST::getNamespaceList() const { return m_scope; }
 
-void AST::setNamespaceList(vector<string> list) { m_scope = list; }
+void AST::setNamespaceList(std::vector<std::string> list) { m_scope = list; }
 
-void AST::setCompilerProperty(string propertyName, ASTNode value) {
+void AST::setCompilerProperty(std::string propertyName, ASTNode value) {
   if (!m_CompilerProperties) {
-    m_CompilerProperties = make_shared<ListNode>(__FILE__, __LINE__);
+    m_CompilerProperties = std::make_shared<ListNode>(__FILE__, __LINE__);
   }
   for (const auto &child : m_CompilerProperties->getChildren()) {
     if (child->getNodeType() == AST::Property) {
       std::shared_ptr<PropertyNode> prop =
-          static_pointer_cast<PropertyNode>(child);
+          std::static_pointer_cast<PropertyNode>(child);
       if (prop->getName() ==
           propertyName) { // if property already exists replace
         prop->replaceValue(value);
@@ -137,14 +137,14 @@ void AST::setCompilerProperty(string propertyName, ASTNode value) {
   m_CompilerProperties->addChild(newProp);
 }
 
-ASTNode AST::getCompilerProperty(string propertyName) const {
+ASTNode AST::getCompilerProperty(std::string propertyName) const {
   if (!m_CompilerProperties) {
     return nullptr;
   }
   for (const auto &child : m_CompilerProperties->getChildren()) {
     if (child->getNodeType() == AST::Property) {
       std::shared_ptr<PropertyNode> prop =
-          static_pointer_cast<PropertyNode>(child);
+          std::static_pointer_cast<PropertyNode>(child);
       if (prop->getName() ==
           propertyName) { // if property already exists replace
         return prop->getValue();
@@ -154,14 +154,14 @@ ASTNode AST::getCompilerProperty(string propertyName) const {
   return nullptr;
 }
 
-void AST::appendToPropertyValue(string propertyName, ASTNode value) {
+void AST::appendToPropertyValue(std::string propertyName, ASTNode value) {
   if (!m_CompilerProperties) {
-    m_CompilerProperties = make_shared<ListNode>(__FILE__, __LINE__);
+    m_CompilerProperties = std::make_shared<ListNode>(__FILE__, __LINE__);
   }
   for (const auto &child : m_CompilerProperties->getChildren()) {
     if (child->getNodeType() == AST::Property) {
       std::shared_ptr<PropertyNode> prop =
-          static_pointer_cast<PropertyNode>(child);
+          std::static_pointer_cast<PropertyNode>(child);
       if (prop->getName() ==
           propertyName) { // if property already exists replace
         if (prop->getValue()->getNodeType() == AST::List) {
@@ -180,7 +180,7 @@ void AST::appendToPropertyValue(string propertyName, ASTNode value) {
   m_CompilerProperties->addChild(newProperty);
 }
 
-string AST::toText(int indentOffset, int indentSize, bool newLine) const {
+std::string AST::toText(int indentOffset, int indentSize, bool newLine) const {
   std::string outText;
   if (m_token == AST::None) {
     // Root tree
@@ -194,8 +194,8 @@ string AST::toText(int indentOffset, int indentSize, bool newLine) const {
   return outText;
 }
 
-string AST::toText(ASTNode node, int indentOffset, int indentSize,
-                   bool newLine) {
+std::string AST::toText(ASTNode node, int indentOffset, int indentSize,
+                        bool newLine) {
   if (!node) {
     return "";
   }

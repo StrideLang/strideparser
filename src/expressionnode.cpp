@@ -37,7 +37,6 @@
 #include "stride/parser/expressionnode.h"
 #include "stride/parser/listnode.h"
 
-using namespace std;
 using namespace strd;
 
 ExpressionNode::ExpressionNode(ExpressionType type, ASTNode left, ASTNode right,
@@ -49,7 +48,7 @@ ExpressionNode::ExpressionNode(ExpressionType type, ASTNode left, ASTNode right,
   addChild(left);
   addChild(right);
 
-  m_CompilerProperties = make_shared<ListNode>(__FILE__, __LINE__);
+  m_CompilerProperties = std::make_shared<ListNode>(__FILE__, __LINE__);
 }
 
 ExpressionNode::ExpressionNode(ExpressionNode::ExpressionType type,
@@ -60,7 +59,7 @@ ExpressionNode::ExpressionNode(ExpressionNode::ExpressionType type,
          m_type == ExpressionNode::LogicalNot);
   addChild(value);
 
-  m_CompilerProperties = make_shared<ListNode>(__FILE__, __LINE__);
+  m_CompilerProperties = std::make_shared<ListNode>(__FILE__, __LINE__);
 }
 
 ExpressionNode::~ExpressionNode() {}
@@ -116,7 +115,7 @@ ExpressionNode::ExpressionType ExpressionNode::getExpressionType() const {
   return m_type;
 }
 
-string ExpressionNode::getExpressionTypeString() const {
+std::string ExpressionNode::getExpressionTypeString() const {
   switch (m_type) {
   case Multiply:
     return "Multiply";
@@ -144,24 +143,24 @@ ASTNode ExpressionNode::deepCopy() {
       m_type == ExpressionNode::LogicalNot) {
     auto newNode = std::make_shared<ExpressionNode>(
         m_type, m_children.at(0)->deepCopy(), m_filename.data(), m_line);
-    //        if (this->m_CompilerProperties) {
-    //            newNode->m_CompilerProperties =
-    //            std::static_pointer_cast<ListNode>(this->m_CompilerProperties->deepCopy());
-    //        } else {
-    //            newNode->m_CompilerProperties = nullptr;
-    //        }
+    if (this->m_CompilerProperties) {
+      newNode->m_CompilerProperties = std::static_pointer_cast<ListNode>(
+          this->m_CompilerProperties->deepCopy());
+    } else {
+      newNode->m_CompilerProperties = nullptr;
+    }
     return newNode;
 
   } else {
     auto newNode = std::make_shared<ExpressionNode>(
         m_type, m_children.at(0)->deepCopy(), m_children.at(1)->deepCopy(),
         m_filename.data(), m_line);
-    //        if (this->m_CompilerProperties) {
-    //            newNode->m_CompilerProperties =
-    //            std::static_pointer_cast<ListNode>(this->m_CompilerProperties->deepCopy());
-    //        } else {
-    //            newNode->m_CompilerProperties = nullptr;
-    //        }
+    if (this->m_CompilerProperties) {
+      newNode->m_CompilerProperties = std::static_pointer_cast<ListNode>(
+          this->m_CompilerProperties->deepCopy());
+    } else {
+      newNode->m_CompilerProperties = nullptr;
+    }
     return newNode;
   }
 }

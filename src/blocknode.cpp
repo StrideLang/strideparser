@@ -38,33 +38,34 @@
 #include "stride/parser/listnode.h"
 #include "stride/parser/scopenode.h"
 
-using namespace std;
 using namespace strd;
 
-BlockNode::BlockNode(string name, const char *filename, int line,
-                     vector<string> scope)
+BlockNode::BlockNode(std::string name, const char *filename, int line,
+                     std::vector<std::string> scope)
     : AST(AST::Block, filename, line, scope) {
   m_name = name;
 
-  m_CompilerProperties = make_shared<ListNode>(__FILE__, __LINE__);
+  m_CompilerProperties = std::make_shared<ListNode>(__FILE__, __LINE__);
 }
 
-BlockNode::BlockNode(string name, ASTNode scope, const char *filename, int line)
+BlockNode::BlockNode(std::string name, ASTNode scope, const char *filename,
+                     int line)
     : AST(AST::Block, filename, line) {
   m_name = name;
   resolveScope(scope);
 
-  m_CompilerProperties = make_shared<ListNode>(__FILE__, __LINE__);
+  m_CompilerProperties = std::make_shared<ListNode>(__FILE__, __LINE__);
 }
 
 BlockNode::~BlockNode() {}
 
-string BlockNode::getName() const { return m_name; }
+std::string BlockNode::getName() const { return m_name; }
 
-string BlockNode::toText(int indentOffset, int indentSize, bool newLine) const {
+std::string BlockNode::toText(int indentOffset, int indentSize,
+                              bool newLine) const {
   (void)indentOffset;
   (void)indentSize;
-  string outText;
+  std::string outText;
   if (getNamespaceList().size() > 0) {
     // FIXME namespace
   }
@@ -89,11 +90,11 @@ void BlockNode::resolveScope(ASTNode scope) {
 ASTNode BlockNode::deepCopy() {
   std::shared_ptr<BlockNode> newNode =
       std::make_shared<BlockNode>(m_name, m_filename.data(), m_line, m_scope);
-  //    if (this->m_CompilerProperties) {
-  //        newNode->m_CompilerProperties =
-  //        std::static_pointer_cast<ListNode>(this->m_CompilerProperties->deepCopy());
-  //    } else {
-  //        newNode->m_CompilerProperties = nullptr;
-  //    }
+  if (this->m_CompilerProperties) {
+    newNode->m_CompilerProperties = std::static_pointer_cast<ListNode>(
+        this->m_CompilerProperties->deepCopy());
+  } else {
+    newNode->m_CompilerProperties = nullptr;
+  }
   return newNode;
 }

@@ -39,10 +39,9 @@
 #include "stride/parser/scopenode.h"
 #include "stride/parser/valuenode.h"
 
-using namespace std;
 using namespace strd;
 
-FunctionNode::FunctionNode(string name, ASTNode propertiesList,
+FunctionNode::FunctionNode(std::string name, ASTNode propertiesList,
                            const char *filename, int line)
     : AST(AST::Function, filename, line) {
   m_name = name;
@@ -52,11 +51,12 @@ FunctionNode::FunctionNode(string name, ASTNode propertiesList,
     }
   }
   m_rate = -1;
-  m_CompilerProperties = make_shared<ListNode>(__FILE__, __LINE__);
+  m_CompilerProperties = std::make_shared<ListNode>(__FILE__, __LINE__);
 }
 
-FunctionNode::FunctionNode(string name, ASTNode scope, ASTNode propertiesList,
-                           const char *filename, int line)
+FunctionNode::FunctionNode(std::string name, ASTNode scope,
+                           ASTNode propertiesList, const char *filename,
+                           int line)
     : AST(AST::Function, filename, line) {
   m_name = name;
   if (propertiesList) {
@@ -66,7 +66,7 @@ FunctionNode::FunctionNode(string name, ASTNode scope, ASTNode propertiesList,
   }
   resolveScope(scope);
   m_rate = -1;
-  m_CompilerProperties = make_shared<ListNode>(__FILE__, __LINE__);
+  m_CompilerProperties = std::make_shared<ListNode>(__FILE__, __LINE__);
 }
 
 FunctionNode::~FunctionNode() {}
@@ -74,14 +74,15 @@ FunctionNode::~FunctionNode() {}
 void FunctionNode::addChild(ASTNode t) {
   AST::addChild(t);
   assert(t->getNodeType() == AST::Property);
-  m_properties.push_back(static_pointer_cast<PropertyNode>(t));
+  m_properties.push_back(std::static_pointer_cast<PropertyNode>(t));
 }
 
-void FunctionNode::setChildren(vector<ASTNode> &newChildren) {
+void FunctionNode::setChildren(std::vector<ASTNode> &newChildren) {
   AST::setChildren(newChildren);
   for (unsigned int i = 0; i < m_children.size(); i++) {
     assert(m_children.at(i)->getNodeType() == AST::Property);
-    m_properties.push_back(static_pointer_cast<PropertyNode>(m_children.at(i)));
+    m_properties.push_back(
+        std::static_pointer_cast<PropertyNode>(m_children.at(i)));
   }
 }
 
@@ -90,7 +91,7 @@ ASTNode FunctionNode::getDomain() {
   return domainValue;
 }
 
-void FunctionNode::setDomainString(string domain) {
+void FunctionNode::setDomainString(std::string domain) {
   bool domainSet = false;
   for (unsigned int i = 0; i < m_properties.size(); i++) {
     if (m_properties.at(i)->getName() == "domain") {
@@ -112,7 +113,7 @@ void FunctionNode::setDomainString(string domain) {
 ////    m_properties.clear();
 //}
 
-vector<std::shared_ptr<PropertyNode>> FunctionNode::getProperties() const {
+std::vector<std::shared_ptr<PropertyNode>> FunctionNode::getProperties() const {
   return m_properties;
 }
 
@@ -123,7 +124,7 @@ void FunctionNode::addProperty(std::shared_ptr<PropertyNode> newProperty) {
   }
 }
 
-ASTNode FunctionNode::getPropertyValue(string propertyName) {
+ASTNode FunctionNode::getPropertyValue(std::string propertyName) {
   for (unsigned int i = 0; i < m_properties.size(); i++) {
     if (m_properties.at(i)->getName() == propertyName) {
       return m_properties.at(i)->getValue();
@@ -132,7 +133,7 @@ ASTNode FunctionNode::getPropertyValue(string propertyName) {
   return nullptr;
 }
 
-void FunctionNode::setPropertyValue(string propertyName, ASTNode value) {
+void FunctionNode::setPropertyValue(std::string propertyName, ASTNode value) {
   if (getPropertyValue(propertyName)) {
     replacePropertyValue(propertyName, value);
   } else {
@@ -141,7 +142,8 @@ void FunctionNode::setPropertyValue(string propertyName, ASTNode value) {
   }
 }
 
-bool FunctionNode::replacePropertyValue(string propertyName, ASTNode newValue) {
+bool FunctionNode::replacePropertyValue(std::string propertyName,
+                                        ASTNode newValue) {
   bool replaced = false;
   for (unsigned int i = 0; i < m_properties.size(); i++) {
     if (m_properties.at(i)->getName() == propertyName) {
@@ -158,17 +160,17 @@ void FunctionNode::resolveScope(ASTNode scope) {
     for (unsigned int i = 0; i < scope->getChildren().size(); i++) {
       assert(scope->getChildren().at(i)->getNodeType() == AST::Scope);
       m_scope.push_back(
-          (static_pointer_cast<ScopeNode>(scope->getChildren().at(i)))
+          (std::static_pointer_cast<ScopeNode>(scope->getChildren().at(i)))
               ->getName());
     }
   }
 }
 
-string FunctionNode::toText(int indentOffset, int indentSize,
-                            bool newLine) const {
+std::string FunctionNode::toText(int indentOffset, int indentSize,
+                                 bool newLine) const {
   (void)indentOffset;
   (void)indentSize;
-  string outText = m_name + "(";
+  std::string outText = m_name + "(";
   for (const auto &prop : m_properties) {
     outText += prop->toText(0, indentSize, false) + " ";
   }
@@ -180,23 +182,23 @@ string FunctionNode::toText(int indentOffset, int indentSize,
 }
 
 ASTNode FunctionNode::deepCopy() {
-  AST *newProps = new AST();
+  ASTNode newProps = std::make_shared<AST>();
   for (unsigned int i = 0; i < m_properties.size(); i++) {
     newProps->addChild(m_properties[i]->deepCopy());
   }
   std::shared_ptr<FunctionNode> newFunctionNode =
-      std::make_shared<FunctionNode>(m_name, std::shared_ptr<AST>(newProps),
-                                     m_filename.data(), m_line);
+      std::make_shared<FunctionNode>(m_name, newProps, m_filename.data(),
+                                     m_line);
   for (unsigned int i = 0; i < this->getScopeLevels(); i++) {
     newFunctionNode->addScope(this->getScopeAt(i));
   }
   newFunctionNode->setRate(getRate());
-  //    if (this->m_CompilerProperties) {
-  //        newFunctionNode->m_CompilerProperties =
-  //        std::static_pointer_cast<ListNode>(this->m_CompilerProperties->deepCopy());
-  //    } else {
-  //        newFunctionNode->m_CompilerProperties = nullptr;
-  //    }
+  if (this->m_CompilerProperties) {
+    newFunctionNode->m_CompilerProperties = std::static_pointer_cast<ListNode>(
+        this->m_CompilerProperties->deepCopy());
+  } else {
+    newFunctionNode->m_CompilerProperties = nullptr;
+  }
   return newFunctionNode;
 }
 

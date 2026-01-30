@@ -34,6 +34,7 @@
 
 #include <vector>
 
+#include "stride/parser/listnode.h"
 #include "stride/parser/platformnode.h"
 
 using namespace strd;
@@ -54,28 +55,29 @@ int SystemNode::majorVersion() const { return m_majorVersion; }
 
 int SystemNode::minorVersion() const { return m_minorVersion; }
 
-// AST *SystemNode::deepCopy()
-//{
-//    SystemNode *newnode = new SystemNode(m_systemName, m_majorVersion,
-//    m_minorVersion,
-//                                    m_filename.data() , m_line,
-//                                    m_targetPlatforms);
-//    vector<AST *> children = getChildren();
-//    for (unsigned int i = 0; i < children.size(); i++) {
-//        newnode->addChild(children.at(i)->deepCopy());
-//    }
-//    return newnode;
-//}
+ASTNode SystemNode::deepCopy() {
+  auto newNode = std::make_shared<SystemNode>(m_systemName, m_majorVersion,
+                                              m_minorVersion, m_filename.data(),
+                                              m_line, m_targetPlatforms);
+  for (auto &child : getChildren()) {
+    newNode->addChild(child->deepCopy());
+  }
+  if (this->m_CompilerProperties) {
+    newNode->m_CompilerProperties = std::static_pointer_cast<ListNode>(
+        this->m_CompilerProperties->deepCopy());
+  } else {
+    newNode->m_CompilerProperties = nullptr;
+  }
+  return newNode;
+}
 
-// vector<string> SystemNode::hwPlatforms() const
-//{
-//    return m_targetPlatforms;
-//}
+// std::vector<std::string> SystemNode::hwPlatforms() const {
+//   return m_targetPlatforms;
+// }
 
-// void SystemNode::setHwPlatforms(const vector<string> &hwPlatform)
-//{
-//    m_targetPlatforms = hwPlatform;
-//}
+// void SystemNode::setHwPlatforms(const std::vector<std::string> &hwPlatform) {
+//   m_targetPlatforms = hwPlatform;
+// }
 
 std::string SystemNode::platformName() const { return m_systemName; }
 

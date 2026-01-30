@@ -45,7 +45,9 @@ public:
   ScopeNode(std::string name, const char *filename, int line);
   ~ScopeNode();
 
-  std::string getName() const { return m_name; }
+  std::string getName() const;
+
+  ASTNode deepCopy() override;
 
 private:
   std::string m_name;

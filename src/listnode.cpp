@@ -35,7 +35,6 @@
 #include "stride/parser/listnode.h"
 #include <algorithm>
 
-using namespace std;
 using namespace strd;
 
 ListNode::ListNode(const char *filename, int line)
@@ -50,8 +49,9 @@ ListNode::ListNode(ASTNode newMember, const char *filename, int line)
 
 ListNode::~ListNode() {}
 
-string ListNode::toText(int indentOffset, int indentSize, bool newLine) const {
-  string outText = "[ ";
+std::string ListNode::toText(int indentOffset, int indentSize,
+                             bool newLine) const {
+  std::string outText = "[ ";
   int currentColumn = indentOffset + indentSize;
   if (m_children.size() > 1) {
     outText += "\n";
@@ -101,7 +101,7 @@ void ListNode::stealMembers(ListNode *list) {
 }
 
 AST::Token ListNode::getListType() {
-  vector<ASTNode> children = getChildren();
+  std::vector<ASTNode> children = getChildren();
   if (children.size() == 0) {
     return AST::Invalid;
   }
@@ -135,7 +135,7 @@ void ListNode::replaceMember(ASTNode replacement, ASTNode member) {
 }
 
 ASTNode ListNode::deepCopy() {
-  vector<ASTNode> children = getChildren();
+  std::vector<ASTNode> children = getChildren();
   std::shared_ptr<ListNode> newList;
   if (children.size() > 0) {
     newList = std::make_shared<ListNode>(children.at(0)->deepCopy(),
@@ -146,11 +146,11 @@ ASTNode ListNode::deepCopy() {
   } else {
     newList = std::make_shared<ListNode>(nullptr, m_filename.data(), m_line);
   }
-  //    if (this->m_CompilerProperties) {
-  //        newList->m_CompilerProperties =
-  //        std::static_pointer_cast<ListNode>(this->m_CompilerProperties->deepCopy());
-  //    } else {
-  //        newList->m_CompilerProperties = nullptr;
-  //    }
+  if (this->m_CompilerProperties) {
+    newList->m_CompilerProperties = std::static_pointer_cast<ListNode>(
+        this->m_CompilerProperties->deepCopy());
+  } else {
+    newList->m_CompilerProperties = nullptr;
+  }
   return newList;
 }

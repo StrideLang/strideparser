@@ -39,48 +39,47 @@
 #include "stride/parser/listnode.h"
 #include "stride/parser/valuenode.h"
 
-using namespace std;
 using namespace strd;
 
 ValueNode::ValueNode(const char *filename, int line)
     : AST(AST::None, filename, line) {
-  m_CompilerProperties = make_shared<ListNode>(__FILE__, __LINE__);
+  m_CompilerProperties = std::make_shared<ListNode>(__FILE__, __LINE__);
 }
 
 ValueNode::ValueNode(int64_t value, const char *filename, int line)
     : AST(AST::Int, filename, line) {
   m_value = value;
-  m_CompilerProperties = make_shared<ListNode>(__FILE__, __LINE__);
+  m_CompilerProperties = std::make_shared<ListNode>(__FILE__, __LINE__);
 }
 
 ValueNode::ValueNode(float value, const char *filename, int line)
     : AST(AST::Real, filename, line) {
   m_value = double(value);
-  m_CompilerProperties = make_shared<ListNode>(__FILE__, __LINE__);
+  m_CompilerProperties = std::make_shared<ListNode>(__FILE__, __LINE__);
 }
 
 ValueNode::ValueNode(double value, const char *filename, int line)
     : AST(AST::Real, filename, line) {
   m_value = value;
-  m_CompilerProperties = make_shared<ListNode>(__FILE__, __LINE__);
+  m_CompilerProperties = std::make_shared<ListNode>(__FILE__, __LINE__);
 }
 
 ValueNode::ValueNode(const char *value, const char *filename, int line)
     : AST(AST::String, filename, line) {
-  m_value = string(value); // Assign const char* to std::string in variant
-  m_CompilerProperties = make_shared<ListNode>(__FILE__, __LINE__);
+  m_value = std::string(value); // Assign const char* to std::string in variant
+  m_CompilerProperties = std::make_shared<ListNode>(__FILE__, __LINE__);
 }
 
-ValueNode::ValueNode(string value, const char *filename, int line)
+ValueNode::ValueNode(std::string value, const char *filename, int line)
     : AST(AST::String, filename, line) {
   m_value = value;
-  m_CompilerProperties = make_shared<ListNode>(__FILE__, __LINE__);
+  m_CompilerProperties = std::make_shared<ListNode>(__FILE__, __LINE__);
 }
 
 ValueNode::ValueNode(bool value, const char *filename, int line)
     : AST(AST::Switch, filename, line) {
   m_value = value;
-  m_CompilerProperties = make_shared<ListNode>(__FILE__, __LINE__);
+  m_CompilerProperties = std::make_shared<ListNode>(__FILE__, __LINE__);
 }
 
 ValueNode::~ValueNode() {}
@@ -104,20 +103,20 @@ double ValueNode::toReal() const {
   return 0;
 }
 
-string ValueNode::getStringValue() const {
+std::string ValueNode::getStringValue() const {
   assert(getNodeType() == AST::String);
-  return std::get<string>(m_value);
+  return std::get<std::string>(m_value);
 }
 
-string ValueNode::toString() const {
+std::string ValueNode::toString() const {
   if (getNodeType() == AST::Real) {
-    stringstream s;
+    std::stringstream s;
     s << std::setprecision(16) << std::get<double>(m_value);
     return s.str();
   } else if (getNodeType() == AST::Int) {
     return std::to_string(std::get<int64_t>(m_value));
   } else if (getNodeType() == AST::String) {
-    return std::get<string>(m_value);
+    return std::get<std::string>(m_value);
   } else if (getNodeType() == AST::Switch) {
     if (std::get<bool>(m_value)) {
       return "On";
@@ -133,16 +132,17 @@ bool ValueNode::getSwitchValue() const {
   return std::get<bool>(m_value);
 }
 
-string ValueNode::toText(int indentOffset, int indentSize, bool newLine) const {
+std::string ValueNode::toText(int indentOffset, int indentSize,
+                              bool newLine) const {
   (void)indentOffset;
   (void)indentSize;
-  string outText;
+  std::string outText;
   if (getNodeType() == AST::Int) {
     outText += std::to_string(std::get<int64_t>(m_value));
   } else if (getNodeType() == AST::Real) {
     outText += std::to_string(std::get<double>(m_value));
   } else if (getNodeType() == AST::String) {
-    outText += "\"" + std::get<string>(m_value) + "\"";
+    outText += "\"" + std::get<std::string>(m_value) + "\"";
   } else if (getNodeType() == AST::Switch) {
     outText += (std::get<bool>(m_value) ? "on " : "off ");
   }
@@ -153,25 +153,35 @@ string ValueNode::toText(int indentOffset, int indentSize, bool newLine) const {
 }
 
 ASTNode ValueNode::deepCopy() {
-  // TODO newNode->m_CompilerProperties = this->m_CompilerProperties;
+  std::shared_ptr<ValueNode> newNode;
   if (getNodeType() == AST::Int) {
-    return std::make_shared<ValueNode>(std::get<int64_t>(m_value),
-                                       m_filename.c_str(), getLine());
+    newNode = std::make_shared<ValueNode>(std::get<int64_t>(m_value),
+                                          m_filename.c_str(), getLine());
   } else if (getNodeType() == AST::Real) {
-    return std::make_shared<ValueNode>(std::get<double>(m_value),
-                                       m_filename.c_str(), getLine());
+    newNode = std::make_shared<ValueNode>(std::get<double>(m_value),
+                                          m_filename.c_str(), getLine());
   } else if (getNodeType() == AST::String) {
-    return std::make_shared<ValueNode>(std::get<string>(m_value),
-                                       m_filename.c_str(), getLine());
+    newNode = std::make_shared<ValueNode>(std::get<std::string>(m_value),
+                                          m_filename.c_str(), getLine());
   } else if (getNodeType() == AST::Switch) {
-    return std::make_shared<ValueNode>(std::get<bool>(m_value),
-                                       m_filename.c_str(), getLine());
+    newNode = std::make_shared<ValueNode>(std::get<bool>(m_value),
+                                          m_filename.c_str(), getLine());
   } else if (getNodeType() == AST::None) {
-    return std::make_shared<ValueNode>(m_filename.data(), getLine());
+    newNode = std::make_shared<ValueNode>(m_filename.data(), getLine());
   } else {
     assert(0); // Invalid type
+    return nullptr;
   }
-  return nullptr;
+  if (this->m_CompilerProperties) {
+    newNode->m_CompilerProperties = std::static_pointer_cast<ListNode>(
+        this->m_CompilerProperties->deepCopy());
+  }
+  // Let's just do what AST::deepCopy does but for newNode
+  if (this->m_CompilerProperties) {
+    newNode->m_CompilerProperties = std::static_pointer_cast<ListNode>(
+        this->m_CompilerProperties->deepCopy());
+  }
+  return newNode;
 }
 
 void ValueNode::setDomain(ASTNode domain) { m_domain = domain; }
@@ -179,6 +189,6 @@ void ValueNode::setDomain(ASTNode domain) { m_domain = domain; }
 ASTNode ValueNode::getDomain() { return m_domain; }
 
 void ValueNode::setBoolValue(bool value) {
-    assert(getNodeType() == AST::Switch);
-    m_value = value;
+  assert(getNodeType() == AST::Switch);
+  m_value = value;
 }

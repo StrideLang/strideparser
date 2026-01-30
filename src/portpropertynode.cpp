@@ -33,11 +33,11 @@
 */
 
 #include "stride/parser/portpropertynode.h"
+#include "stride/parser/listnode.h"
 
-using namespace std;
 using namespace strd;
 
-PortPropertyNode::PortPropertyNode(string name, string port,
+PortPropertyNode::PortPropertyNode(std::string name, std::string port,
                                    const char *filename, int line)
     : AST(AST::PortProperty, filename, line) {
   m_name = name;
@@ -48,12 +48,14 @@ PortPropertyNode::~PortPropertyNode() {}
 
 ASTNode PortPropertyNode::deepCopy() {
   std::shared_ptr<PortPropertyNode> newPortPropertyNode =
-      make_shared<PortPropertyNode>(m_name, m_port, m_filename.data(), m_line);
-  //    if (this->m_CompilerProperties) {
-  //        newPortPropertyNode->m_CompilerProperties =
-  //        std::static_pointer_cast<ListNode>(this->m_CompilerProperties->deepCopy());
-  //    } else {
-  //        newPortPropertyNode->m_CompilerProperties = nullptr;
-  //    }
+      std::make_shared<PortPropertyNode>(m_name, m_port, m_filename.data(),
+                                         m_line);
+  if (this->m_CompilerProperties) {
+    newPortPropertyNode->m_CompilerProperties =
+        std::static_pointer_cast<ListNode>(
+            this->m_CompilerProperties->deepCopy());
+  } else {
+    newPortPropertyNode->m_CompilerProperties = nullptr;
+  }
   return newPortPropertyNode;
 }

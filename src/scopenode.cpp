@@ -33,13 +33,27 @@
 */
 
 #include "stride/parser/scopenode.h"
+#include "stride/parser/listnode.h"
 
-using namespace std;
 using namespace strd;
 
-ScopeNode::ScopeNode(string name, const char *filename, int line)
+ScopeNode::ScopeNode(std::string name, const char *filename, int line)
     : AST(AST::Scope, filename, line) {
   m_name = name;
 }
 
+ASTNode ScopeNode::deepCopy() {
+  auto newNode =
+      std::make_shared<ScopeNode>(m_name, m_filename.data(), getLine());
+  if (this->m_CompilerProperties) {
+    newNode->m_CompilerProperties = std::static_pointer_cast<ListNode>(
+        this->m_CompilerProperties->deepCopy());
+  } else {
+    newNode->m_CompilerProperties = nullptr;
+  }
+  return newNode;
+}
+
 ScopeNode::~ScopeNode() {}
+
+std::string ScopeNode::getName() const { return m_name; }

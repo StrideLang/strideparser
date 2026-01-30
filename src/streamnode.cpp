@@ -34,6 +34,7 @@
 
 #include <cassert>
 
+#include "stride/parser/listnode.h"
 #include "stride/parser/streamnode.h"
 
 using namespace strd;
@@ -101,12 +102,12 @@ ASTNode StreamNode::deepCopy() {
       m_children.at(0)->deepCopy(), m_children.at(1)->deepCopy(),
       m_filename.data(), m_line);
 
-  //    if (this->m_CompilerProperties) {
-  //        newStream->m_CompilerProperties =
-  //        std::static_pointer_cast<ListNode>(this->m_CompilerProperties->deepCopy());
-  //    } else {
-  //        newStream->m_CompilerProperties = nullptr;
-  //    }
+  if (this->m_CompilerProperties) {
+    newStream->m_CompilerProperties = std::static_pointer_cast<ListNode>(
+        this->m_CompilerProperties->deepCopy());
+  } else {
+    newStream->m_CompilerProperties = nullptr;
+  }
   return newStream;
 }
 

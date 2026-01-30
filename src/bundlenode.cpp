@@ -40,19 +40,19 @@
 #include "stride/parser/scopenode.h"
 #include "stride/parser/valuenode.h"
 
-using namespace std;
 using namespace strd;
 
-BundleNode::BundleNode(string name, std::shared_ptr<ListNode> indexList,
-                       const char *filename, int line, vector<string> scope)
+BundleNode::BundleNode(std::string name, std::shared_ptr<ListNode> indexList,
+                       const char *filename, int line,
+                       std::vector<std::string> scope)
     : AST(AST::Bundle, filename, line, scope) {
   addChild(indexList);
   m_name = name;
 
-  m_CompilerProperties = make_shared<ListNode>(__FILE__, __LINE__);
+  m_CompilerProperties = std::make_shared<ListNode>(__FILE__, __LINE__);
 }
 
-BundleNode::BundleNode(string name, ASTNode scope,
+BundleNode::BundleNode(std::string name, ASTNode scope,
                        std::shared_ptr<ListNode> indexList,
                        const char *filename, int line)
     : AST(AST::Bundle, filename, line) {
@@ -60,12 +60,12 @@ BundleNode::BundleNode(string name, ASTNode scope,
   m_name = name;
   resolveScope(scope);
 
-  m_CompilerProperties = make_shared<ListNode>(__FILE__, __LINE__);
+  m_CompilerProperties = std::make_shared<ListNode>(__FILE__, __LINE__);
 }
 
 BundleNode::~BundleNode() {}
 
-string BundleNode::getName() const { return m_name; }
+std::string BundleNode::getName() const { return m_name; }
 
 std::shared_ptr<ListNode> BundleNode::index() const {
   return std::static_pointer_cast<ListNode>(m_children.at(0));
@@ -81,18 +81,19 @@ std::vector<size_t> BundleNode::getIndeces() {
   for (const auto &listNode : indexList->getChildren()) {
     if (listNode->getNodeType() == AST::Int) {
       indeces.push_back(
-          static_pointer_cast<ValueNode>(listNode)->getIntValue());
+          std::static_pointer_cast<ValueNode>(listNode)->getIntValue());
     } else if (listNode->getNodeType() == AST::Range) {
-      auto rangeNode = static_pointer_cast<RangeNode>(listNode);
+      auto rangeNode = std::static_pointer_cast<RangeNode>(listNode);
       if (rangeNode->startIndex()->getNodeType() == AST::Int &&
           rangeNode->endIndex()->getNodeType() == AST::Int) {
-        assert(static_pointer_cast<ValueNode>(rangeNode->endIndex())
+        assert(std::static_pointer_cast<ValueNode>(rangeNode->endIndex())
                    ->getIntValue() >=
-               static_pointer_cast<ValueNode>(rangeNode->startIndex())
+               std::static_pointer_cast<ValueNode>(rangeNode->startIndex())
                    ->getIntValue());
-        for (size_t i = static_pointer_cast<ValueNode>(rangeNode->startIndex())
-                            ->getIntValue();
-             i <= static_pointer_cast<ValueNode>(rangeNode->endIndex())
+        for (size_t i =
+                 std::static_pointer_cast<ValueNode>(rangeNode->startIndex())
+                     ->getIntValue();
+             i <= std::static_pointer_cast<ValueNode>(rangeNode->endIndex())
                       ->getIntValue();
              i++) {
           indeces.push_back(i);
@@ -125,17 +126,17 @@ ASTNode BundleNode::deepCopy() {
   assert(getNodeType() == AST::Bundle);
   if (getNodeType() == AST::Bundle) {
     std::shared_ptr<BundleNode> newBundle = std::make_shared<BundleNode>(
-        m_name, static_pointer_cast<ListNode>(index()->deepCopy()),
+        m_name, std::static_pointer_cast<ListNode>(index()->deepCopy()),
         m_filename.data(), m_line);
     for (unsigned int i = 0; i < this->getScopeLevels(); i++) {
       newBundle->addScope(this->getScopeAt(i));
     }
-    //        if (this->m_CompilerProperties) {
-    //            newBundle->m_CompilerProperties =
-    //            std::static_pointer_cast<ListNode>(this->m_CompilerProperties->deepCopy());
-    //        } else {
-    //            newBundle->m_CompilerProperties = nullptr;
-    //        }
+    if (this->m_CompilerProperties) {
+      newBundle->m_CompilerProperties = std::static_pointer_cast<ListNode>(
+          this->m_CompilerProperties->deepCopy());
+    } else {
+      newBundle->m_CompilerProperties = nullptr;
+    }
     return newBundle;
   }
   assert(0 == 1);

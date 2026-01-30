@@ -35,13 +35,13 @@
 #include <cassert>
 
 #include "stride/parser/importnode.h"
+#include "stride/parser/listnode.h"
 #include "stride/parser/scopenode.h"
 
-using namespace std;
 using namespace strd;
 
-ImportNode::ImportNode(string name, ASTNode scope, const char *filename,
-                       int line, string alias)
+ImportNode::ImportNode(std::string name, ASTNode scope, const char *filename,
+                       int line, std::string alias)
     : AST(AST::Import, filename, line) {
   m_importName = name;
   m_importAlias = alias;
@@ -56,22 +56,22 @@ ImportNode::ImportNode(string name, ASTNode scope, const char *filename,
   }
 }
 
-ImportNode::ImportNode(string name, const char *filename, int line,
-                       string alias)
+ImportNode::ImportNode(std::string name, const char *filename, int line,
+                       std::string alias)
     : AST(AST::Import, filename, line) {
   m_importName = name;
   m_importAlias = alias;
 }
 
-string ImportNode::importName() const { return m_importName; }
+std::string ImportNode::importName() const { return m_importName; }
 
-void ImportNode::setImportName(const string &importName) {
+void ImportNode::setImportName(const std::string &importName) {
   m_importName = importName;
 }
 
-string ImportNode::importAlias() const { return m_importAlias; }
+std::string ImportNode::importAlias() const { return m_importAlias; }
 
-void ImportNode::setImportAlias(const string &importAlias) {
+void ImportNode::setImportAlias(const std::string &importAlias) {
   m_importAlias = importAlias;
 }
 
@@ -92,11 +92,11 @@ ASTNode ImportNode::deepCopy() {
   for (unsigned int i = 0; i < this->getScopeLevels(); i++) {
     newImportNode->addScope(this->getScopeAt(i));
   }
-  //    if (this->m_CompilerProperties) {
-  //        newImportNode->m_CompilerProperties =
-  //        std::static_pointer_cast<ListNode>(this->m_CompilerProperties->deepCopy());
-  //    } else {
-  //        newImportNode->m_CompilerProperties = nullptr;
-  //    }
+  if (this->m_CompilerProperties) {
+    newImportNode->m_CompilerProperties = std::static_pointer_cast<ListNode>(
+        this->m_CompilerProperties->deepCopy());
+  } else {
+    newImportNode->m_CompilerProperties = nullptr;
+  }
   return newImportNode;
 }

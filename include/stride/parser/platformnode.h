@@ -57,7 +57,7 @@ public:
   //    vector<string> hwPlatforms() const;
   //    void setHwPlatforms(const vector<string> &hwPlatforms);
 
-  //    AST *deepCopy();
+  ASTNode deepCopy() override;
 
 private:
   int m_minorVersion;
