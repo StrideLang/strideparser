@@ -164,3 +164,46 @@ ASTNode ExpressionNode::deepCopy() {
     return newNode;
   }
 }
+
+std::string ExpressionNode::toText(int indentOffset, int indentSize,
+                                   bool newLine) const {
+  std::string text;
+  text += "(";
+  if (isUnary()) {
+    text += getOperator();
+    text += getValue()->toText(indentOffset, indentSize, false);
+  } else {
+    text += getLeft()->toText(indentOffset, indentSize, false);
+    text += " " + getOperator() + " ";
+    text += getRight()->toText(indentOffset, indentSize, false);
+  }
+
+  text += ")";
+  if (newLine) {
+    text += "\n";
+  }
+  return text;
+}
+
+std::string ExpressionNode::getOperator() const {
+  switch (m_type) {
+  case Multiply:
+    return "*";
+  case Divide:
+    return "/";
+  case Add:
+    return "+";
+  case Subtract:
+    return "-";
+  case And:
+    return "&";
+  case Or:
+    return "!";
+  case UnaryMinus:
+    return "-";
+  case LogicalNot:
+    return "!";
+  default:
+    return "";
+  }
+}

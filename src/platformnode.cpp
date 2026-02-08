@@ -71,6 +71,19 @@ ASTNode SystemNode::deepCopy() {
   return newNode;
 }
 
+std::string SystemNode::toText(int indentOffset, int indentSize,
+                               bool newLine) const {
+  std::string text;
+  text = "use " + platformName() + " ";
+  // TODO include hardware platforms
+  text += std::to_string(m_majorVersion) + "." + std::to_string(m_minorVersion);
+  text += ";";
+  if (newLine) {
+    text += "\n";
+  }
+  return text;
+}
+
 // std::vector<std::string> SystemNode::hwPlatforms() const {
 //   return m_targetPlatforms;
 // }

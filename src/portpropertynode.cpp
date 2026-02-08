@@ -59,3 +59,13 @@ ASTNode PortPropertyNode::deepCopy() {
   }
   return newPortPropertyNode;
 }
+
+std::string PortPropertyNode::toText(int indentOffset, int indentSize,
+                                     bool newLine) const {
+  std::string text;
+  text += m_name + "." + m_port;
+  if (newLine) {
+    text += "\n";
+  }
+  return text;
+}

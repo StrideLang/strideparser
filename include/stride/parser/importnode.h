@@ -57,6 +57,9 @@ public:
 
   virtual ASTNode deepCopy() override;
 
+  std::string toText(int indentOffset = 0, int indentSize = 2,
+                     bool newLine = true) const override;
+
 private:
   std::string m_importName;
   std::string m_importAlias;

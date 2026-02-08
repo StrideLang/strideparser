@@ -43,6 +43,7 @@ set(PARSER_HEADERS
   include/stride/parser/keywordnode.h
   include/stride/parser/platformnode.h
   include/stride/parser/propertynode.h
+  include/stride/parser/portpropertynode.h
 )
 
 if (WIN32)

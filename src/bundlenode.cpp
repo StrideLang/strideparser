@@ -142,3 +142,19 @@ ASTNode BundleNode::deepCopy() {
   assert(0 == 1);
   return nullptr;
 }
+
+std::string BundleNode::toText(int indentOffset, int indentSize,
+                               bool newLine) const {
+  std::string text;
+  text = getName() + "[ ";
+  for (const auto &elem : getChildren()[0]->getChildren()) {
+    text += elem->toText(indentOffset, indentSize, false);
+    text += ", ";
+  }
+  text = text.substr(0, text.size() - 2);
+  text += " ]";
+  if (newLine) {
+    text += "/n";
+  }
+  return text;
+}

@@ -41,21 +41,23 @@
 
 namespace strd {
 
-class PortPropertyNode : public AST
-{
+class PortPropertyNode : public AST {
 public:
-    PortPropertyNode(std::string name, std::string port, const char *filename, int line);
-    ~PortPropertyNode();
+  PortPropertyNode(std::string name, std::string port, const char *filename,
+                   int line);
+  ~PortPropertyNode();
 
-    std::string getName() const {return m_name;}
-    std::string getPortName() const {return m_port;}
+  std::string getName() const { return m_name; }
+  std::string getPortName() const { return m_port; }
 
-    virtual ASTNode deepCopy() override;
+  virtual ASTNode deepCopy() override;
+  virtual std::string toText(int indentOffset = 0, int indentSize = 2,
+                             bool newLine = true) const override;
 
 private:
-    std::string m_name;
-    std::string m_port;
+  std::string m_name;
+  std::string m_port;
 };
-} //namespace strd
+} // namespace strd
 
 #endif // PORTPROPERTYNODE_H

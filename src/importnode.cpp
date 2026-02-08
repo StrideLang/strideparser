@@ -100,3 +100,18 @@ ASTNode ImportNode::deepCopy() {
   }
   return newImportNode;
 }
+
+std::string ImportNode::toText(int indentOffset, int indentSize,
+                               bool newLine) const {
+  std::string text;
+  text += "import " + m_importName;
+  if (m_importAlias.size() > 0) {
+    text += " as " + m_importAlias;
+  }
+  text += ";";
+  if (newLine) {
+    text += "\n";
+  }
+
+  return text;
+}

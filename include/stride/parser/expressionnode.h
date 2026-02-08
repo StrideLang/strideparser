@@ -75,7 +75,12 @@ public:
   std::string getExpressionTypeString() const;
   virtual ASTNode deepCopy() override;
 
+  std::string toText(int indentOffset = 0, int indentSize = 2,
+                     bool newLine = true) const override;
+
 private:
+  std::string getOperator() const;
+
   ExpressionType m_type;
 };
 } // namespace strd

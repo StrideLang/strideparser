@@ -62,3 +62,15 @@ ASTNode RangeNode::deepCopy() {
   }
   return newRangeNode;
 }
+
+std::string RangeNode::toText(int indentOffset, int indentSize,
+                              bool newLine) const {
+  std::string text;
+  text = startIndex()->toText(indentOffset, indentSize, false);
+  text += ":";
+  text += endIndex()->toText(indentOffset, indentSize, false);
+  if (newLine) {
+    text += "\n";
+  }
+  return text;
+}
