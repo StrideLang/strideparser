@@ -1274,7 +1274,11 @@ void yyerror(const char *s){
 
     LangError newError;
     newError.type = LangError::Syntax;
+    if(yytext) {
     newError.errorTokens.push_back(std::string(yytext));
+    } else {
+ newError.errorTokens.push_back(std::string());
+}
     newError.filename = string(currentFile);
     newError.lineNumber = yylineno;
     parseErrors.push_back(newError);
