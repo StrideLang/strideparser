@@ -75,7 +75,9 @@ std::string SystemNode::toText(int indentOffset, int indentSize,
                                bool newLine) const {
   std::string text;
   text = "use " + platformName() + " ";
-  // TODO include hardware platforms
+  for (const auto &hwPlatform : m_targetPlatforms) {
+    text += hwPlatform + " ";
+  }
   text += std::to_string(m_majorVersion) + "." + std::to_string(m_minorVersion);
   text += ";";
   if (newLine) {

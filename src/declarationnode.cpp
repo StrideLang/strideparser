@@ -181,8 +181,11 @@ std::string DeclarationNode::toText(int indentOffset, int indentSize,
     indentBase += " ";
   }
   outText += indentBase;
-  if (getNamespaceList().size() > 0) {
-    // FIXME namespace
+  auto nsList = getNamespaceList();
+  if (nsList.size() > 0) {
+    for (const auto &ns : nsList) {
+      outText += ns + "::";
+    }
   }
   outText += m_objectType + " ";
   auto isAnonymous = getCompilerProperty("anonymous");

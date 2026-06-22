@@ -66,8 +66,11 @@ std::string BlockNode::toText(int indentOffset, int indentSize,
   (void)indentOffset;
   (void)indentSize;
   std::string outText;
-  if (getNamespaceList().size() > 0) {
-    // FIXME namespace
+  auto nsList = getNamespaceList();
+  if (nsList.size() > 0) {
+    for (const auto &ns : nsList) {
+      outText += ns + "::";
+    }
   }
   outText += m_name;
   if (newLine) {

@@ -60,7 +60,7 @@ public:
     UnknownPlatform,
     SystemRedefinition,
     UnresolvedRate,
-    ConstraintFail, // TODO Needs more careful though on error tokens.
+    ConstraintFail,
     None
   } ErrorType;
 

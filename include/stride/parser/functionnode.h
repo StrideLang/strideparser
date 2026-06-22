@@ -71,7 +71,8 @@ public:
 
   virtual ASTNode deepCopy() override;
 
-  // FIXME We should provide input and output rates for functions.
+  // FIXME We should move domain and rates out of the parser and into the code
+  // generator
   double getRate() const;
   void setRate(double rate);
 
