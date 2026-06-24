@@ -285,26 +285,39 @@ TEST(Basic, Lists) {
   //    [ In >> Out; OtherIn >> OtherOut;] >> [Out1, Out2];
   //    [ In >> Out; OtherIn >> OtherOut;] >> Out;
   //    Out >> [ In >> Out; OtherIn >> OtherOut;];
+  {
+    StreamNode *stream = static_cast<StreamNode *>(nodes.at(9).get());
+    EXPECT_TRUE(stream->getNodeType() == AST::Stream);
+    list = static_cast<ListNode *>(stream->getLeft().get());
+    EXPECT_TRUE(list->getNodeType() == AST::List);
+    EXPECT_TRUE(list->getChildren().size() == 2);
+    EXPECT_TRUE(list->getChildren()[0]->getNodeType() == AST::Stream);
+    EXPECT_TRUE(list->getChildren()[1]->getNodeType() == AST::Stream);
+    //  stream = static_cast<StreamNode *>(nodes.at(10).get());
+    //  list = static_cast<ListNode *>(stream->getLeft().get());
+    //  EXPECT_TRUE(list->getNodeType() == AST::List);
+    //  EXPECT_TRUE(list->getChildren().size() == 2);
+    //  EXPECT_TRUE(list->getChildren()[0]->getNodeType() == AST::Stream);
+    //  EXPECT_TRUE(list->getChildren()[1]->getNodeType() == AST::Stream);
+    stream = static_cast<StreamNode *>(nodes.at(10).get());
+    list = static_cast<ListNode *>(stream->getRight().get());
+    EXPECT_TRUE(list->getNodeType() == AST::List);
+    EXPECT_TRUE(list->getChildren().size() == 2);
+    EXPECT_TRUE(list->getChildren()[0]->getNodeType() == AST::Stream);
+    EXPECT_TRUE(list->getChildren()[1]->getNodeType() == AST::Stream);
+  }
 
-  StreamNode *stream = static_cast<StreamNode *>(nodes.at(9).get());
-  EXPECT_TRUE(stream->getNodeType() == AST::Stream);
-  list = static_cast<ListNode *>(stream->getLeft().get());
-  EXPECT_TRUE(list->getNodeType() == AST::List);
-  EXPECT_TRUE(list->getChildren().size() == 2);
-  EXPECT_TRUE(list->getChildren()[0]->getNodeType() == AST::Stream);
-  EXPECT_TRUE(list->getChildren()[1]->getNodeType() == AST::Stream);
-  //  stream = static_cast<StreamNode *>(nodes.at(10).get());
-  //  list = static_cast<ListNode *>(stream->getLeft().get());
-  //  EXPECT_TRUE(list->getNodeType() == AST::List);
-  //  EXPECT_TRUE(list->getChildren().size() == 2);
-  //  EXPECT_TRUE(list->getChildren()[0]->getNodeType() == AST::Stream);
-  //  EXPECT_TRUE(list->getChildren()[1]->getNodeType() == AST::Stream);
-  stream = static_cast<StreamNode *>(nodes.at(10).get());
-  list = static_cast<ListNode *>(stream->getRight().get());
-  EXPECT_TRUE(list->getNodeType() == AST::List);
-  EXPECT_TRUE(list->getChildren().size() == 2);
-  EXPECT_TRUE(list->getChildren()[0]->getNodeType() == AST::Stream);
-  EXPECT_TRUE(list->getChildren()[1]->getNodeType() == AST::Stream);
+  // Out >> [ 2,3,4,] >> Out;
+  {
+    StreamNode *stream = static_cast<StreamNode *>(nodes.at(11).get());
+    EXPECT_TRUE(stream->getNodeType() == AST::Stream);
+    list = static_cast<ListNode *>(stream->getLeft().get());
+    EXPECT_TRUE(list->getNodeType() == AST::List);
+    EXPECT_TRUE(list->getChildren().size() == 3);
+    EXPECT_TRUE(list->getChildren()[0]->getNodeType() == AST::Int);
+    EXPECT_TRUE(list->getChildren()[1]->getNodeType() == AST::Int);
+    EXPECT_TRUE(list->getChildren()[2]->getNodeType() == AST::Int);
+  }
 }
 
 TEST(Basic, NoneSwitch) {

@@ -52,3 +52,6 @@ constant IntegerList [3] {
 #[ In >> Out; OtherIn] >> Out;
 Out >> [ In >> Out; OtherIn >> OtherOut;];
 
+# Comma at the End
+[ 2,3,4,] >> Out;
+

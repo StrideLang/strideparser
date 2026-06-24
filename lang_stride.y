@@ -682,6 +682,11 @@ portPropertyDef:
 // =================================
 
 valueListDef:
+        '[' valueList COMMA ']'       {
+            $$ = $2;
+            COUT << "New list ... " << ENDL;
+        }
+    |
         '[' valueList ']'       {
             $$ = $2;
             COUT << "New list ... " << ENDL;
