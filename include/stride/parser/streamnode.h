@@ -63,6 +63,8 @@ public:
 
   ASTNode next();
 
+  bool hasNext();
+
 private:
   std::shared_ptr<StreamNode> mStream;
   ASTNode mLastNode;

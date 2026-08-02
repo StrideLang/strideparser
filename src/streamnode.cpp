@@ -133,6 +133,8 @@ ASTNode StreamNodeIterator::next() {
   return next;
 }
 
+bool StreamNodeIterator::hasNext() { return mStream || mLastNode; }
+
 void StreamNodeBuilder::addNode(ASTNode node) { mStreamNodes.push_back(node); }
 
 std::shared_ptr<StreamNode> StreamNodeBuilder::build() {
