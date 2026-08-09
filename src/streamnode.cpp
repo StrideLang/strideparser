@@ -50,6 +50,16 @@ StreamNode::StreamNode(ASTNode left, ASTNode right, const char *filename,
 
 StreamNode::~StreamNode() {}
 
+ASTNode StreamNode::getLeft() const { return m_children.at(0); }
+
+ASTNode StreamNode::getRight() const {
+  if (m_children.size() > 1) {
+    return m_children.at(1);
+  } else {
+    return nullptr;
+  }
+}
+
 std::string StreamNode::toText(int indentOffset, int indentSize,
                                bool newLine) const {
   std::string outText;
@@ -71,7 +81,7 @@ std::string StreamNode::toText(int indentOffset, int indentSize,
     }
     outText += newText;
 
-    if (!currentStream) {
+    if (!currentStream || !currentStream->getRight()) {
       outText += ";";
       break;
     }
@@ -119,7 +129,7 @@ ASTNode StreamNodeIterator::next() {
   ASTNode next;
   if (mStream) {
     next = mStream->getLeft();
-    if (mStream->getRight()->getNodeType() == AST::Stream) {
+    if (mStream->getRight() && mStream->getRight()->getNodeType() == AST::Stream) {
       mStream = std::static_pointer_cast<StreamNode>(mStream->getRight());
     } else {
       mLastNode = mStream->getRight();

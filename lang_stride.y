@@ -411,6 +411,9 @@ streamDef:
             }
             COUT << "Stream Resolved!" << ENDL;
         }
+    |   functionDef SEMICOLON {
+            $$ = new StreamNode(std::shared_ptr<AST>($1), nullptr, currentFile, yyloc.first_line);
+        }
     ;
 
 // =================================

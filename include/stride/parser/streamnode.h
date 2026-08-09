@@ -43,10 +43,8 @@ public:
   StreamNode(ASTNode left, ASTNode right, const char *filename, int line);
   ~StreamNode();
 
-  // TODO streams should be stored as a linked list (not nested pairs). It would
-  // make so much code later clearer.
-  ASTNode getLeft() const { return m_children.at(0); }
-  ASTNode getRight() const { return m_children.at(1); }
+  ASTNode getLeft() const;
+  ASTNode getRight() const;
 
   void setLeft(ASTNode newLeft);
   void setRight(ASTNode newRight);

@@ -268,6 +268,16 @@ TEST(Stream, Basic) {
   EXPECT_TRUE(elements.at(1)->getNodeType() == AST::Bundle);
 
   EXPECT_TRUE(l->getLine() == 20);
+
+  //    A[1:2,3,4] >> B[1,2,3:4] >> C[1,2:3,4] >> D[1,2,3,4];
+  node = std::static_pointer_cast<StreamNode>(nodes.at(11));
+  EXPECT_TRUE(node->getNodeType() == AST::Stream);
+  EXPECT_TRUE(node->getLeft()->getNodeType() == AST::Function);
+  EXPECT_FALSE(node->getRight());
+  functionNode = std::static_pointer_cast<FunctionNode>(node->getLeft());
+  EXPECT_TRUE(functionNode->getName() == "SingleFunc");
+
+  EXPECT_TRUE(functionNode->getLine() == 22);
 }
 
 TEST(Stream, Iterator) {
@@ -281,20 +291,24 @@ TEST(Stream, Iterator) {
     EXPECT_TRUE(node->getNodeType() == AST::Stream);
     EXPECT_EQ(node->getLine(), 3);
     StreamNodeIterator it(node);
+    EXPECT_TRUE(it.hasNext());
     auto streamComp = it.next();
     EXPECT_TRUE(streamComp);
     EXPECT_TRUE(streamComp->getNodeType() == AST::Block);
     EXPECT_TRUE(std::static_pointer_cast<BlockNode>(streamComp)->getName() ==
                 "Val1");
     EXPECT_EQ(streamComp->getLine(), 3);
+    EXPECT_TRUE(it.hasNext());
     streamComp = it.next();
     EXPECT_TRUE(streamComp);
     EXPECT_TRUE(streamComp->getNodeType() == AST::Block);
     EXPECT_TRUE(std::static_pointer_cast<BlockNode>(streamComp)->getName() ==
                 "Val2");
     EXPECT_TRUE(streamComp->getLine() == 3);
+    EXPECT_FALSE(it.hasNext());
     streamComp = it.next();
     EXPECT_FALSE(streamComp);
+    EXPECT_FALSE(it.hasNext());
   }
 
   // Func1() >> Func2() ;
@@ -303,18 +317,22 @@ TEST(Stream, Iterator) {
     EXPECT_TRUE(node->getNodeType() == AST::Stream);
     EXPECT_TRUE(node->getLine() == 4);
     StreamNodeIterator it(node);
+    EXPECT_TRUE(it.hasNext());
     auto streamComp = it.next();
     EXPECT_TRUE(streamComp);
     EXPECT_TRUE(streamComp->getNodeType() == AST::Function);
     EXPECT_TRUE(std::static_pointer_cast<FunctionNode>(streamComp)->getName() ==
                 "Func1");
+    EXPECT_TRUE(it.hasNext());
     streamComp = it.next();
     EXPECT_TRUE(streamComp);
     EXPECT_TRUE(streamComp->getNodeType() == AST::Function);
     EXPECT_TRUE(std::static_pointer_cast<FunctionNode>(streamComp)->getName() ==
                 "Func2");
+    EXPECT_FALSE(it.hasNext());
     streamComp = it.next();
     EXPECT_FALSE(streamComp);
+    EXPECT_FALSE(it.hasNext());
   }
 
   // Val1 >> Func1() >> Func2() >> Val2 ;
@@ -323,11 +341,13 @@ TEST(Stream, Iterator) {
     EXPECT_TRUE(node->getNodeType() == AST::Stream);
     EXPECT_TRUE(node->getLine() == 6);
     StreamNodeIterator it(node);
+    EXPECT_TRUE(it.hasNext());
     auto streamComp = it.next();
     EXPECT_TRUE(streamComp);
     EXPECT_TRUE(streamComp->getNodeType() == AST::Block);
     EXPECT_TRUE(std::static_pointer_cast<BlockNode>(streamComp)->getName() ==
                 "Val1");
+    EXPECT_TRUE(it.hasNext());
     streamComp = it.next();
     node = std::static_pointer_cast<StreamNode>(streamComp);
     EXPECT_TRUE(streamComp->getLine() == 6);
@@ -335,15 +355,31 @@ TEST(Stream, Iterator) {
     auto functionNode = std::static_pointer_cast<FunctionNode>(streamComp);
     EXPECT_TRUE(functionNode->getName() == "Func1");
     EXPECT_TRUE(functionNode->getLine() == 6);
+    EXPECT_TRUE(it.hasNext());
     streamComp = it.next();
     functionNode = std::static_pointer_cast<FunctionNode>(streamComp);
     EXPECT_TRUE(functionNode->getName() == "Func2");
     EXPECT_TRUE(functionNode->getLine() == 7);
+    EXPECT_TRUE(it.hasNext());
     streamComp = it.next();
     EXPECT_TRUE(streamComp->getNodeType() == AST::Block);
     auto nameNode = std::static_pointer_cast<BlockNode>(streamComp);
     EXPECT_TRUE(nameNode->getName() == "Val2");
     EXPECT_TRUE(nameNode->getLine() == 8);
+    EXPECT_FALSE(it.hasNext());
+  }
+  // Single stream
+  // SingleFunc();
+  {
+    auto node = std::static_pointer_cast<StreamNode>(nodes.at(11));
+    EXPECT_TRUE(node->getNodeType() == AST::Stream);
+    EXPECT_EQ(node->getLine(), 22);
+    StreamNodeIterator it(node);
+    EXPECT_TRUE(it.hasNext());
+    auto streamComp = it.next();
+    EXPECT_TRUE(streamComp);
+    EXPECT_EQ(streamComp->getNodeType(), AST::Function);
+    EXPECT_FALSE(it.hasNext());
   }
 
   // //    Bundle1[1] >> Bundle2[2];
