@@ -71,7 +71,7 @@ std::string LangError::getErrorText() {
   case BundleSizeMismatch:
     errorText += "Bundle Size Mismatch Error";
     break;
-  case ArrayIndexOutOfRange:
+  case ArrayIndexOutOfBounds:
     errorText += "Array Index out of Range Error";
     break;
   case DuplicateSymbol:

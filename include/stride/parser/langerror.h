@@ -51,7 +51,7 @@ public:
     InvalidPortType,
     InvalidIndexType,
     BundleSizeMismatch,
-    ArrayIndexOutOfRange,
+    ArrayIndexOutOfBounds,
     DuplicateSymbol,
     InconsistentList,
     StreamMemberSizeMismatch,
