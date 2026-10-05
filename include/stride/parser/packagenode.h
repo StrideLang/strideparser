@@ -1,7 +1,7 @@
 /*
     Stride is licensed under the terms of the 3-clause BSD license.
 
-    Copyright (C) 2017. The Regents of the University of California.
+    Copyright (C) 2026. Andres Cabrera.
     All rights reserved.
     Redistribution and use in source and binary forms, with or without
     modification, are permitted provided that the following conditions are met:
@@ -29,27 +29,39 @@
     ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
     POSSIBILITY OF SUCH DAMAGE.
 
-    Authors: Andres Cabrera and Joseph Tilbian
+    Authors: Andres Cabrera
 */
 
-#ifndef STRIDEPARSER_H
-#define STRIDEPARSER_H
+#ifndef PACKAGENODE_H
+#define PACKAGENODE_H
+
+#include <string>
+#include <vector>
 
 #include "ast.h"
-#include "blocknode.h"
-#include "bundlenode.h"
-#include "declarationnode.h"
-#include "expressionnode.h"
-#include "functionnode.h"
-#include "importnode.h"
-#include "listnode.h"
-#include "packagenode.h"
-#include "platformnode.h"
-#include "portpropertynode.h"
-#include "propertynode.h"
-#include "rangenode.h"
-#include "scopenode.h"
-#include "streamnode.h"
-#include "valuenode.h"
 
-#endif // STRIDEPARSER_H
+namespace strd {
+class PackageNode : public AST {
+public:
+  PackageNode(std::string name, ASTNode scope, const char *filename, int line);
+  PackageNode(std::string name, const char *filename, int line);
+
+  std::string packageName() const;
+
+  const std::string &fullPackageName() const;
+  const std::vector<std::string> &packageSegments() const;
+
+  virtual void resolveScope(ASTNode scope) override;
+  virtual ASTNode deepCopy() override;
+
+  std::string toText(int indentOffset = 0, int indentSize = 2,
+                     bool newLine = true) const override;
+
+private:
+  std::string m_packageName;
+  mutable std::string m_cachedFullName;
+  mutable std::vector<std::string> m_cachedSegments;
+};
+} // namespace strd
+
+#endif // PACKAGENODE_H

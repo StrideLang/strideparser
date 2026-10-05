@@ -49,6 +49,7 @@ HEXLETTER   [A-Fa-f]
 "@"     { return AT; }
 
 "use"           { return USE; }
+"package"       { return PACKAGE; }
 "version"       { return VERSION; }
 "with"          { return WITH; }
 "import"        { return IMPORT; }

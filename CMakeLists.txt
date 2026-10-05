@@ -14,6 +14,7 @@ set(PARSER_SRC
   src/expressionnode.cpp
   src/listnode.cpp
   src/importnode.cpp
+  src/packagenode.cpp
   src/rangenode.cpp
   src/langerror.cpp
   src/keywordnode.cpp
@@ -34,6 +35,7 @@ set(PARSER_HEADERS
   include/stride/parser/expressionnode.h
   include/stride/parser/listnode.h
   include/stride/parser/importnode.h
+  include/stride/parser/packagenode.h
   include/stride/parser/rangenode.h
   include/stride/parser/langerror.h
   include/stride/parser/strideparser.h

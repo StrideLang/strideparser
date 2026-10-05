@@ -5,6 +5,7 @@
 #include "stride/parser/functionnode.h"
 #include "stride/parser/importnode.h"
 #include "stride/parser/listnode.h"
+#include "stride/parser/packagenode.h"
 #include "stride/parser/platformnode.h"
 #include "stride/parser/portpropertynode.h"
 #include "stride/parser/propertynode.h"
@@ -125,3 +126,22 @@ TEST(ToTextTest, SystemNode) {
   SystemNode sys("MyPlatform", 1, 2, "test", 1);
   EXPECT_EQ(sys.toText(0, 2, false), "use MyPlatform 1.2;");
 }
+
+TEST(ToTextTest, PackageNode) {
+  PackageNode pkg("Filters", "test", 1);
+  EXPECT_EQ(pkg.toText(0, 2, false), "package Filters;");
+  EXPECT_EQ(pkg.packageName(), "Filters");
+  EXPECT_EQ(pkg.fullPackageName(), "Filters");
+
+  PackageNode pkgScoped("Biquad", "test", 1);
+  pkgScoped.addScope("Audio");
+  pkgScoped.addScope("Filters");
+  EXPECT_EQ(pkgScoped.toText(0, 2, false), "package Audio::Filters::Biquad;");
+  EXPECT_EQ(pkgScoped.fullPackageName(), "Audio::Filters::Biquad");
+  const auto &segs = pkgScoped.packageSegments();
+  ASSERT_EQ(segs.size(), 3);
+  EXPECT_EQ(segs[0], "Audio");
+  EXPECT_EQ(segs[1], "Filters");
+  EXPECT_EQ(segs[2], "Biquad");
+}
+

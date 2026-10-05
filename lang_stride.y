@@ -75,6 +75,7 @@ NullStream nstream;
 %code requires { #include "stride/parser/importnode.h" }
 %code requires { #include "stride/parser/keywordnode.h" }
 %code requires { #include "stride/parser/listnode.h" }
+%code requires { #include "stride/parser/packagenode.h" }
 %code requires { #include "stride/parser/platformnode.h" }
 %code requires { #include "stride/parser/portpropertynode.h" }
 %code requires { #include "stride/parser/propertynode.h" }
@@ -97,6 +98,7 @@ NullStream nstream;
     strd::ExpressionNode *expressionNode;
     strd::ListNode *listNode;
     strd::ImportNode *importNode;
+    strd::PackageNode *packageNode;
     strd::RangeNode *rangeNode;
     strd::KeywordNode *keywordNode;
     strd::ScopeNode *scopeNode;
@@ -107,6 +109,7 @@ NullStream nstream;
 %type <systemNode> systemDef
 %type <systemNode> languagePlatform
 %type <importNode> importDef
+%type <packageNode> packageDef
 %type <declarationNode> blockDef
 %type <ast> blockType
 %type <ast> properties
@@ -151,7 +154,7 @@ NullStream nstream;
 
 %token '[' ']' '{' '}'
 %token DOT COMMA COLON COLONCOLON SEMICOLON
-%token USE VERSION WITH IMPORT AS FOR NONE ON OFF
+%token USE VERSION WITH IMPORT PACKAGE AS FOR NONE ON OFF
 %token BITAND BITOR BITNOT AT
 %token STREAMRATE
 
@@ -179,6 +182,10 @@ start:
         systemDef {
             tree_head->addChild(std::shared_ptr<SystemNode>($1));
             COUT << "System Definition Resolved!" << ENDL;
+        }
+    |   packageDef  {
+            tree_head->addChild(std::shared_ptr<PackageNode>($1));
+            COUT << "Package Definition Resolved!" << ENDL;
         }
     |   importDef   {
             tree_head->addChild(std::shared_ptr<ImportNode>($1));
@@ -225,6 +232,28 @@ languagePlatform:
             $$ = new SystemNode(s, major, minor, currentFile, yyloc.first_line);
             COUT << "Platform: " << $2 << ENDL << "Version: " << $4 << " line " << yylineno << ENDL;
             free($2);
+        }
+    ;
+
+
+// =================================
+//  PACKAGE DEFINITION
+// =================================
+
+packageDef:
+        PACKAGE UVAR {
+            string word;
+            word.append($2); /* string constructor leaks otherwise! */
+            $$ = new PackageNode(word, NULL, currentFile, yyloc.first_line);
+            COUT << "Package: " << $2 << ENDL;
+            free($2);
+        }
+    |   PACKAGE scopeDef UVAR {
+            string word;
+            word.append($3); /* string constructor leaks otherwise! */
+            $$ = new PackageNode(word, std::shared_ptr<AST>($2), currentFile, yyloc.first_line);
+            COUT << "Package: " << $3 << " in scope!" << ENDL;
+            free($3);
         }
     ;
 

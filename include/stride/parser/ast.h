@@ -63,6 +63,7 @@ public:
     Range,
     List,
     Import,
+    Package,
     For,
     Scope,
     PortProperty,

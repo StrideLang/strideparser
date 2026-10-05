@@ -7,6 +7,7 @@
 #include "stride/parser/expressionnode.h"
 #include "stride/parser/functionnode.h"
 #include "stride/parser/importnode.h"
+#include "stride/parser/packagenode.h"
 #include "stride/parser/platformnode.h"
 #include "stride/parser/rangenode.h"
 #include "stride/parser/streamnode.h"
@@ -560,4 +561,23 @@ TEST(Basic, TrailingCommasInLists) {
   EXPECT_EQ(std::static_pointer_cast<ValueNode>(idx6->getChildren()[0])->getIntValue(), 1);
   EXPECT_EQ(std::static_pointer_cast<ValueNode>(idx6->getChildren()[1])->getIntValue(), 2);
 }
+
+TEST(Basic, PackageDeclaration) {
+  ASTNode tree = AST::parseFile(TESTS_SOURCE_DIR "basic/24_package.stride");
+  ASSERT_TRUE(tree != nullptr);
+
+  std::vector<ASTNode> nodes = tree->getChildren();
+  ASSERT_EQ(nodes.size(), 1);
+
+  // Node 0: package Audio::Filters
+  ASSERT_EQ(nodes.at(0)->getNodeType(), AST::Package);
+  auto pkg = std::static_pointer_cast<PackageNode>(nodes.at(0));
+  EXPECT_EQ(pkg->packageName(), "Filters");
+  EXPECT_EQ(pkg->fullPackageName(), "Audio::Filters");
+  const auto &segs = pkg->packageSegments();
+  ASSERT_EQ(segs.size(), 2);
+  EXPECT_EQ(segs[0], "Audio");
+  EXPECT_EQ(segs[1], "Filters");
+}
+
 
