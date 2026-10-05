@@ -400,3 +400,95 @@ TEST(Basic, Header) {
   EXPECT_TRUE(importnode->importAlias() == "F");
   EXPECT_TRUE(importnode->getLine() == 6);
 }
+
+TEST(Basic, HexAndBinaryLiterals) {
+  ASTNode tree;
+  tree = AST::parseFile(TESTS_SOURCE_DIR "basic/22_hex_binary_literals.stride");
+
+  EXPECT_TRUE(tree != nullptr);
+  std::vector<ASTNode> nodes = tree->getChildren();
+  // Node 0: Platform
+  EXPECT_EQ(nodes.at(0)->getNodeType(), AST::Platform);
+
+  // Node 1: 0x10 >> Out1 (0x10 == 16)
+  auto stream1 = std::static_pointer_cast<StreamNode>(nodes.at(1));
+  auto val1 = std::static_pointer_cast<ValueNode>(stream1->getLeft());
+  EXPECT_EQ(val1->getNodeType(), AST::Int);
+  EXPECT_EQ(val1->getIntValue(), 16);
+
+  // Node 2: 0x1F >> Out2 (0x1F == 31)
+  auto stream2 = std::static_pointer_cast<StreamNode>(nodes.at(2));
+  auto val2 = std::static_pointer_cast<ValueNode>(stream2->getLeft());
+  EXPECT_EQ(val2->getNodeType(), AST::Int);
+  EXPECT_EQ(val2->getIntValue(), 31);
+
+  // Node 3: 0X2A >> Out3 (0X2A == 42)
+  auto stream3 = std::static_pointer_cast<StreamNode>(nodes.at(3));
+  auto val3 = std::static_pointer_cast<ValueNode>(stream3->getLeft());
+  EXPECT_EQ(val3->getNodeType(), AST::Int);
+  EXPECT_EQ(val3->getIntValue(), 42);
+
+  // Node 4: 0b1010 >> Out4 (0b1010 == 10)
+  auto stream4 = std::static_pointer_cast<StreamNode>(nodes.at(4));
+  auto val4 = std::static_pointer_cast<ValueNode>(stream4->getLeft());
+  EXPECT_EQ(val4->getNodeType(), AST::Int);
+  EXPECT_EQ(val4->getIntValue(), 10);
+
+  // Node 5: 0b0 >> Out5 (0b0 == 0)
+  auto stream5 = std::static_pointer_cast<StreamNode>(nodes.at(5));
+  auto val5 = std::static_pointer_cast<ValueNode>(stream5->getLeft());
+  EXPECT_EQ(val5->getNodeType(), AST::Int);
+  EXPECT_EQ(val5->getIntValue(), 0);
+
+  // Node 6: 0B11110000 >> Out6 (0B11110000 == 240)
+  auto stream6 = std::static_pointer_cast<StreamNode>(nodes.at(6));
+  auto val6 = std::static_pointer_cast<ValueNode>(stream6->getLeft());
+  EXPECT_EQ(val6->getNodeType(), AST::Int);
+  EXPECT_EQ(val6->getIntValue(), 240);
+
+  // Node 7: HexBundle declaration
+  auto hexBundleDecl = std::static_pointer_cast<DeclarationNode>(nodes.at(7));
+  EXPECT_EQ(hexBundleDecl->getNodeType(), AST::BundleDeclaration);
+  auto hexProps = hexBundleDecl->getProperties();
+  auto hexList = std::static_pointer_cast<ListNode>(hexProps.at(0)->getValue());
+  auto hexMembers = hexList->getChildren();
+  EXPECT_EQ(hexMembers.size(), 4);
+  int64_t expectedHex[] = {1, 2, 4, 8};
+  for (size_t i = 0; i < 4; ++i) {
+    auto v = std::static_pointer_cast<ValueNode>(hexMembers[i]);
+    EXPECT_EQ(v->getNodeType(), AST::Int);
+    EXPECT_EQ(v->getIntValue(), expectedHex[i]);
+  }
+
+  // Node 8: BinBundle declaration
+  auto binBundleDecl = std::static_pointer_cast<DeclarationNode>(nodes.at(8));
+  EXPECT_EQ(binBundleDecl->getNodeType(), AST::BundleDeclaration);
+  auto binProps = binBundleDecl->getProperties();
+  auto binList = std::static_pointer_cast<ListNode>(binProps.at(0)->getValue());
+  auto binMembers = binList->getChildren();
+  EXPECT_EQ(binMembers.size(), 4);
+  int64_t expectedBin[] = {1, 2, 4, 8};
+  for (size_t i = 0; i < 4; ++i) {
+    auto v = std::static_pointer_cast<ValueNode>(binMembers[i]);
+    EXPECT_EQ(v->getNodeType(), AST::Int);
+    EXPECT_EQ(v->getIntValue(), expectedBin[i]);
+  }
+
+  // Node 9: HexBundle[0x02] >> Out7
+  auto stream7 = std::static_pointer_cast<StreamNode>(nodes.at(9));
+  auto bundle7 = std::static_pointer_cast<BundleNode>(stream7->getLeft());
+  auto idxList7 = bundle7->index();
+  auto idxVal7 =
+      std::static_pointer_cast<ValueNode>(idxList7->getChildren().at(0));
+  EXPECT_EQ(idxVal7->getNodeType(), AST::Int);
+  EXPECT_EQ(idxVal7->getIntValue(), 2);
+
+  // Node 10: BinBundle[0b01] >> Out8
+  auto stream8 = std::static_pointer_cast<StreamNode>(nodes.at(10));
+  auto bundle8 = std::static_pointer_cast<BundleNode>(stream8->getLeft());
+  auto idxList8 = bundle8->index();
+  auto idxVal8 =
+      std::static_pointer_cast<ValueNode>(idxList8->getChildren().at(0));
+  EXPECT_EQ(idxVal8->getNodeType(), AST::Int);
+  EXPECT_EQ(idxVal8->getIntValue(), 1);
+}

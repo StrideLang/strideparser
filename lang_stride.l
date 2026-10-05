@@ -66,9 +66,9 @@ HEXLETTER   [A-Fa-f]
 
 {DIGIT}+\.{DIGIT}*  { yylval.fval = strtod(yytext, NULL); return REAL; }
 {DIGIT}*\.{DIGIT}+  { yylval.fval = strtod(yytext, NULL); return REAL; }
-{DIGIT}+            { yylval.ival = atoi(yytext); return INT; }
-
-0x({DIGIT}|{HEXLETTER})+  { yylval.sval = strdup(yytext); return HEX; }
+0[xX]({DIGIT}|{HEXLETTER})+  { yylval.sval = strdup(yytext); return HEX; }
+0[bB][01]+                  { yylval.sval = strdup(yytext); return BIN; }
+{DIGIT}+            { yylval.ival = atoll(yytext); return INT; }
 
 (_)*{CLETTER}({LETTER}|{CLETTER}|{DIGIT}|_)*    { yylval.sval = strdup(yytext); return UVAR; }
 (_)*{LETTER}({LETTER}|{CLETTER}|{DIGIT})*       { yylval.sval = strdup(yytext); return WORD; }

@@ -1,0 +1,19 @@
+use TestPlatform version 1.0
+
+0x10 >> Out1;
+0x1F >> Out2;
+0X2A >> Out3;
+0b1010 >> Out4;
+0b0 >> Out5;
+0B11110000 >> Out6;
+
+constant HexBundle [0x04] {
+    value: [ 0x01, 0x02, 0x04, 0x08 ]
+}
+
+constant BinBundle [0b100] {
+    value: [ 0b0001, 0b0010, 0b0100, 0b1000 ]
+}
+
+HexBundle[0x02] >> Out7;
+BinBundle[0b01] >> Out8;

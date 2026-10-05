@@ -143,6 +143,7 @@ NullStream nstream;
 %token  <ival>  INT
 %token  <fval>  REAL
 %token  <sval>  HEX
+%token  <sval>  BIN
 %token  <sval>  UVAR
 %token  <sval>  WORD
 %token  <sval>  STRING
@@ -1111,6 +1112,20 @@ indexComp:
             $$ = new ValueNode($1, currentFile, yyloc.first_line);
             COUT << "Index/Size Integer: " << $1 << ENDL;
         }
+    |   HEX             {
+            char * p;
+            int64_t value = strtoll($1, &p, 16);
+            $$ = new ValueNode(value, currentFile, yyloc.first_line);
+            COUT << "Index/Size Hex: " << $1 << ENDL;
+            free($1);
+        }
+    |   BIN             {
+            char * p;
+            int64_t value = strtoll($1 + 2, &p, 2);
+            $$ = new ValueNode(value, currentFile, yyloc.first_line);
+            COUT << "Index/Size Bin: " << $1 << ENDL;
+            free($1);
+        }
     |   UVAR            {
             string s;
             s.append($1); /* string constructor leaks otherwise! */
@@ -1190,10 +1205,17 @@ streamComp:
         }
     |   HEX             {
             char * p;
-            int64_t value = strtol($1, &p, 16);
+            int64_t value = strtoll($1, &p, 16);
             $$ = new ValueNode(value, currentFile, yyloc.first_line);
-            free($1);
             COUT << "Hex: " << $1 << ENDL;
+            free($1);
+        }
+    |   BIN             {
+            char * p;
+            int64_t value = strtoll($1 + 2, &p, 2);
+            $$ = new ValueNode(value, currentFile, yyloc.first_line);
+            COUT << "Bin: " << $1 << ENDL;
+            free($1);
         }
 //    |   NONE            {
 //            $$ = new ValueNode(currentFile, yyloc.first_line);
