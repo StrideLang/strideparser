@@ -1,0 +1,35 @@
+use TestPlatform version 1.0
+
+# Value lists with trailing commas
+[ 1, 2, 3, ] >> Out1;
+[ 42, ] >> Out2;
+
+# List of lists with trailing commas
+[ [ 1, 2, ], [ 3, 4, ], ] >> Out3;
+
+# Bundle declaration with trailing comma
+signal MySignal[4, ] {
+    default: 0
+}
+
+# Block lists with trailing commas in module
+module TestModule {
+    ports: [
+        mainInputPort {
+            block: In
+        },
+        mainOutputPort {
+            block: Out
+        },
+    ]
+    blocks: [
+        signal In { type: _IntType },
+        signal Out { type: _IntType },
+    ]
+    streams: [
+        In + 1 >> Out;,
+    ]
+}
+
+# Bundle indexing with trailing comma
+MyBundle[1, 2, ] >> Out4;

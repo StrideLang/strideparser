@@ -492,3 +492,72 @@ TEST(Basic, HexAndBinaryLiterals) {
   EXPECT_EQ(idxVal8->getNodeType(), AST::Int);
   EXPECT_EQ(idxVal8->getIntValue(), 1);
 }
+
+TEST(Basic, TrailingCommasInLists) {
+  ASTNode tree;
+  tree = AST::parseFile(TESTS_SOURCE_DIR "basic/23_trailing_commas.stride");
+
+  EXPECT_TRUE(tree != nullptr);
+  std::vector<ASTNode> nodes = tree->getChildren();
+  // Node 0: Platform
+  EXPECT_EQ(nodes.at(0)->getNodeType(), AST::Platform);
+
+  // Node 1: [ 1, 2, 3, ] >> Out1;
+  auto stream1 = std::static_pointer_cast<StreamNode>(nodes.at(1));
+  auto list1 = std::static_pointer_cast<ListNode>(stream1->getLeft());
+  EXPECT_EQ(list1->getNodeType(), AST::List);
+  EXPECT_EQ(list1->size(), 3);
+  EXPECT_EQ(std::static_pointer_cast<ValueNode>(list1->getChildren()[0])->getIntValue(), 1);
+  EXPECT_EQ(std::static_pointer_cast<ValueNode>(list1->getChildren()[1])->getIntValue(), 2);
+  EXPECT_EQ(std::static_pointer_cast<ValueNode>(list1->getChildren()[2])->getIntValue(), 3);
+
+  // Node 2: [ 42, ] >> Out2;
+  auto stream2 = std::static_pointer_cast<StreamNode>(nodes.at(2));
+  auto list2 = std::static_pointer_cast<ListNode>(stream2->getLeft());
+  EXPECT_EQ(list2->getNodeType(), AST::List);
+  EXPECT_EQ(list2->size(), 1);
+  EXPECT_EQ(std::static_pointer_cast<ValueNode>(list2->getChildren()[0])->getIntValue(), 42);
+
+  // Node 3: [ [ 1, 2, ], [ 3, 4, ], ] >> Out3;
+  auto stream3 = std::static_pointer_cast<StreamNode>(nodes.at(3));
+  auto list3 = std::static_pointer_cast<ListNode>(stream3->getLeft());
+  EXPECT_EQ(list3->getNodeType(), AST::List);
+  EXPECT_EQ(list3->size(), 2);
+  auto subList1 = std::static_pointer_cast<ListNode>(list3->getChildren()[0]);
+  auto subList2 = std::static_pointer_cast<ListNode>(list3->getChildren()[1]);
+  EXPECT_EQ(subList1->size(), 2);
+  EXPECT_EQ(subList2->size(), 2);
+  EXPECT_EQ(std::static_pointer_cast<ValueNode>(subList1->getChildren()[0])->getIntValue(), 1);
+  EXPECT_EQ(std::static_pointer_cast<ValueNode>(subList1->getChildren()[1])->getIntValue(), 2);
+  EXPECT_EQ(std::static_pointer_cast<ValueNode>(subList2->getChildren()[0])->getIntValue(), 3);
+  EXPECT_EQ(std::static_pointer_cast<ValueNode>(subList2->getChildren()[1])->getIntValue(), 4);
+
+  // Node 4: signal MySignal[4, ] { default: 0 }
+  auto signalDecl = std::static_pointer_cast<DeclarationNode>(nodes.at(4));
+  EXPECT_EQ(signalDecl->getNodeType(), AST::BundleDeclaration);
+  EXPECT_EQ(signalDecl->getName(), "MySignal");
+
+  // Node 5: module TestModule
+  auto moduleDecl = std::static_pointer_cast<DeclarationNode>(nodes.at(5));
+  EXPECT_EQ(moduleDecl->getNodeType(), AST::Declaration);
+  EXPECT_EQ(moduleDecl->getName(), "TestModule");
+  auto portsList = std::static_pointer_cast<ListNode>(moduleDecl->getPropertyValue("ports"));
+  EXPECT_TRUE(portsList != nullptr);
+  EXPECT_EQ(portsList->size(), 2);
+  auto blocksList = std::static_pointer_cast<ListNode>(moduleDecl->getPropertyValue("blocks"));
+  EXPECT_TRUE(blocksList != nullptr);
+  EXPECT_EQ(blocksList->size(), 2);
+  auto streamsList = std::static_pointer_cast<ListNode>(moduleDecl->getPropertyValue("streams"));
+  EXPECT_TRUE(streamsList != nullptr);
+  EXPECT_EQ(streamsList->size(), 1);
+
+  // Node 6: MyBundle[1, 2, ] >> Out4;
+  auto stream6 = std::static_pointer_cast<StreamNode>(nodes.at(6));
+  auto bundle6 = std::static_pointer_cast<BundleNode>(stream6->getLeft());
+  EXPECT_EQ(bundle6->getName(), "MyBundle");
+  auto idx6 = bundle6->index();
+  EXPECT_EQ(idx6->size(), 2);
+  EXPECT_EQ(std::static_pointer_cast<ValueNode>(idx6->getChildren()[0])->getIntValue(), 1);
+  EXPECT_EQ(std::static_pointer_cast<ValueNode>(idx6->getChildren()[1])->getIntValue(), 2);
+}
+

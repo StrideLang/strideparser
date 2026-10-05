@@ -328,6 +328,19 @@ blockDef:
             free($2);
             free($1);
          }
+    |   WORD UVAR '[' indexExp COMMA ']' blockType    {
+            string name;
+            name.append($2); /* string constructor leaks otherwise! */
+            std::shared_ptr<ListNode> list = std::make_shared<ListNode>(std::shared_ptr<AST>($4), currentFile, yyloc.first_line);
+            std::shared_ptr<BundleNode> bundle = std::make_shared<BundleNode>(name, list, currentFile, yyloc.first_line);
+            COUT << "Bundle name: " << name << ENDL;
+            string type;
+            type.append($1); /* string constructor leaks otherwise! */
+            $$ = new DeclarationNode(bundle, type, std::shared_ptr<AST>($7), currentFile, yyloc.first_line);
+            COUT << "Block Bundle: " << $1 << ", Labelled: " << $2 << ENDL;
+            free($2);
+            free($1);
+         }
     |   anonymousDeclDef     {
         COUT << "Resolving anonymous declaration ... " << ENDL;
         COUT << "Streaming ... " << ENDL;
@@ -456,7 +469,22 @@ bundleDef:
             COUT << "Bundle name: " << $1 << ENDL;
             free($1);
         }
+    |   UVAR '[' indexList COMMA ']'    {
+            string s;
+            s.append($1); /* string constructor leaks otherwise! */
+            $$ = new BundleNode(s, std::shared_ptr<ListNode>($3), currentFile, yyloc.first_line);
+            COUT << "Bundle name: " << $1 << ENDL;
+            free($1);
+        }
     |   scopeDef UVAR '[' indexList ']' {
+            string s;
+            s.append($2); /* string constructor leaks otherwise! */
+            $$ = new BundleNode(s, std::shared_ptr<AST>($1), std::shared_ptr<ListNode>($4), currentFile, yyloc.first_line);
+            COUT << "Bundle name: " << $2 << " in scope!" << ENDL;
+            COUT << "Streaming ... " << ENDL;
+            free($2);
+        }
+    |   scopeDef UVAR '[' indexList COMMA ']' {
             string s;
             s.append($2); /* string constructor leaks otherwise! */
             $$ = new BundleNode(s, std::shared_ptr<AST>($1), std::shared_ptr<ListNode>($4), currentFile, yyloc.first_line);
@@ -695,6 +723,10 @@ valueListDef:
             $$ = $2;
             COUT << "New list ... " << ENDL;
         }
+    |   '[' valueListList COMMA ']'   {
+            $$ = $2;
+            COUT << "New list of lists ... " << ENDL;
+        }
     |   '[' valueListList ']'   {
             $$ = $2;
             COUT << "New list of lists ... " << ENDL;
@@ -742,14 +774,17 @@ valueListList:
 // =================================
 
 listDef:
-        '[' blockList  ']'  { $$ = $2; }
-    |   streamListDef       { }
-    |   '[' listList   ']'  { $$ = $2; }
+        '[' blockList COMMA ']' { $$ = $2; }
+    |   '[' blockList  ']'      { $$ = $2; }
+    |   streamListDef           { }
+    |   '[' listList COMMA ']'  { $$ = $2; }
+    |   '[' listList   ']'      { $$ = $2; }
     ;
 
 
 streamListDef:
-        '[' streamList ']'  { $$ = $2; currentAt = "";}
+        '[' streamList COMMA ']'  { $$ = $2; currentAt = "";}
+    |   '[' streamList ']'        { $$ = $2; currentAt = "";}
     ;
 
 blockList:
@@ -1269,6 +1304,10 @@ streamComp:
             COUT << "Resolving port property definition ... " << ENDL;
         }
     |   '{' valueList '}'     {
+            $$ = $2;
+            COUT << "List ... " << ENDL;
+    }
+    |   '{' valueList COMMA '}'     {
             $$ = $2;
             COUT << "List ... " << ENDL;
     }
