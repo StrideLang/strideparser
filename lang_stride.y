@@ -129,7 +129,6 @@ NullStream nstream;
 %type <declarationNode> anonymousDeclDef
 %type <listNode> listDef
 %type <listNode> streamListDef
-%type <listNode> valueListList
 %type <listNode> valueList
 %type <listNode> valueListDef
 %type <listNode> blockList
@@ -752,14 +751,6 @@ valueListDef:
             $$ = $2;
             COUT << "New list ... " << ENDL;
         }
-    |   '[' valueListList COMMA ']'   {
-            $$ = $2;
-            COUT << "New list of lists ... " << ENDL;
-        }
-    |   '[' valueListList ']'   {
-            $$ = $2;
-            COUT << "New list of lists ... " << ENDL;
-        }
     |   '[' ']'                 {
             $$ = new ListNode(NULL, currentFile, yyloc.first_line);
             COUT << "New empty list ...  " << ENDL;
@@ -777,24 +768,25 @@ valueList:
             COUT << "Value expression ..." << ENDL;
             COUT << "New list item ... " << ENDL;
         }
-    |   valueExp                    {
-            $$ = new ListNode(std::shared_ptr<AST>($1), currentFile, yyloc.first_line);
-            COUT << "Value expression ..." << ENDL;
-            COUT << "New list item ... " << ENDL;
-        }
-    ;
-
-valueListList:
-        valueListList COMMA valueListDef    {
+    |   valueList COMMA valueListDef {
             ListNode *list = new ListNode(NULL, currentFile, yyloc.first_line);
             list->stealMembers($1);
             ListNode *oldList = $1;
             delete oldList;
             list->addChild(std::shared_ptr<AST>($3));
             $$ = list;
+            COUT << "Value list definition ..." << ENDL;
+            COUT << "New list item ... " << ENDL;
         }
-    |   valueListDef                        {
+    |   valueExp                    {
             $$ = new ListNode(std::shared_ptr<AST>($1), currentFile, yyloc.first_line);
+            COUT << "Value expression ..." << ENDL;
+            COUT << "New list item ... " << ENDL;
+        }
+    |   valueListDef                {
+            $$ = new ListNode(std::shared_ptr<AST>($1), currentFile, yyloc.first_line);
+            COUT << "Value list definition ..." << ENDL;
+            COUT << "New list item ... " << ENDL;
         }
     ;
 
