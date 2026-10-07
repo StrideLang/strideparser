@@ -1,14 +1,14 @@
 #include "gtest/gtest.h"
 
+#include "stride/parser/arraynode.h"
 #include "stride/parser/ast.h"
-#include "stride/parser/blocknode.h"
-#include "stride/parser/bundlenode.h"
 #include "stride/parser/declarationnode.h"
+#include "stride/parser/entitynode.h"
 #include "stride/parser/expressionnode.h"
 #include "stride/parser/functionnode.h"
 #include "stride/parser/importnode.h"
+#include "stride/parser/memberaccessnode.h"
 #include "stride/parser/platformnode.h"
-#include "stride/parser/portpropertynode.h"
 #include "stride/parser/rangenode.h"
 #include "stride/parser/streamnode.h"
 #include "stride/parser/valuenode.h"
@@ -30,8 +30,8 @@ TEST(BlockDeclaration, Declaration) {
   EXPECT_TRUE(property != nullptr && property->getChildren().size() == 1);
   EXPECT_TRUE(property->getName() == "rate");
   AST *propertyValue = property->getChildren().at(0).get();
-  EXPECT_TRUE(propertyValue->getNodeType() == AST::Block);
-  EXPECT_TRUE(static_cast<BlockNode *>(propertyValue)->getName() ==
+  EXPECT_TRUE(propertyValue->getNodeType() == AST::Entity);
+  EXPECT_TRUE(static_cast<EntityNode *>(propertyValue)->getName() ==
               "AudioRate");
   property = properties.at(1);
   EXPECT_TRUE(property != nullptr && property->getChildren().size() == 1);
@@ -77,7 +77,7 @@ TEST(BlockDeclaration, Declaration) {
   EXPECT_TRUE(propertyValue->getNodeType() == AST::Declaration);
   DeclarationNode *object = static_cast<DeclarationNode *>(propertyValue);
   EXPECT_TRUE(object->getName() == "");
-  EXPECT_TRUE(object->getObjectType() == "");
+  EXPECT_TRUE(object->getEntityType() == "");
   std::vector<std::shared_ptr<PropertyNode>> objProperties =
       static_cast<DeclarationNode *>(object)->getProperties();
   EXPECT_TRUE(objProperties.size() == 2);
@@ -118,7 +118,7 @@ TEST(BlockDeclaration, Declaration) {
       static_cast<StreamNode *>(listnode->getChildren().at(0).get());
   EXPECT_TRUE(streamNode->getChildren().size() == 2);
   EXPECT_TRUE(streamNode->getChildren().at(0)->getNodeType() == AST::Function);
-  EXPECT_TRUE(streamNode->getChildren().at(1)->getNodeType() == AST::Bundle);
+  EXPECT_TRUE(streamNode->getChildren().at(1)->getNodeType() == AST::Array);
   property = properties.at(1);
   EXPECT_TRUE(property != nullptr && property->getChildren().size() == 1);
   EXPECT_TRUE(property->getName() == "meta");
@@ -145,18 +145,18 @@ TEST(BlockDeclaration, PortProperty) {
   auto propertyValueNode = property->getChildren();
   EXPECT_EQ(propertyValueNode.size(), 1);
   auto propValue =
-      std::static_pointer_cast<PortPropertyNode>(propertyValueNode[0]);
-  EXPECT_EQ(propValue->getNodeType(), AST::PortProperty);
-  EXPECT_EQ(propValue->getName(), "");
-  EXPECT_EQ(propValue->getPortName(), "firstport");
+      std::static_pointer_cast<MemberAccessNode>(propertyValueNode[0]);
+  EXPECT_EQ(propValue->getNodeType(), AST::MemberAccess);
+  EXPECT_EQ(propValue->getEntity(), "");
+  EXPECT_EQ(propValue->getPropertyName(), "firstport");
 
   property = properties.at(3);
   EXPECT_TRUE(property != nullptr && property->getChildren().size() == 1);
   EXPECT_EQ(property->getName(), "lastport");
   propertyValueNode = property->getChildren();
   EXPECT_EQ(propertyValueNode.size(), 1);
-  propValue = std::static_pointer_cast<PortPropertyNode>(propertyValueNode[0]);
-  EXPECT_EQ(propValue->getNodeType(), AST::PortProperty);
-  EXPECT_EQ(propValue->getName(), "Block");
-  EXPECT_EQ(propValue->getPortName(), "port");
+  propValue = std::static_pointer_cast<MemberAccessNode>(propertyValueNode[0]);
+  EXPECT_EQ(propValue->getNodeType(), AST::MemberAccess);
+  EXPECT_EQ(propValue->getEntity(), "Block");
+  EXPECT_EQ(propValue->getPropertyName(), "port");
 }

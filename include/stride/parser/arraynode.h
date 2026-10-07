@@ -32,54 +32,45 @@
     Authors: Andres Cabrera and Joseph Tilbian
 */
 
-#ifndef DECLARATIONNODE_H
-#define DECLARATIONNODE_H
+#ifndef ARRAYNODE_H
+#define ARRAYNODE_H
 
 #include <string>
 #include <vector>
 
-#include "arraynode.h"
 #include "ast.h"
-#include "propertynode.h"
+#include "listnode.h"
 
 namespace strd {
-class DeclarationNode : public AST {
+class ArrayNode : public AST {
 public:
-  DeclarationNode(std::string name, std::string entityType,
-                  ASTNode propertiesList, const char *filename, int line,
-                  std::vector<std::string> scope = std::vector<std::string>());
-  DeclarationNode(std::shared_ptr<ArrayNode> arrayIndex, std::string entityType,
-                  ASTNode propertiesList, const char *filename, int line,
-                  std::vector<std::string> scope = std::vector<std::string>());
-  ~DeclarationNode() override;
+  ArrayNode(std::string name, std::shared_ptr<ListNode> indexList,
+            const char *filename, int line,
+            std::vector<std::string> scope = std::vector<std::string>());
+  ArrayNode(std::string name, ASTNode scope,
+            std::shared_ptr<ListNode> indexList, const char *filename,
+            int line);
+  virtual ~ArrayNode();
 
   std::string getName() const;
-  std::shared_ptr<ArrayNode> getArrayIndex() const;
-  std::shared_ptr<ArrayNode> getBundle() const { return getArrayIndex(); }
+  std::shared_ptr<ListNode> index() const;
 
-  std::vector<std::shared_ptr<PropertyNode>> getProperties() const;
-  bool addProperty(std::shared_ptr<PropertyNode> newProperty);
-  ASTNode getPropertyValue(std::string propertyName);
-  void setPropertyValue(std::string propertyName, ASTNode value);
-  bool replacePropertyValue(std::string propertyName, ASTNode newValue);
-  void removeProperty(ASTNode property);
+  void setIndex(std::shared_ptr<ListNode> index);
+  std::vector<size_t> getIndices();
+  std::vector<size_t> getIndeces() { return getIndices(); }
 
-  ASTNode getDomain();
-  void setDomainString(std::string domain);
+  virtual void resolveScope(ASTNode scope) override;
 
-  std::string getEntityType() const;
-  std::string getObjectType() const { return getEntityType(); }
-
-  virtual std::string toText(int indentOffset = 0, int indentSize = 2,
-                             bool newLine = true) const override;
   virtual ASTNode deepCopy() override;
+  std::string toText(int indentOffset = 0, int indentSize = 2,
+                     bool newLine = true) const override;
 
 private:
   std::string m_name;
-  std::string m_entityType;
-  std::vector<std::shared_ptr<PropertyNode>> m_properties;
 };
+
+using BundleNode = ArrayNode;
 
 } // namespace strd
 
-#endif // DECLARATIONNODE_H
+#endif // ARRAYNODE_H

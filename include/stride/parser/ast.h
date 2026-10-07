@@ -55,9 +55,9 @@ public:
   typedef enum {
     None,
     Platform,
-    Bundle,
+    Array,
     Declaration,
-    BundleDeclaration,
+    ArrayDeclaration,
     Stream,
     Property,
     Range,
@@ -66,7 +66,7 @@ public:
     Package,
     For,
     Scope,
-    PortProperty,
+    MemberAccess,
 
     // Built-in types (leaf nodes)
     Int = 0x80,
@@ -74,10 +74,16 @@ public:
     String = 0x82,
     Switch = 0x83,
 
-    Block = 0x20,
+    Entity = 0x20,
     Expression = 0x21,
     Function = 0x22,
     Keyword = 0x23,
+
+    // Backwards-compatible aliases
+    Bundle = Array,
+    BundleDeclaration = ArrayDeclaration,
+    PortProperty = MemberAccess,
+    Block = Entity,
 
     // Invalid
     Invalid

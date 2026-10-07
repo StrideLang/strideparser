@@ -35,18 +35,18 @@
 #include <algorithm>
 #include <cassert>
 
-#include "stride/parser/blocknode.h"
 #include "stride/parser/declarationnode.h"
+#include "stride/parser/entitynode.h"
 #include "stride/parser/valuenode.h"
 
 using namespace strd;
 
-DeclarationNode::DeclarationNode(std::string name, std::string objectType,
+DeclarationNode::DeclarationNode(std::string name, std::string entityType,
                                  ASTNode propertiesList, const char *filename,
                                  int line, std::vector<std::string> scope)
     : AST(AST::Declaration, filename, line, scope) {
   m_name = name;
-  m_objectType = objectType;
+  m_entityType = entityType;
   if (propertiesList) {
     for (ASTNode child : propertiesList->getChildren()) {
       addChild(child);
@@ -64,13 +64,13 @@ DeclarationNode::DeclarationNode(std::string name, std::string objectType,
   m_CompilerProperties = std::make_shared<ListNode>(__FILE__, __LINE__);
 }
 
-DeclarationNode::DeclarationNode(std::shared_ptr<BundleNode> bundle,
-                                 std::string objectType, ASTNode propertiesList,
+DeclarationNode::DeclarationNode(std::shared_ptr<ArrayNode> arrayIndex,
+                                 std::string entityType, ASTNode propertiesList,
                                  const char *filename, int line,
                                  std::vector<std::string> scope)
-    : AST(AST::BundleDeclaration, filename, line, scope) {
-  addChild(bundle);
-  m_objectType = objectType;
+    : AST(AST::ArrayDeclaration, filename, line, scope) {
+  addChild(arrayIndex);
+  m_entityType = entityType;
   if (propertiesList) {
     for (ASTNode child : propertiesList->getChildren()) {
       addChild(child);
@@ -90,16 +90,18 @@ DeclarationNode::~DeclarationNode() {}
 std::string DeclarationNode::getName() const {
   if (getNodeType() == AST::Declaration) {
     return m_name;
-  } else if (getNodeType() == AST::BundleDeclaration) {
-    return getBundle()->getName();
+  } else if (getNodeType() == AST::ArrayDeclaration ||
+             getNodeType() == AST::BundleDeclaration) {
+    return getArrayIndex()->getName();
   }
   assert(0 == 1);
   return std::string();
 }
 
-std::shared_ptr<BundleNode> DeclarationNode::getBundle() const {
-  assert(getNodeType() == AST::BundleDeclaration);
-  return std::static_pointer_cast<BundleNode>(m_children.at(0));
+std::shared_ptr<ArrayNode> DeclarationNode::getArrayIndex() const {
+  assert(getNodeType() == AST::ArrayDeclaration ||
+         getNodeType() == AST::BundleDeclaration);
+  return std::static_pointer_cast<ArrayNode>(m_children.at(0));
 }
 
 std::vector<std::shared_ptr<PropertyNode>>
@@ -166,11 +168,11 @@ ASTNode DeclarationNode::getDomain() {
 }
 
 void DeclarationNode::setDomainString(std::string domain) {
-  replacePropertyValue("domain",
-                       std::make_shared<BlockNode>(domain, __FILE__, __LINE__));
+  replacePropertyValue(
+      "domain", std::make_shared<EntityNode>(domain, __FILE__, __LINE__));
 }
 
-std::string DeclarationNode::getObjectType() const { return m_objectType; }
+std::string DeclarationNode::getEntityType() const { return m_entityType; }
 
 std::string DeclarationNode::toText(int indentOffset, int indentSize,
                                     bool newLine) const {
@@ -187,7 +189,7 @@ std::string DeclarationNode::toText(int indentOffset, int indentSize,
       outText += ns + "::";
     }
   }
-  outText += m_objectType + " ";
+  outText += m_entityType + " ";
   auto isAnonymous = getCompilerProperty("anonymous");
   if (!isAnonymous) {
     outText += getName() + " ";
@@ -216,13 +218,14 @@ ASTNode DeclarationNode::deepCopy() {
   for (unsigned int i = 0; i < m_properties.size(); i++) {
     newProps->addChild(m_properties[i]->deepCopy());
   }
-  if (getNodeType() == AST::BundleDeclaration) {
+  if (getNodeType() == AST::ArrayDeclaration ||
+      getNodeType() == AST::BundleDeclaration) {
     node = std::make_shared<DeclarationNode>(
-        std::static_pointer_cast<BundleNode>(getBundle()->deepCopy()),
-        m_objectType, newProps, m_filename.data(), m_line, m_scope);
+        std::static_pointer_cast<ArrayNode>(getArrayIndex()->deepCopy()),
+        m_entityType, newProps, m_filename.data(), m_line, m_scope);
   } else if (getNodeType() == AST::Declaration) {
     node = std::make_shared<DeclarationNode>(
-        m_name, m_objectType, newProps, m_filename.data(), m_line, m_scope);
+        m_name, m_entityType, newProps, m_filename.data(), m_line, m_scope);
   }
   if (this->m_CompilerProperties) {
     node->m_CompilerProperties = std::static_pointer_cast<ListNode>(
@@ -231,6 +234,5 @@ ASTNode DeclarationNode::deepCopy() {
     node->m_CompilerProperties = nullptr;
   }
   assert(node);
-  //    newProps.reset();
   return node;
 }

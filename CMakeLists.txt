@@ -8,7 +8,7 @@ set(PARSER_SRC
   src/ast.cpp
   src/streamnode.cpp
   src/valuenode.cpp
-  src/bundlenode.cpp
+  src/arraynode.cpp
   src/propertynode.cpp
   src/functionnode.cpp
   src/expressionnode.cpp
@@ -19,16 +19,17 @@ set(PARSER_SRC
   src/langerror.cpp
   src/keywordnode.cpp
   src/declarationnode.cpp
-  src/blocknode.cpp
+  src/entitynode.cpp
   src/scopenode.cpp
   src/platformnode.cpp
-  src/portpropertynode.cpp
+  src/memberaccessnode.cpp
 )
 
 set(PARSER_HEADERS
   include/stride/parser/ast.h
   include/stride/parser/streamnode.h
   include/stride/parser/valuenode.h
+  include/stride/parser/arraynode.h
   include/stride/parser/bundlenode.h
   include/stride/parser/propertynode.h
   include/stride/parser/functionnode.h
@@ -40,11 +41,13 @@ set(PARSER_HEADERS
   include/stride/parser/langerror.h
   include/stride/parser/strideparser.h
   include/stride/parser/declarationnode.h
+  include/stride/parser/entitynode.h
   include/stride/parser/blocknode.h
   include/stride/parser/scopenode.h
   include/stride/parser/keywordnode.h
   include/stride/parser/platformnode.h
   include/stride/parser/propertynode.h
+  include/stride/parser/memberaccessnode.h
   include/stride/parser/portpropertynode.h
 )
 

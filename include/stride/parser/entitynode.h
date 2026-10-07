@@ -32,54 +32,34 @@
     Authors: Andres Cabrera and Joseph Tilbian
 */
 
-#ifndef DECLARATIONNODE_H
-#define DECLARATIONNODE_H
+#ifndef ENTITYNODE_H
+#define ENTITYNODE_H
 
 #include <string>
-#include <vector>
 
-#include "arraynode.h"
 #include "ast.h"
-#include "propertynode.h"
 
 namespace strd {
-class DeclarationNode : public AST {
+class EntityNode : public AST {
 public:
-  DeclarationNode(std::string name, std::string entityType,
-                  ASTNode propertiesList, const char *filename, int line,
-                  std::vector<std::string> scope = std::vector<std::string>());
-  DeclarationNode(std::shared_ptr<ArrayNode> arrayIndex, std::string entityType,
-                  ASTNode propertiesList, const char *filename, int line,
-                  std::vector<std::string> scope = std::vector<std::string>());
-  ~DeclarationNode() override;
+  EntityNode(std::string name, const char *filename, int line,
+             std::vector<std::string> scope = std::vector<std::string>());
+  EntityNode(std::string name, ASTNode scope, const char *filename, int line);
+
+  ~EntityNode() override;
 
   std::string getName() const;
-  std::shared_ptr<ArrayNode> getArrayIndex() const;
-  std::shared_ptr<ArrayNode> getBundle() const { return getArrayIndex(); }
-
-  std::vector<std::shared_ptr<PropertyNode>> getProperties() const;
-  bool addProperty(std::shared_ptr<PropertyNode> newProperty);
-  ASTNode getPropertyValue(std::string propertyName);
-  void setPropertyValue(std::string propertyName, ASTNode value);
-  bool replacePropertyValue(std::string propertyName, ASTNode newValue);
-  void removeProperty(ASTNode property);
-
-  ASTNode getDomain();
-  void setDomainString(std::string domain);
-
-  std::string getEntityType() const;
-  std::string getObjectType() const { return getEntityType(); }
-
   virtual std::string toText(int indentOffset = 0, int indentSize = 2,
                              bool newLine = true) const override;
   virtual ASTNode deepCopy() override;
 
 private:
+  void resolveScope(ASTNode scope) override;
   std::string m_name;
-  std::string m_entityType;
-  std::vector<std::shared_ptr<PropertyNode>> m_properties;
 };
+
+using BlockNode = EntityNode;
 
 } // namespace strd
 
-#endif // DECLARATIONNODE_H
+#endif // ENTITYNODE_H

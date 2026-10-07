@@ -1,0 +1,161 @@
+/*
+    Stride is licensed under the terms of the 3-clause BSD license.
+
+    Copyright (C) 2017. The Regents of the University of California.
+    All rights reserved.
+    Redistribution and use in source and binary forms, with or without
+    modification, are permitted provided that the following conditions are met:
+
+        Redistributions of source code must retain the above copyright notice,
+        this list of conditions and the following disclaimer.
+
+        Redistributions in binary form must reproduce the above copyright
+        notice, this list of conditions and the following disclaimer in the
+        documentation and/or other materials provided with the distribution.
+
+        Neither the name of the copyright holder nor the names of its
+        contributors may be used to endorse or promote products derived from
+        this software without specific prior written permission.
+
+    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+    AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+    IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+    ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+    LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+    CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+    SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+    INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+    CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+    ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+    POSSIBILITY OF SUCH DAMAGE.
+
+    Authors: Andres Cabrera and Joseph Tilbian
+*/
+
+#include <cassert>
+
+#include "stride/parser/arraynode.h"
+#include "stride/parser/listnode.h"
+#include "stride/parser/rangenode.h"
+#include "stride/parser/scopenode.h"
+#include "stride/parser/valuenode.h"
+
+using namespace strd;
+
+ArrayNode::ArrayNode(std::string name, std::shared_ptr<ListNode> indexList,
+                     const char *filename, int line,
+                     std::vector<std::string> scope)
+    : AST(AST::Array, filename, line, scope) {
+  addChild(indexList);
+  m_name = name;
+
+  m_CompilerProperties = std::make_shared<ListNode>(__FILE__, __LINE__);
+}
+
+ArrayNode::ArrayNode(std::string name, ASTNode scope,
+                     std::shared_ptr<ListNode> indexList,
+                     const char *filename, int line)
+    : AST(AST::Array, filename, line) {
+  addChild(indexList);
+  m_name = name;
+  resolveScope(scope);
+
+  m_CompilerProperties = std::make_shared<ListNode>(__FILE__, __LINE__);
+}
+
+ArrayNode::~ArrayNode() {}
+
+std::string ArrayNode::getName() const { return m_name; }
+
+std::shared_ptr<ListNode> ArrayNode::index() const {
+  return std::static_pointer_cast<ListNode>(m_children.at(0));
+}
+
+void ArrayNode::setIndex(std::shared_ptr<ListNode> index) {
+  m_children[0] = index;
+}
+
+std::vector<size_t> ArrayNode::getIndices() {
+  auto indexList = index();
+  std::vector<size_t> indeces;
+  for (const auto &listNode : indexList->getChildren()) {
+    if (listNode->getNodeType() == AST::Int) {
+      indeces.push_back(
+          std::static_pointer_cast<ValueNode>(listNode)->getIntValue());
+    } else if (listNode->getNodeType() == AST::Range) {
+      auto rangeNode = std::static_pointer_cast<RangeNode>(listNode);
+      if (rangeNode->startIndex()->getNodeType() == AST::Int &&
+          rangeNode->endIndex()->getNodeType() == AST::Int) {
+        assert(std::static_pointer_cast<ValueNode>(rangeNode->endIndex())
+                   ->getIntValue() >=
+               std::static_pointer_cast<ValueNode>(rangeNode->startIndex())
+                   ->getIntValue());
+        for (size_t i =
+                 std::static_pointer_cast<ValueNode>(rangeNode->startIndex())
+                     ->getIntValue();
+             i <= std::static_pointer_cast<ValueNode>(rangeNode->endIndex())
+                      ->getIntValue();
+             i++) {
+          indeces.push_back(i);
+        }
+      } else {
+        // FIXME implement
+        assert(0 == 1);
+      }
+    } else if (listNode->getNodeType() == AST::MemberAccess ||
+               listNode->getNodeType() == AST::PortProperty) {
+      // Unsupported
+      assert(0 == 1);
+    }
+  }
+
+  return indeces;
+}
+
+void ArrayNode::resolveScope(ASTNode scope) {
+  if (scope) {
+    for (unsigned int i = 0; i < scope->getChildren().size(); i++) {
+      assert(scope->getChildren().at(i)->getNodeType() == AST::Scope);
+      m_scope.push_back(
+          (static_cast<ScopeNode *>(scope->getChildren().at(i).get()))
+              ->getName());
+    }
+  }
+}
+
+ASTNode ArrayNode::deepCopy() {
+  assert(getNodeType() == AST::Array || getNodeType() == AST::Bundle);
+  if (getNodeType() == AST::Array || getNodeType() == AST::Bundle) {
+    std::shared_ptr<ArrayNode> newArray = std::make_shared<ArrayNode>(
+        m_name, std::static_pointer_cast<ListNode>(index()->deepCopy()),
+        m_filename.data(), m_line);
+    for (unsigned int i = 0; i < this->getScopeLevels(); i++) {
+      newArray->addScope(this->getScopeAt(i));
+    }
+    if (this->m_CompilerProperties) {
+      newArray->m_CompilerProperties = std::static_pointer_cast<ListNode>(
+          this->m_CompilerProperties->deepCopy());
+    } else {
+      newArray->m_CompilerProperties = nullptr;
+    }
+    return newArray;
+  }
+  assert(0 == 1);
+  return nullptr;
+}
+
+std::string ArrayNode::toText(int indentOffset, int indentSize,
+                              bool newLine) const {
+  std::string text;
+  text = getName() + "[ ";
+  for (const auto &elem : getChildren()[0]->getChildren()) {
+    text += elem->toText(indentOffset, indentSize, false);
+    text += ", ";
+  }
+  text = text.substr(0, text.size() - 2);
+  text += " ]";
+  if (newLine) {
+    text += "/n";
+  }
+  return text;
+}

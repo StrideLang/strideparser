@@ -32,54 +32,40 @@
     Authors: Andres Cabrera and Joseph Tilbian
 */
 
-#ifndef DECLARATIONNODE_H
-#define DECLARATIONNODE_H
+#include "stride/parser/memberaccessnode.h"
+#include "stride/parser/listnode.h"
 
-#include <string>
-#include <vector>
+using namespace strd;
 
-#include "arraynode.h"
-#include "ast.h"
-#include "propertynode.h"
+MemberAccessNode::MemberAccessNode(std::string entity, std::string propertyName,
+                                   const char *filename, int line)
+    : AST(AST::MemberAccess, filename, line) {
+  m_entity = entity;
+  m_propertyName = propertyName;
+}
 
-namespace strd {
-class DeclarationNode : public AST {
-public:
-  DeclarationNode(std::string name, std::string entityType,
-                  ASTNode propertiesList, const char *filename, int line,
-                  std::vector<std::string> scope = std::vector<std::string>());
-  DeclarationNode(std::shared_ptr<ArrayNode> arrayIndex, std::string entityType,
-                  ASTNode propertiesList, const char *filename, int line,
-                  std::vector<std::string> scope = std::vector<std::string>());
-  ~DeclarationNode() override;
+MemberAccessNode::~MemberAccessNode() {}
 
-  std::string getName() const;
-  std::shared_ptr<ArrayNode> getArrayIndex() const;
-  std::shared_ptr<ArrayNode> getBundle() const { return getArrayIndex(); }
+ASTNode MemberAccessNode::deepCopy() {
+  std::shared_ptr<MemberAccessNode> newMemberAccessNode =
+      std::make_shared<MemberAccessNode>(m_entity, m_propertyName,
+                                         m_filename.data(), m_line);
+  if (this->m_CompilerProperties) {
+    newMemberAccessNode->m_CompilerProperties =
+        std::static_pointer_cast<ListNode>(
+            this->m_CompilerProperties->deepCopy());
+  } else {
+    newMemberAccessNode->m_CompilerProperties = nullptr;
+  }
+  return newMemberAccessNode;
+}
 
-  std::vector<std::shared_ptr<PropertyNode>> getProperties() const;
-  bool addProperty(std::shared_ptr<PropertyNode> newProperty);
-  ASTNode getPropertyValue(std::string propertyName);
-  void setPropertyValue(std::string propertyName, ASTNode value);
-  bool replacePropertyValue(std::string propertyName, ASTNode newValue);
-  void removeProperty(ASTNode property);
-
-  ASTNode getDomain();
-  void setDomainString(std::string domain);
-
-  std::string getEntityType() const;
-  std::string getObjectType() const { return getEntityType(); }
-
-  virtual std::string toText(int indentOffset = 0, int indentSize = 2,
-                             bool newLine = true) const override;
-  virtual ASTNode deepCopy() override;
-
-private:
-  std::string m_name;
-  std::string m_entityType;
-  std::vector<std::shared_ptr<PropertyNode>> m_properties;
-};
-
-} // namespace strd
-
-#endif // DECLARATIONNODE_H
+std::string MemberAccessNode::toText(int indentOffset, int indentSize,
+                                     bool newLine) const {
+  std::string text;
+  text += m_entity + "." + m_propertyName;
+  if (newLine) {
+    text += "\n";
+  }
+  return text;
+}

@@ -67,8 +67,8 @@ NullStream nstream;
 %}
 
 %code requires { #include "stride/parser/ast.h" }
-%code requires { #include "stride/parser/blocknode.h" }
-%code requires { #include "stride/parser/bundlenode.h" }
+%code requires { #include "stride/parser/entitynode.h" }
+%code requires { #include "stride/parser/arraynode.h" }
 %code requires { #include "stride/parser/declarationnode.h" }
 %code requires { #include "stride/parser/expressionnode.h" }
 %code requires { #include "stride/parser/functionnode.h" }
@@ -77,7 +77,7 @@ NullStream nstream;
 %code requires { #include "stride/parser/listnode.h" }
 %code requires { #include "stride/parser/packagenode.h" }
 %code requires { #include "stride/parser/platformnode.h" }
-%code requires { #include "stride/parser/portpropertynode.h" }
+%code requires { #include "stride/parser/memberaccessnode.h" }
 %code requires { #include "stride/parser/propertynode.h" }
 %code requires { #include "stride/parser/rangenode.h" }
 %code requires { #include "stride/parser/scopenode.h" }
@@ -93,7 +93,9 @@ NullStream nstream;
     strd::DeclarationNode *declarationNode;
     strd::StreamNode *streamNode;
     strd::PropertyNode *propertyNode;
+    strd::ArrayNode *arrayNode;
     strd::BundleNode *bundleNode;
+    strd::EntityNode *entityNode;
     strd::FunctionNode *functionNode;
     strd::ExpressionNode *expressionNode;
     strd::ListNode *listNode;
@@ -102,6 +104,7 @@ NullStream nstream;
     strd::RangeNode *rangeNode;
     strd::KeywordNode *keywordNode;
     strd::ScopeNode *scopeNode;
+    strd::MemberAccessNode *memberAccessNode;
     strd::PortPropertyNode *portPropertyNode;
 }
 
@@ -347,12 +350,12 @@ blockDef:
             string name;
             name.append($2); /* string constructor leaks otherwise! */
             std::shared_ptr<ListNode> list = std::make_shared<ListNode>(std::shared_ptr<AST>($4), currentFile, yyloc.first_line);
-            std::shared_ptr<BundleNode> bundle = std::make_shared<BundleNode>(name, list, currentFile, yyloc.first_line);
-            COUT << "Bundle name: " << name << ENDL;
+            std::shared_ptr<ArrayNode> array = std::make_shared<ArrayNode>(name, list, currentFile, yyloc.first_line);
+            COUT << "Array name: " << name << ENDL;
             string type;
             type.append($1); /* string constructor leaks otherwise! */
-            $$ = new DeclarationNode(bundle, type, std::shared_ptr<AST>($6), currentFile, yyloc.first_line);
-            COUT << "Block Bundle: " << $1 << ", Labelled: " << $2 << ENDL;
+            $$ = new DeclarationNode(array, type, std::shared_ptr<AST>($6), currentFile, yyloc.first_line);
+            COUT << "Array Declaration: " << $1 << ", Labelled: " << $2 << ENDL;
             free($2);
             free($1);
          }
@@ -360,12 +363,12 @@ blockDef:
             string name;
             name.append($2); /* string constructor leaks otherwise! */
             std::shared_ptr<ListNode> list = std::make_shared<ListNode>(std::shared_ptr<AST>($4), currentFile, yyloc.first_line);
-            std::shared_ptr<BundleNode> bundle = std::make_shared<BundleNode>(name, list, currentFile, yyloc.first_line);
-            COUT << "Bundle name: " << name << ENDL;
+            std::shared_ptr<ArrayNode> array = std::make_shared<ArrayNode>(name, list, currentFile, yyloc.first_line);
+            COUT << "Array name: " << name << ENDL;
             string type;
             type.append($1); /* string constructor leaks otherwise! */
-            $$ = new DeclarationNode(bundle, type, std::shared_ptr<AST>($7), currentFile, yyloc.first_line);
-            COUT << "Block Bundle: " << $1 << ", Labelled: " << $2 << ENDL;
+            $$ = new DeclarationNode(array, type, std::shared_ptr<AST>($7), currentFile, yyloc.first_line);
+            COUT << "Array Declaration: " << $1 << ", Labelled: " << $2 << ENDL;
             free($2);
             free($1);
          }
@@ -486,37 +489,37 @@ scope:
     ;
 
 // =================================
-//  BUNDLE DEFINITION
+//  ARRAY DEFINITION
 // =================================
 
 bundleDef:
         UVAR '[' indexList ']'          {
             string s;
             s.append($1); /* string constructor leaks otherwise! */
-            $$ = new BundleNode(s, std::shared_ptr<ListNode>($3), currentFile, yyloc.first_line);
-            COUT << "Bundle name: " << $1 << ENDL;
+            $$ = new ArrayNode(s, std::shared_ptr<ListNode>($3), currentFile, yyloc.first_line);
+            COUT << "Array name: " << $1 << ENDL;
             free($1);
         }
     |   UVAR '[' indexList COMMA ']'    {
             string s;
             s.append($1); /* string constructor leaks otherwise! */
-            $$ = new BundleNode(s, std::shared_ptr<ListNode>($3), currentFile, yyloc.first_line);
-            COUT << "Bundle name: " << $1 << ENDL;
+            $$ = new ArrayNode(s, std::shared_ptr<ListNode>($3), currentFile, yyloc.first_line);
+            COUT << "Array name: " << $1 << ENDL;
             free($1);
         }
     |   scopeDef UVAR '[' indexList ']' {
             string s;
             s.append($2); /* string constructor leaks otherwise! */
-            $$ = new BundleNode(s, std::shared_ptr<AST>($1), std::shared_ptr<ListNode>($4), currentFile, yyloc.first_line);
-            COUT << "Bundle name: " << $2 << " in scope!" << ENDL;
+            $$ = new ArrayNode(s, std::shared_ptr<AST>($1), std::shared_ptr<ListNode>($4), currentFile, yyloc.first_line);
+            COUT << "Array name: " << $2 << " in scope!" << ENDL;
             COUT << "Streaming ... " << ENDL;
             free($2);
         }
     |   scopeDef UVAR '[' indexList COMMA ']' {
             string s;
             s.append($2); /* string constructor leaks otherwise! */
-            $$ = new BundleNode(s, std::shared_ptr<AST>($1), std::shared_ptr<ListNode>($4), currentFile, yyloc.first_line);
-            COUT << "Bundle name: " << $2 << " in scope!" << ENDL;
+            $$ = new ArrayNode(s, std::shared_ptr<AST>($1), std::shared_ptr<ListNode>($4), currentFile, yyloc.first_line);
+            COUT << "Array name: " << $2 << " in scope!" << ENDL;
             COUT << "Streaming ... " << ENDL;
             free($2);
         }
@@ -719,8 +722,8 @@ portPropertyDef:
             s.append($1); /* string constructor leaks otherwise! */
             string p;
             p.append($3); /* string constructor leaks otherwise! */
-            $$ = new PortPropertyNode(s, p, currentFile, yyloc.first_line);
-            COUT << "Port Name: " << $1 << ENDL << "Port Property: " << $3 << ENDL;
+            $$ = new MemberAccessNode(s, p, currentFile, yyloc.first_line);
+            COUT << "Entity: " << $1 << ENDL << "Property Name: " << $3 << ENDL;
             free($1);
             free($3);
         }
@@ -728,11 +731,11 @@ portPropertyDef:
 
 portPropertyDef:
         DOT WORD   {
-            string s; // empty block name for "this"
+            string s; // empty entity name for "this"
             string p;
             p.append($2); /* string constructor leaks otherwise! */
-            $$ = new PortPropertyNode(s, p, currentFile, yyloc.first_line);
-            COUT << "Port Property for THIS: " << $2 << ENDL;
+            $$ = new MemberAccessNode(s, p, currentFile, yyloc.first_line);
+            COUT << "Property Name for THIS: " << $2 << ENDL;
             free($2);
         }
     ;
@@ -1302,20 +1305,20 @@ streamComp:
     |   UVAR            {
             string s;
             s.append($1); /* string constructor leaks otherwise! */
-            $$ = new BlockNode(s, currentFile, yyloc.first_line);
-            COUT << "User variable: " << $1 << ENDL;
+            $$ = new EntityNode(s, currentFile, yyloc.first_line);
+            COUT << "Entity: " << $1 << ENDL;
             free($1);
         }
     |   scopeDef UVAR   {
             string s;
             s.append($2);
-            $$ = new BlockNode(s, std::shared_ptr<AST>($1), currentFile, yyloc.first_line);
-            COUT << "User variable: " << $2 << " in scope!" << ENDL;
+            $$ = new EntityNode(s, std::shared_ptr<AST>($1), currentFile, yyloc.first_line);
+            COUT << "Entity: " << $2 << " in scope!" << ENDL;
             free($2);
         }
     |   bundleDef       {
             $$ = $1;
-            COUT << "Resolving indexed bundle ..." << ENDL;
+            COUT << "Resolving indexed array ..." << ENDL;
         }
     |   functionDef     {
             $$ = $1;

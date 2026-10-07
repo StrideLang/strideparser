@@ -34,9 +34,9 @@ TEST(ToTextTest, ValueNodes) {
   EXPECT_EQ(swoff.toText(0, 2, false), "off ");
 }
 
-TEST(ToTextTest, BlockNode) {
-  BlockNode block("MyBlock", "test", 1);
-  EXPECT_EQ(block.toText(0, 2, false), "MyBlock");
+TEST(ToTextTest, EntityNode) {
+  EntityNode entity("MyEntity", "test", 1);
+  EXPECT_EQ(entity.toText(0, 2, false), "MyEntity");
 }
 
 TEST(ToTextTest, PropertyNode) {
