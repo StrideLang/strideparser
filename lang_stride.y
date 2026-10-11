@@ -458,6 +458,21 @@ streamDef:
         }
     |   functionDef SEMICOLON {
             $$ = new StreamNode(std::shared_ptr<AST>($1), nullptr, currentFile, yyloc.first_line);
+            if (currentAt.size() > 0) {
+              $$->setCompilerProperty("_at", std::make_shared<ValueNode>(currentAt, currentFile, yyloc.first_line));
+            }
+        }
+    |   AT NONE functionDef SEMICOLON {
+            currentAt.clear();
+            $$ = new StreamNode(std::shared_ptr<AST>($3), nullptr, currentFile, yyloc.first_line);
+        }
+    |   AT UVAR functionDef SEMICOLON {
+            currentAt = $2;
+            $$ = new StreamNode(std::shared_ptr<AST>($3), nullptr, currentFile, yyloc.first_line);
+            if (currentAt.size() > 0) {
+              $$->setCompilerProperty("_at", std::make_shared<ValueNode>(currentAt, currentFile, yyloc.first_line));
+            }
+            free($2);
         }
     ;
 
@@ -551,6 +566,14 @@ functionDef:
             COUT << "User function: " << $1 << ENDL;
             free($1);
         }
+    |   UVAR '[' ']' '(' ')'                {
+            string s;
+            s.append($1);
+            $$ = new FunctionNode(s, NULL, currentFile, yyloc.first_line);
+            $$->setCompilerProperty("_multiInstance", std::make_shared<ValueNode>(true, currentFile, yyloc.first_line));
+            COUT << "Multi-instance User function: " << $1 << ENDL;
+            free($1);
+        }
     |   UVAR atDef '(' ')'                  {
             string s;
             s.append($1); /* string constructor leaks otherwise! */
@@ -559,11 +582,28 @@ functionDef:
             COUT << "User function: " << $1 << ENDL;
             free($1);
         }
+    |   UVAR '[' ']' atDef '(' ')'          {
+            string s;
+            s.append($1);
+            $$ = new FunctionNode(s, NULL, currentFile, yyloc.first_line);
+            $$->setCompilerProperty("_multiInstance", std::make_shared<ValueNode>(true, currentFile, yyloc.first_line));
+            $$->setCompilerProperty("_at", std::shared_ptr<AST>($4));
+            COUT << "Multi-instance User function: " << $1 << ENDL;
+            free($1);
+        }
     |   scopeDef UVAR '(' ')'               {
             string s;
             s.append($2);
             $$ = new FunctionNode(s, std::shared_ptr<AST>($1), NULL, currentFile, yyloc.first_line);
             COUT << "User function: " << $2 << " in scope!" << ENDL;
+            free($2);
+        }
+    |   scopeDef UVAR '[' ']' '(' ')'       {
+            string s;
+            s.append($2);
+            $$ = new FunctionNode(s, std::shared_ptr<AST>($1), NULL, currentFile, yyloc.first_line);
+            $$->setCompilerProperty("_multiInstance", std::make_shared<ValueNode>(true, currentFile, yyloc.first_line));
+            COUT << "Multi-instance User function: " << $2 << " in scope!" << ENDL;
             free($2);
         }
     |   scopeDef UVAR atDef '(' ')'         {
@@ -574,12 +614,30 @@ functionDef:
             COUT << "User function: " << $2 << " in scope!" << ENDL;
             free($2);
         }
+    |   scopeDef UVAR '[' ']' atDef '(' ')' {
+            string s;
+            s.append($2);
+            $$ = new FunctionNode(s, std::shared_ptr<AST>($1), NULL, currentFile, yyloc.first_line);
+            $$->setCompilerProperty("_multiInstance", std::make_shared<ValueNode>(true, currentFile, yyloc.first_line));
+            $$->setCompilerProperty("_at", std::shared_ptr<AST>($5));
+            COUT << "Multi-instance User function: " << $2 << " in scope!" << ENDL;
+            free($2);
+        }
     |   UVAR '(' properties ')'             {
             string s;
             s.append($1); /* string constructor leaks otherwise! */
             $$ = new FunctionNode(s, std::shared_ptr<AST>($3), currentFile, yyloc.first_line);
             COUT << "Properties () ..." << ENDL;
             COUT << "User function: " << $1 << ENDL;
+            free($1);
+        }
+    |   UVAR '[' ']' '(' properties ')'     {
+            string s;
+            s.append($1);
+            $$ = new FunctionNode(s, std::shared_ptr<AST>($5), currentFile, yyloc.first_line);
+            $$->setCompilerProperty("_multiInstance", std::make_shared<ValueNode>(true, currentFile, yyloc.first_line));
+            COUT << "Properties () ..." << ENDL;
+            COUT << "Multi-instance User function: " << $1 << ENDL;
             free($1);
         }
     |   UVAR atDef  '(' properties ')'      {
@@ -591,12 +649,31 @@ functionDef:
             COUT << "User function: " << $1 << ENDL;
             free($1);
         }
+    |   UVAR '[' ']' atDef  '(' properties ')' {
+            string s;
+            s.append($1);
+            $$ = new FunctionNode(s, std::shared_ptr<AST>($6), currentFile, yyloc.first_line);
+            $$->setCompilerProperty("_multiInstance", std::make_shared<ValueNode>(true, currentFile, yyloc.first_line));
+            $$->setCompilerProperty("_at", std::shared_ptr<AST>($4));
+            COUT << "Properties () ..." << ENDL;
+            COUT << "Multi-instance User function: " << $1 << ENDL;
+            free($1);
+        }
     |   scopeDef UVAR '(' properties ')'               {
             string s;
             s.append($2);
             $$ = new FunctionNode(s, std::shared_ptr<AST>($1), std::shared_ptr<AST>($4), currentFile, yyloc.first_line);
             COUT << "Properties () ..." << ENDL;
             COUT << "User function: " << $2 << " in scope!" << ENDL;
+            free($2);
+        }
+    |   scopeDef UVAR '[' ']' '(' properties ')'       {
+            string s;
+            s.append($2);
+            $$ = new FunctionNode(s, std::shared_ptr<AST>($1), std::shared_ptr<AST>($6), currentFile, yyloc.first_line);
+            $$->setCompilerProperty("_multiInstance", std::make_shared<ValueNode>(true, currentFile, yyloc.first_line));
+            COUT << "Properties () ..." << ENDL;
+            COUT << "Multi-instance User function: " << $2 << " in scope!" << ENDL;
             free($2);
         }
     |   scopeDef UVAR atDef  '(' properties ')'        {
@@ -606,6 +683,16 @@ functionDef:
             $$->setCompilerProperty("_at", std::shared_ptr<AST>($3));
             COUT << "Properties () ..." << ENDL;
             COUT << "User function: " << $2 << " in scope!" << ENDL;
+            free($2);
+        }
+    |   scopeDef UVAR '[' ']' atDef  '(' properties ')' {
+            string s;
+            s.append($2);
+            $$ = new FunctionNode(s, std::shared_ptr<AST>($1), std::shared_ptr<AST>($7), currentFile, yyloc.first_line);
+            $$->setCompilerProperty("_multiInstance", std::make_shared<ValueNode>(true, currentFile, yyloc.first_line));
+            $$->setCompilerProperty("_at", std::shared_ptr<AST>($5));
+            COUT << "Properties () ..." << ENDL;
+            COUT << "Multi-instance User function: " << $2 << " in scope!" << ENDL;
             free($2);
         }
     ;

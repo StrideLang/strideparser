@@ -50,7 +50,7 @@ public:
   ~FunctionNode();
 
   virtual void addChild(ASTNode t) override;
-  virtual void setChildren(std::vector<ASTNode> &newChildren) override;
+  virtual void setChildren(const std::vector<ASTNode> &newChildren) override;
   //    virtual void deleteChildren() override;
 
   std::string getName() const { return m_name; }

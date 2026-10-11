@@ -104,7 +104,7 @@ std::shared_ptr<ArrayNode> DeclarationNode::getArrayIndex() const {
   return std::static_pointer_cast<ArrayNode>(m_children.at(0));
 }
 
-std::vector<std::shared_ptr<PropertyNode>>
+const std::vector<std::shared_ptr<PropertyNode>> &
 DeclarationNode::getProperties() const {
   return m_properties;
 }

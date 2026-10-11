@@ -79,7 +79,7 @@ public:
     Function = 0x22,
     Keyword = 0x23,
 
-    // Backwards-compatible aliases
+    // Backwards-compatible aliases (deprecated)
     Bundle = Array,
     BundleDeclaration = ArrayDeclaration,
     PortProperty = MemberAccess,
@@ -103,8 +103,8 @@ public:
   bool isNil() { return m_token == AST::None; }
 
   virtual void addChild(ASTNode t);
-  std::vector<ASTNode> getChildren() const { return m_children; }
-  virtual void setChildren(std::vector<ASTNode> &newChildren);
+  const std::vector<ASTNode> &getChildren() const { return m_children; }
+  virtual void setChildren(const std::vector<ASTNode> &newChildren);
 
   virtual ASTNode deepCopy();
 
@@ -122,6 +122,7 @@ public:
 
   void setCompilerProperty(std::string propertyName, ASTNode value);
   ASTNode getCompilerProperty(std::string propertyName) const;
+  void removeCompilerProperty(std::string propertyName);
   void appendToPropertyValue(std::string propertyName, ASTNode value);
 
   // Code processing

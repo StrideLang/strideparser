@@ -57,7 +57,7 @@ public:
   std::shared_ptr<ArrayNode> getArrayIndex() const;
   std::shared_ptr<ArrayNode> getBundle() const { return getArrayIndex(); }
 
-  std::vector<std::shared_ptr<PropertyNode>> getProperties() const;
+  const std::vector<std::shared_ptr<PropertyNode>> &getProperties() const;
   bool addProperty(std::shared_ptr<PropertyNode> newProperty);
   ASTNode getPropertyValue(std::string propertyName);
   void setPropertyValue(std::string propertyName, ASTNode value);

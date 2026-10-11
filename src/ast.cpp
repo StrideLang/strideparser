@@ -71,7 +71,7 @@ ASTNode AST::parseFile(const char *fileName, const char *sourceFilename) {
 std::vector<LangError> AST::getParseErrors() { return getErrors(); }
 void AST::addChild(ASTNode t) { m_children.push_back(t); }
 
-void AST::setChildren(std::vector<ASTNode> &newChildren) {
+void AST::setChildren(const std::vector<ASTNode> &newChildren) {
   m_children = newChildren;
 }
 
@@ -152,6 +152,23 @@ ASTNode AST::getCompilerProperty(std::string propertyName) const {
     }
   }
   return nullptr;
+}
+
+void AST::removeCompilerProperty(std::string propertyName) {
+  if (!m_CompilerProperties) {
+    return;
+  }
+  std::vector<ASTNode> remaining;
+  for (const auto &child : m_CompilerProperties->getChildren()) {
+    if (child->getNodeType() == AST::Property) {
+      auto prop = std::static_pointer_cast<PropertyNode>(child);
+      if (prop->getName() == propertyName) {
+        continue;
+      }
+    }
+    remaining.push_back(child);
+  }
+  m_CompilerProperties->setChildren(remaining);
 }
 
 void AST::appendToPropertyValue(std::string propertyName, ASTNode value) {

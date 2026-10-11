@@ -77,7 +77,7 @@ void FunctionNode::addChild(ASTNode t) {
   m_properties.push_back(std::static_pointer_cast<PropertyNode>(t));
 }
 
-void FunctionNode::setChildren(std::vector<ASTNode> &newChildren) {
+void FunctionNode::setChildren(const std::vector<ASTNode> &newChildren) {
   AST::setChildren(newChildren);
   for (unsigned int i = 0; i < m_children.size(); i++) {
     assert(m_children.at(i)->getNodeType() == AST::Property);
