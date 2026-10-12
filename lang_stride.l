@@ -55,6 +55,7 @@ HEXLETTER   [A-Fa-f]
 "import"        { return IMPORT; }
 "as"            { return AS; }
 "for"           { return FOR; }
+"in"            { return IN; }
 "none"          { return NONE; }
 "on"            { return ON; }
 "off"           { return OFF; }

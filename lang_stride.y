@@ -142,6 +142,7 @@ NullStream nstream;
 %type <ast> scopeDef
 %type <scopeNode> scope
 %type <portPropertyNode> portPropertyDef
+%type <ast> generatorRange
 
 
 /* declare tokens */
@@ -156,7 +157,7 @@ NullStream nstream;
 
 %token '[' ']' '{' '}'
 %token DOT COMMA COLON COLONCOLON SEMICOLON
-%token USE VERSION WITH IMPORT PACKAGE AS FOR NONE ON OFF
+%token USE VERSION WITH IMPORT PACKAGE AS FOR IN NONE ON OFF
 %token BITAND BITOR BITNOT AT
 %token STREAMRATE
 
@@ -372,6 +373,23 @@ blockDef:
             free($2);
             free($1);
          }
+    |   WORD UVAR '[' UVAR IN generatorRange ']' blockType {
+            string word;
+            word.append($1);
+            string name;
+            name.append($2);
+            string varName;
+            varName.append($4);
+            auto decl = new DeclarationNode(name, word, std::shared_ptr<AST>($8), currentFile, yyloc.first_line);
+            decl->setCompilerProperty("_isGenerator", std::make_shared<ValueNode>(true, currentFile, yyloc.first_line));
+            decl->setCompilerProperty("_generatorVar", std::make_shared<ValueNode>(varName, currentFile, yyloc.first_line));
+            decl->setCompilerProperty("_generatorRange", std::shared_ptr<AST>($6));
+            $$ = decl;
+            COUT << "Generator Block: " << $1 << " " << $2 << "[" << $4 << " in ...]" << ENDL;
+            free($1);
+            free($2);
+            free($4);
+        }
     |   anonymousDeclDef     {
         COUT << "Resolving anonymous declaration ... " << ENDL;
         COUT << "Streaming ... " << ENDL;
@@ -566,6 +584,22 @@ functionDef:
             COUT << "User function: " << $1 << ENDL;
             free($1);
         }
+    |   bundleDef '(' ')'                   {
+            BundleNode *bundle = $1;
+            string s = bundle->getName();
+            $$ = new FunctionNode(s, NULL, currentFile, yyloc.first_line);
+            std::shared_ptr<ArrayNode> array(bundle);
+            $$->setCompilerProperty("_bundleIndices", array);
+            COUT << "Indexed User function: " << s << ENDL;
+        }
+    |   bundleDef '(' properties ')'        {
+            BundleNode *bundle = $1;
+            string s = bundle->getName();
+            $$ = new FunctionNode(s, std::shared_ptr<AST>($3), currentFile, yyloc.first_line);
+            std::shared_ptr<ArrayNode> array(bundle);
+            $$->setCompilerProperty("_bundleIndices", array);
+            COUT << "Indexed User function: " << s << ENDL;
+        }
     |   UVAR '[' ']' '(' ')'                {
             string s;
             s.append($1);
@@ -712,6 +746,22 @@ anonymousDeclDef:
             $$ = decl;
             COUT << "Block: " << $1 << ", Labelled: " << uvar << ENDL;
             free($1);
+        }
+    |   WORD '[' UVAR IN generatorRange ']' blockType {
+            string word;
+            word.append($1);
+            string varName;
+            varName.append($3);
+            string uvar = "___Anonymous___" + std::to_string(anonymous_counter++);
+            auto decl = new DeclarationNode(uvar, word, std::shared_ptr<AST>($7), currentFile, yyloc.first_line);
+            decl->setCompilerProperty("anonymous", std::make_shared<ValueNode>(true, currentFile, yyloc.first_line));
+            decl->setCompilerProperty("_isGenerator", std::make_shared<ValueNode>(true, currentFile, yyloc.first_line));
+            decl->setCompilerProperty("_generatorVar", std::make_shared<ValueNode>(varName, currentFile, yyloc.first_line));
+            decl->setCompilerProperty("_generatorRange", std::shared_ptr<AST>($5));
+            $$ = decl;
+            COUT << "Anonymous Generator Block: " << $1 << "[" << $3 << " in ...], Labelled: " << uvar << ENDL;
+            free($1);
+            free($3);
         }
     ;
 
@@ -1015,6 +1065,21 @@ indexRange:
         indexExp COLON indexExp         {
             $$ = new RangeNode(std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), currentFile, yyloc.first_line);
             COUT << "Resolving Index Range ..." << ENDL;
+        }
+    ;
+
+generatorRange:
+        indexRange                      {
+            $$ = $1;
+        }
+    |   valueListDef                    {
+            $$ = $1;
+        }
+    |   UVAR                            {
+            string s;
+            s.append($1);
+            $$ = new EntityNode(s, currentFile, yyloc.first_line);
+            free($1);
         }
     ;
 
