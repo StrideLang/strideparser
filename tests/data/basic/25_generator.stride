@@ -1,0 +1,11 @@
+transition PlaceMarker[Index in 0:8] {
+    label: "Place Marker"
+}
+
+transition [Index in 1:4] {
+    label: "Anonymous Marker"
+}
+
+action DoSomething[Item in [A, B, C]] {
+    label: "Do"
+}

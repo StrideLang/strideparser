@@ -580,4 +580,67 @@ TEST(Basic, PackageDeclaration) {
   EXPECT_EQ(segs[1], "Filters");
 }
 
+TEST(Basic, GeneratorSyntax) {
+  ASTNode tree = AST::parseFile(TESTS_SOURCE_DIR "basic/25_generator.stride");
+  ASSERT_TRUE(tree != nullptr);
+
+  std::vector<ASTNode> nodes = tree->getChildren();
+  ASSERT_EQ(nodes.size(), 3);
+
+  // Node 0: transition PlaceMarker[Index in 0:8]
+  ASSERT_EQ(nodes.at(0)->getNodeType(), AST::Declaration);
+  auto decl0 = std::static_pointer_cast<DeclarationNode>(nodes.at(0));
+  EXPECT_EQ(decl0->getName(), "PlaceMarker");
+  EXPECT_EQ(decl0->getEntityType(), "transition");
+  auto isGen0 = decl0->getCompilerProperty("_isGenerator");
+  ASSERT_NE(isGen0, nullptr);
+  EXPECT_TRUE(std::static_pointer_cast<ValueNode>(isGen0)->getSwitchValue());
+  auto var0 = decl0->getCompilerProperty("_generatorVar");
+  ASSERT_NE(var0, nullptr);
+  EXPECT_EQ(std::static_pointer_cast<ValueNode>(var0)->getStringValue(), "Index");
+  auto range0 = decl0->getCompilerProperty("_generatorRange");
+  ASSERT_NE(range0, nullptr);
+  ASSERT_EQ(range0->getNodeType(), AST::Range);
+  auto r0 = std::static_pointer_cast<RangeNode>(range0);
+  EXPECT_EQ(std::static_pointer_cast<ValueNode>(r0->startIndex())->getIntValue(), 0);
+  EXPECT_EQ(std::static_pointer_cast<ValueNode>(r0->endIndex())->getIntValue(), 8);
+
+  // Node 1: transition [Index in 1:4] (anonymous generator transition)
+  ASSERT_EQ(nodes.at(1)->getNodeType(), AST::Declaration);
+  auto decl1 = std::static_pointer_cast<DeclarationNode>(nodes.at(1));
+  EXPECT_EQ(decl1->getEntityType(), "transition");
+  auto anon1 = decl1->getCompilerProperty("anonymous");
+  ASSERT_NE(anon1, nullptr);
+  EXPECT_TRUE(std::static_pointer_cast<ValueNode>(anon1)->getSwitchValue());
+  auto isGen1 = decl1->getCompilerProperty("_isGenerator");
+  ASSERT_NE(isGen1, nullptr);
+  EXPECT_TRUE(std::static_pointer_cast<ValueNode>(isGen1)->getSwitchValue());
+  auto var1 = decl1->getCompilerProperty("_generatorVar");
+  ASSERT_NE(var1, nullptr);
+  EXPECT_EQ(std::static_pointer_cast<ValueNode>(var1)->getStringValue(), "Index");
+  auto range1 = decl1->getCompilerProperty("_generatorRange");
+  ASSERT_NE(range1, nullptr);
+  ASSERT_EQ(range1->getNodeType(), AST::Range);
+  auto r1 = std::static_pointer_cast<RangeNode>(range1);
+  EXPECT_EQ(std::static_pointer_cast<ValueNode>(r1->startIndex())->getIntValue(), 1);
+  EXPECT_EQ(std::static_pointer_cast<ValueNode>(r1->endIndex())->getIntValue(), 4);
+
+  // Node 2: action DoSomething[Item in [A, B, C]]
+  ASSERT_EQ(nodes.at(2)->getNodeType(), AST::Declaration);
+  auto decl2 = std::static_pointer_cast<DeclarationNode>(nodes.at(2));
+  EXPECT_EQ(decl2->getName(), "DoSomething");
+  EXPECT_EQ(decl2->getEntityType(), "action");
+  auto isGen2 = decl2->getCompilerProperty("_isGenerator");
+  ASSERT_NE(isGen2, nullptr);
+  EXPECT_TRUE(std::static_pointer_cast<ValueNode>(isGen2)->getSwitchValue());
+  auto var2 = decl2->getCompilerProperty("_generatorVar");
+  ASSERT_NE(var2, nullptr);
+  EXPECT_EQ(std::static_pointer_cast<ValueNode>(var2)->getStringValue(), "Item");
+  auto range2 = decl2->getCompilerProperty("_generatorRange");
+  ASSERT_NE(range2, nullptr);
+  ASSERT_EQ(range2->getNodeType(), AST::List);
+  EXPECT_EQ(range2->getChildren().size(), 3);
+}
+
+
 

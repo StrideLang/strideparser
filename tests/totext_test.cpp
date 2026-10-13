@@ -92,8 +92,8 @@ TEST(ToTextTest, StreamNode) {
 TEST(ToTextTest, ArrayNode) {
   auto indexList = std::make_shared<ListNode>("test", 1);
   indexList->addChild(std::make_shared<ValueNode>((int64_t)5, "test", 1));
-  ArrayNode bundle("MyBundle", indexList, "test", 1);
-  EXPECT_EQ(bundle.toText(0, 2, false), "MyBundle[ 5 ]");
+  ArrayNode array("MyBundle", indexList, "test", 1);
+  EXPECT_EQ(array.toText(0, 2, false), "MyBundle[ 5 ]");
 }
 
 TEST(ToTextTest, ExpressionNode) {

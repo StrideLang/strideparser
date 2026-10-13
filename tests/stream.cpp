@@ -96,10 +96,10 @@ TEST(Stream, Basic) {
   EXPECT_TRUE(node->getLine() == 10);
   EXPECT_TRUE(node->getLeft()->getNodeType() == AST::Array);
   EXPECT_TRUE(node->getRight()->getNodeType() == AST::Array);
-  auto bundle = std::static_pointer_cast<ArrayNode>(node->getLeft());
-  EXPECT_TRUE(bundle->getName() == "Bundle1");
-  EXPECT_TRUE(bundle->getLine() == 10);
-  auto indexList = bundle->index();
+  auto array = std::static_pointer_cast<ArrayNode>(node->getLeft());
+  EXPECT_TRUE(array->getName() == "Bundle1");
+  EXPECT_TRUE(array->getLine() == 10);
+  auto indexList = array->index();
   EXPECT_TRUE(indexList->getNodeType() == AST::List);
   EXPECT_TRUE(indexList->size() == 1);
   auto value =
@@ -107,10 +107,10 @@ TEST(Stream, Basic) {
   EXPECT_TRUE(value->getNodeType() == AST::Int);
   EXPECT_TRUE(value->getLine() == 10);
   EXPECT_TRUE(value->getIntValue() == 1);
-  bundle = std::static_pointer_cast<ArrayNode>(node->getRight());
-  EXPECT_TRUE(bundle->getName() == "Bundle2");
-  EXPECT_TRUE(bundle->getLine() == 10);
-  indexList = bundle->index();
+  array = std::static_pointer_cast<ArrayNode>(node->getRight());
+  EXPECT_TRUE(array->getName() == "Bundle2");
+  EXPECT_TRUE(array->getLine() == 10);
+  indexList = array->index();
   EXPECT_TRUE(indexList->getNodeType() == AST::List);
   EXPECT_TRUE(indexList->size() == 1);
   value = std::static_pointer_cast<ValueNode>(indexList->getChildren().at(0));
@@ -134,10 +134,10 @@ TEST(Stream, Basic) {
   EXPECT_TRUE(expression->getRight()->getNodeType() == AST::Int);
   EXPECT_TRUE(std::static_pointer_cast<ValueNode>(expression->getRight())
                   ->getIntValue() == 3);
-  bundle = std::static_pointer_cast<ArrayNode>(node->getRight());
-  EXPECT_TRUE(bundle->getName() == "Bundle");
-  EXPECT_TRUE(bundle->getLine() == 11);
-  indexList = bundle->index();
+  array = std::static_pointer_cast<ArrayNode>(node->getRight());
+  EXPECT_TRUE(array->getName() == "Bundle");
+  EXPECT_TRUE(array->getLine() == 11);
+  indexList = array->index();
   EXPECT_TRUE(indexList->getNodeType() == AST::List);
   EXPECT_TRUE(indexList->size() == 1);
   value = std::static_pointer_cast<ValueNode>(indexList->getChildren().at(0));
@@ -155,16 +155,16 @@ TEST(Stream, Basic) {
   EXPECT_TRUE(expression->getExpressionType() == ExpressionNode::Multiply);
   EXPECT_TRUE(expression->getLeft()->getNodeType() == AST::Array);
   EXPECT_TRUE(expression->getLine() == 12);
-  bundle = std::static_pointer_cast<ArrayNode>(expression->getLeft());
-  EXPECT_TRUE(bundle->getName() == "Bundle1");
-  EXPECT_TRUE(bundle->getLine() == 12);
+  array = std::static_pointer_cast<ArrayNode>(expression->getLeft());
+  EXPECT_TRUE(array->getName() == "Bundle1");
+  EXPECT_TRUE(array->getLine() == 12);
   EXPECT_TRUE(expression->getRight()->getNodeType() == AST::Real);
   EXPECT_TRUE(std::static_pointer_cast<ValueNode>(expression->getRight())
                   ->getRealValue() == 0.5);
-  bundle = std::static_pointer_cast<ArrayNode>(node->getRight());
-  EXPECT_TRUE(bundle->getName() == "Bundle2");
-  EXPECT_TRUE(bundle->getLine() == 12);
-  indexList = bundle->index();
+  array = std::static_pointer_cast<ArrayNode>(node->getRight());
+  EXPECT_TRUE(array->getName() == "Bundle2");
+  EXPECT_TRUE(array->getLine() == 12);
+  indexList = array->index();
   EXPECT_TRUE(indexList->getNodeType() == AST::List);
   EXPECT_TRUE(indexList->size() == 1);
   value = std::static_pointer_cast<ValueNode>(indexList->getChildren().at(0));
@@ -178,13 +178,13 @@ TEST(Stream, Basic) {
   EXPECT_TRUE(node->getLeft()->getNodeType() == AST::Array);
   EXPECT_TRUE(node->getRight()->getNodeType() == AST::Array);
   EXPECT_TRUE(node->getLine() == 14);
-  bundle = std::static_pointer_cast<ArrayNode>(node->getLeft());
-  EXPECT_TRUE(bundle->getName() == "BundleRange");
-  EXPECT_EQ(bundle->getLine(), 14);
-  auto index = std::static_pointer_cast<ListNode>(bundle->index());
+  array = std::static_pointer_cast<ArrayNode>(node->getLeft());
+  EXPECT_TRUE(array->getName() == "BundleRange");
+  EXPECT_EQ(array->getLine(), 14);
+  auto index = std::static_pointer_cast<ListNode>(array->index());
   EXPECT_TRUE(index->getNodeType() == AST::List);
   EXPECT_TRUE(index->getChildren().size() == 1);
-  indexList = bundle->index();
+  indexList = array->index();
   EXPECT_TRUE(indexList->getNodeType() == AST::List);
   EXPECT_TRUE(indexList->size() == 1);
   auto range =
@@ -199,13 +199,13 @@ TEST(Stream, Basic) {
   EXPECT_TRUE(value->getLine() == 14);
   EXPECT_TRUE(value->getIntValue() == 2);
 
-  bundle = std::static_pointer_cast<ArrayNode>(node->getRight());
-  EXPECT_TRUE(bundle->getName() == "BundleRange2");
-  EXPECT_TRUE(bundle->getLine() == 14);
-  index = std::static_pointer_cast<ListNode>(bundle->index());
+  array = std::static_pointer_cast<ArrayNode>(node->getRight());
+  EXPECT_TRUE(array->getName() == "BundleRange2");
+  EXPECT_TRUE(array->getLine() == 14);
+  index = std::static_pointer_cast<ListNode>(array->index());
   EXPECT_TRUE(index->getNodeType() == AST::List);
   EXPECT_TRUE(index->getChildren().size() == 1);
-  indexList = bundle->index();
+  indexList = array->index();
   EXPECT_TRUE(indexList->getNodeType() == AST::List);
   EXPECT_TRUE(indexList->size() == 1);
   range = std::static_pointer_cast<RangeNode>(indexList->getChildren().at(0));
@@ -243,10 +243,10 @@ TEST(Stream, Basic) {
   EXPECT_TRUE(node->getNodeType() == AST::Stream);
   EXPECT_TRUE(node->getLeft()->getNodeType() == AST::Array);
   EXPECT_TRUE(node->getRight()->getNodeType() == AST::Stream);
-  bundle = std::static_pointer_cast<ArrayNode>(node->getLeft());
-  EXPECT_TRUE(bundle->getName() == "A");
-  EXPECT_TRUE(bundle->getLine() == 18);
-  auto list = std::static_pointer_cast<ListNode>(bundle->index());
+  array = std::static_pointer_cast<ArrayNode>(node->getLeft());
+  EXPECT_TRUE(array->getName() == "A");
+  EXPECT_TRUE(array->getLine() == 18);
+  auto list = std::static_pointer_cast<ListNode>(array->index());
   EXPECT_TRUE(list->getNodeType() == AST::List);
   EXPECT_TRUE(list->getLine() == 18);
 

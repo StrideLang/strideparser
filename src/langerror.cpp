@@ -62,7 +62,7 @@ std::string LangError::getErrorText() {
     break;
   case InvalidPortType:
     errorText += "Invalid port type Error. Port '" + errorTokens[1] +
-                 "' in Block '" + errorTokens[0] + "' expects '" +
+                 "' in Entity '" + errorTokens[0] + "' expects '" +
                  errorTokens[3] + "'" + "' given '" + errorTokens[2] + "'";
     break;
   case InvalidIndexType:
