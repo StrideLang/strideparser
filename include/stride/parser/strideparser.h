@@ -37,8 +37,6 @@
 
 #include "arraynode.h"
 #include "ast.h"
-#include "blocknode.h"
-#include "bundlenode.h"
 #include "declarationnode.h"
 #include "entitynode.h"
 #include "expressionnode.h"
@@ -48,7 +46,6 @@
 #include "memberaccessnode.h"
 #include "packagenode.h"
 #include "platformnode.h"
-#include "portpropertynode.h"
 #include "propertynode.h"
 #include "rangenode.h"
 #include "scopenode.h"

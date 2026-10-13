@@ -57,7 +57,6 @@ public:
 
   void setIndex(std::shared_ptr<ListNode> index);
   std::vector<size_t> getIndices();
-  std::vector<size_t> getIndeces() { return getIndices(); }
 
   virtual void resolveScope(ASTNode scope) override;
 
@@ -68,8 +67,6 @@ public:
 private:
   std::string m_name;
 };
-
-using BundleNode = ArrayNode;
 
 } // namespace strd
 

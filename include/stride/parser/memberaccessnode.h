@@ -50,10 +50,6 @@ public:
   std::string getEntity() const { return m_entity; }
   std::string getPropertyName() const { return m_propertyName; }
 
-  // Aliases for transitional backwards compatibility
-  std::string getName() const { return getEntity(); }
-  std::string getPortName() const { return getPropertyName(); }
-
   virtual ASTNode deepCopy() override;
   virtual std::string toText(int indentOffset = 0, int indentSize = 2,
                              bool newLine = true) const override;
@@ -62,8 +58,6 @@ private:
   std::string m_entity;
   std::string m_propertyName;
 };
-
-using PortPropertyNode = MemberAccessNode;
 
 } // namespace strd
 

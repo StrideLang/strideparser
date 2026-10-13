@@ -65,7 +65,7 @@ std::string ListNode::toText(int indentOffset, int indentSize,
     }
 
     if (elem->getNodeType() == AST::Declaration ||
-        elem->getNodeType() == AST::BundleDeclaration) {
+        elem->getNodeType() == AST::ArrayDeclaration) {
       outText += "\n";
     }
     currentColumn += newText.size();

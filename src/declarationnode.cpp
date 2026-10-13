@@ -90,8 +90,7 @@ DeclarationNode::~DeclarationNode() {}
 std::string DeclarationNode::getName() const {
   if (getNodeType() == AST::Declaration) {
     return m_name;
-  } else if (getNodeType() == AST::ArrayDeclaration ||
-             getNodeType() == AST::BundleDeclaration) {
+  } else if (getNodeType() == AST::ArrayDeclaration) {
     return getArrayIndex()->getName();
   }
   assert(0 == 1);
@@ -99,8 +98,7 @@ std::string DeclarationNode::getName() const {
 }
 
 std::shared_ptr<ArrayNode> DeclarationNode::getArrayIndex() const {
-  assert(getNodeType() == AST::ArrayDeclaration ||
-         getNodeType() == AST::BundleDeclaration);
+  assert(getNodeType() == AST::ArrayDeclaration);
   return std::static_pointer_cast<ArrayNode>(m_children.at(0));
 }
 
@@ -218,8 +216,7 @@ ASTNode DeclarationNode::deepCopy() {
   for (unsigned int i = 0; i < m_properties.size(); i++) {
     newProps->addChild(m_properties[i]->deepCopy());
   }
-  if (getNodeType() == AST::ArrayDeclaration ||
-      getNodeType() == AST::BundleDeclaration) {
+  if (getNodeType() == AST::ArrayDeclaration) {
     node = std::make_shared<DeclarationNode>(
         std::static_pointer_cast<ArrayNode>(getArrayIndex()->deepCopy()),
         m_entityType, newProps, m_filename.data(), m_line, m_scope);

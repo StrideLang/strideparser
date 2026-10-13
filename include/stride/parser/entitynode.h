@@ -58,8 +58,6 @@ private:
   std::string m_name;
 };
 
-using BlockNode = EntityNode;
-
 } // namespace strd
 
 #endif // ENTITYNODE_H

@@ -68,8 +68,8 @@ std::string LangError::getErrorText() {
   case InvalidIndexType:
     errorText += "Invalid index type.";
     break;
-  case BundleSizeMismatch:
-    errorText += "Bundle Size Mismatch Error";
+  case ArraySizeMismatch:
+    errorText += "Array Size Mismatch Error";
     break;
   case ArrayIndexOutOfBounds:
     errorText += "Array Index out of Range Error";

@@ -102,8 +102,7 @@ std::vector<size_t> ArrayNode::getIndices() {
         // FIXME implement
         assert(0 == 1);
       }
-    } else if (listNode->getNodeType() == AST::MemberAccess ||
-               listNode->getNodeType() == AST::PortProperty) {
+    } else if (listNode->getNodeType() == AST::MemberAccess) {
       // Unsupported
       assert(0 == 1);
     }
@@ -124,8 +123,8 @@ void ArrayNode::resolveScope(ASTNode scope) {
 }
 
 ASTNode ArrayNode::deepCopy() {
-  assert(getNodeType() == AST::Array || getNodeType() == AST::Bundle);
-  if (getNodeType() == AST::Array || getNodeType() == AST::Bundle) {
+  assert(getNodeType() == AST::Array);
+  if (getNodeType() == AST::Array) {
     std::shared_ptr<ArrayNode> newArray = std::make_shared<ArrayNode>(
         m_name, std::static_pointer_cast<ListNode>(index()->deepCopy()),
         m_filename.data(), m_line);

@@ -55,7 +55,6 @@ public:
 
   std::string getName() const;
   std::shared_ptr<ArrayNode> getArrayIndex() const;
-  std::shared_ptr<ArrayNode> getBundle() const { return getArrayIndex(); }
 
   const std::vector<std::shared_ptr<PropertyNode>> &getProperties() const;
   bool addProperty(std::shared_ptr<PropertyNode> newProperty);
@@ -68,7 +67,6 @@ public:
   void setDomainString(std::string domain);
 
   std::string getEntityType() const;
-  std::string getObjectType() const { return getEntityType(); }
 
   virtual std::string toText(int indentOffset = 0, int indentSize = 2,
                              bool newLine = true) const override;

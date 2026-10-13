@@ -50,7 +50,7 @@ public:
     InvalidPort,
     InvalidPortType,
     InvalidIndexType,
-    BundleSizeMismatch,
+    ArraySizeMismatch,
     ArrayIndexOutOfBounds,
     DuplicateSymbol,
     InconsistentList,

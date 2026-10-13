@@ -1,13 +1,14 @@
+#include "stride/parser/arraynode.h"
 #include "stride/parser/ast.h"
-#include "stride/parser/blocknode.h"
 #include "stride/parser/declarationnode.h"
+#include "stride/parser/entitynode.h"
 #include "stride/parser/expressionnode.h"
 #include "stride/parser/functionnode.h"
 #include "stride/parser/importnode.h"
 #include "stride/parser/listnode.h"
+#include "stride/parser/memberaccessnode.h"
 #include "stride/parser/packagenode.h"
 #include "stride/parser/platformnode.h"
-#include "stride/parser/portpropertynode.h"
 #include "stride/parser/propertynode.h"
 #include "stride/parser/rangenode.h"
 #include "stride/parser/streamnode.h"
@@ -88,10 +89,10 @@ TEST(ToTextTest, StreamNode) {
   EXPECT_EQ(s1->toText(0, 2, false), "1 >> 2 >> 3;");
 }
 
-TEST(ToTextTest, BundleNode) {
+TEST(ToTextTest, ArrayNode) {
   auto indexList = std::make_shared<ListNode>("test", 1);
   indexList->addChild(std::make_shared<ValueNode>((int64_t)5, "test", 1));
-  BundleNode bundle("MyBundle", indexList, "test", 1);
+  ArrayNode bundle("MyBundle", indexList, "test", 1);
   EXPECT_EQ(bundle.toText(0, 2, false), "MyBundle[ 5 ]");
 }
 
@@ -110,8 +111,8 @@ TEST(ToTextTest, ImportNode) {
   EXPECT_EQ(imp2.toText(0, 2, false), "import OtherFile;");
 }
 
-TEST(ToTextTest, PortPropertyNode) {
-  PortPropertyNode pp("MyBlock", "InputPort", "test", 1);
+TEST(ToTextTest, MemberAccessNode) {
+  MemberAccessNode pp("MyBlock", "InputPort", "test", 1);
   EXPECT_EQ(pp.toText(0, 2, false), "MyBlock.InputPort");
 }
 

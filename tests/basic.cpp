@@ -1,9 +1,9 @@
 #include "gtest/gtest.h"
 
+#include "stride/parser/arraynode.h"
 #include "stride/parser/ast.h"
-#include "stride/parser/blocknode.h"
-#include "stride/parser/bundlenode.h"
 #include "stride/parser/declarationnode.h"
+#include "stride/parser/entitynode.h"
 #include "stride/parser/expressionnode.h"
 #include "stride/parser/functionnode.h"
 #include "stride/parser/importnode.h"
@@ -159,7 +159,7 @@ TEST(Basic, Lists) {
   //            value: [ 16, 32, 64, 128 ]
   //    }
   DeclarationNode *block = static_cast<DeclarationNode *>(nodes.at(1).get());
-  EXPECT_TRUE(block->getNodeType() == AST::BundleDeclaration);
+  EXPECT_TRUE(block->getNodeType() == AST::ArrayDeclaration);
   std::vector<std::shared_ptr<PropertyNode>> props = block->getProperties();
   ListNode *list = static_cast<ListNode *>(props.at(0)->getValue().get());
   EXPECT_TRUE(list->getNodeType() == AST::List);
@@ -173,7 +173,7 @@ TEST(Basic, Lists) {
   //            value: [ 16., 32.1, 64., 128. ]
   //    }
   block = static_cast<DeclarationNode *>(nodes.at(2).get());
-  EXPECT_TRUE(block->getNodeType() == AST::BundleDeclaration);
+  EXPECT_TRUE(block->getNodeType() == AST::ArrayDeclaration);
   props = block->getProperties();
   list = static_cast<ListNode *>(props.at(0)->getValue().get());
   EXPECT_TRUE(list->getNodeType() == AST::List);
@@ -188,7 +188,7 @@ TEST(Basic, Lists) {
   //            value: [ '16', "32.1", '64', "128" ]
   //    }
   block = static_cast<DeclarationNode *>(nodes.at(3).get());
-  EXPECT_TRUE(block->getNodeType() == AST::BundleDeclaration);
+  EXPECT_TRUE(block->getNodeType() == AST::ArrayDeclaration);
   props = block->getProperties();
   list = static_cast<ListNode *>(props.at(0)->getValue().get());
   EXPECT_TRUE(list->getNodeType() == AST::List);
@@ -203,7 +203,7 @@ TEST(Basic, Lists) {
   //            value: [ on, off, on, on ]
   //    }
   block = static_cast<DeclarationNode *>(nodes.at(4).get());
-  EXPECT_TRUE(block->getNodeType() == AST::BundleDeclaration);
+  EXPECT_TRUE(block->getNodeType() == AST::ArrayDeclaration);
   props = block->getProperties();
   list = static_cast<ListNode *>(props.at(0)->getValue().get());
   EXPECT_TRUE(list->getNodeType() == AST::List);
@@ -218,30 +218,30 @@ TEST(Basic, Lists) {
   //            value: [ Name1, Name2, Name3, Name4 ]
   //    }
   block = static_cast<DeclarationNode *>(nodes.at(5).get());
-  EXPECT_TRUE(block->getNodeType() == AST::BundleDeclaration);
+  EXPECT_TRUE(block->getNodeType() == AST::ArrayDeclaration);
   props = block->getProperties();
   list = static_cast<ListNode *>(props.at(0)->getValue().get());
   EXPECT_TRUE(list->getNodeType() == AST::List);
   members = list->getChildren();
   EXPECT_TRUE(members.size() == 4);
   for (ASTNode &member : members) {
-    BlockNode *value = static_cast<BlockNode *>(member.get());
-    EXPECT_TRUE(value->getNodeType() == AST::Bundle);
+    EntityNode *value = static_cast<EntityNode *>(member.get());
+    EXPECT_TRUE(value->getNodeType() == AST::Array);
   }
 
   //    constant List_Namespaces [4] {
   //            value: [ ns.Name1, ns.Name2, ns.Name3, ns.Name4 ]
   //    }
   block = static_cast<DeclarationNode *>(nodes.at(6).get());
-  EXPECT_TRUE(block->getNodeType() == AST::BundleDeclaration);
+  EXPECT_TRUE(block->getNodeType() == AST::ArrayDeclaration);
   props = block->getProperties();
   list = static_cast<ListNode *>(props.at(0)->getValue().get());
   EXPECT_TRUE(list->getNodeType() == AST::List);
   members = list->getChildren();
   EXPECT_TRUE(members.size() == 4);
   for (ASTNode &member : members) {
-    BlockNode *value = static_cast<BlockNode *>(member.get());
-    EXPECT_TRUE(value->getNodeType() == AST::Block);
+    EntityNode *value = static_cast<EntityNode *>(member.get());
+    EXPECT_TRUE(value->getNodeType() == AST::Entity);
     EXPECT_TRUE(value->getScopeLevels() == 1);
     EXPECT_TRUE(value->getScopeAt(0) == "Ns");
   }
@@ -260,12 +260,12 @@ TEST(Basic, Lists) {
   DeclarationNode *internalBlock =
       static_cast<DeclarationNode *>(members[0].get());
   EXPECT_TRUE(internalBlock->getNodeType() == AST::Declaration);
-  EXPECT_TRUE(internalBlock->getObjectType() == "blockType1");
+  EXPECT_TRUE(internalBlock->getEntityType() == "blockType1");
   EXPECT_TRUE(internalBlock->getName() == "BlockName2");
 
   internalBlock = static_cast<DeclarationNode *>(members[1].get());
   EXPECT_TRUE(internalBlock->getNodeType() == AST::Declaration);
-  EXPECT_TRUE(internalBlock->getObjectType() == "blockType2");
+  EXPECT_TRUE(internalBlock->getEntityType() == "blockType2");
   EXPECT_TRUE(internalBlock->getName() == "BlockName3");
 
   //    constant IntegerList [3] {
@@ -273,7 +273,7 @@ TEST(Basic, Lists) {
   //            meta:	'List of lists'
   //    }
   block = static_cast<DeclarationNode *>(nodes.at(8).get());
-  EXPECT_TRUE(block->getNodeType() == AST::BundleDeclaration);
+  EXPECT_TRUE(block->getNodeType() == AST::ArrayDeclaration);
   props = block->getProperties();
   list = static_cast<ListNode *>(props.at(0)->getValue().get());
   EXPECT_TRUE(list->getNodeType() == AST::List);
@@ -330,7 +330,7 @@ TEST(Basic, NoneSwitch) {
 
   EXPECT_TRUE(nodes.at(0)->getNodeType() == AST::Declaration);
   DeclarationNode *block = static_cast<DeclarationNode *>(nodes.at(0).get());
-  EXPECT_TRUE(block->getObjectType() == "object");
+  EXPECT_TRUE(block->getEntityType() == "object");
   std::vector<std::shared_ptr<PropertyNode>> properties =
       block->getProperties();
   EXPECT_TRUE(properties.size() == 3);
@@ -449,7 +449,7 @@ TEST(Basic, HexAndBinaryLiterals) {
 
   // Node 7: HexBundle declaration
   auto hexBundleDecl = std::static_pointer_cast<DeclarationNode>(nodes.at(7));
-  EXPECT_EQ(hexBundleDecl->getNodeType(), AST::BundleDeclaration);
+  EXPECT_EQ(hexBundleDecl->getNodeType(), AST::ArrayDeclaration);
   auto hexProps = hexBundleDecl->getProperties();
   auto hexList = std::static_pointer_cast<ListNode>(hexProps.at(0)->getValue());
   auto hexMembers = hexList->getChildren();
@@ -463,7 +463,7 @@ TEST(Basic, HexAndBinaryLiterals) {
 
   // Node 8: BinBundle declaration
   auto binBundleDecl = std::static_pointer_cast<DeclarationNode>(nodes.at(8));
-  EXPECT_EQ(binBundleDecl->getNodeType(), AST::BundleDeclaration);
+  EXPECT_EQ(binBundleDecl->getNodeType(), AST::ArrayDeclaration);
   auto binProps = binBundleDecl->getProperties();
   auto binList = std::static_pointer_cast<ListNode>(binProps.at(0)->getValue());
   auto binMembers = binList->getChildren();
@@ -477,7 +477,7 @@ TEST(Basic, HexAndBinaryLiterals) {
 
   // Node 9: HexBundle[0x02] >> Out7
   auto stream7 = std::static_pointer_cast<StreamNode>(nodes.at(9));
-  auto bundle7 = std::static_pointer_cast<BundleNode>(stream7->getLeft());
+  auto bundle7 = std::static_pointer_cast<ArrayNode>(stream7->getLeft());
   auto idxList7 = bundle7->index();
   auto idxVal7 =
       std::static_pointer_cast<ValueNode>(idxList7->getChildren().at(0));
@@ -486,7 +486,7 @@ TEST(Basic, HexAndBinaryLiterals) {
 
   // Node 10: BinBundle[0b01] >> Out8
   auto stream8 = std::static_pointer_cast<StreamNode>(nodes.at(10));
-  auto bundle8 = std::static_pointer_cast<BundleNode>(stream8->getLeft());
+  auto bundle8 = std::static_pointer_cast<ArrayNode>(stream8->getLeft());
   auto idxList8 = bundle8->index();
   auto idxVal8 =
       std::static_pointer_cast<ValueNode>(idxList8->getChildren().at(0));
@@ -535,7 +535,7 @@ TEST(Basic, TrailingCommasInLists) {
 
   // Node 4: signal MySignal[4, ] { default: 0 }
   auto signalDecl = std::static_pointer_cast<DeclarationNode>(nodes.at(4));
-  EXPECT_EQ(signalDecl->getNodeType(), AST::BundleDeclaration);
+  EXPECT_EQ(signalDecl->getNodeType(), AST::ArrayDeclaration);
   EXPECT_EQ(signalDecl->getName(), "MySignal");
 
   // Node 5: module TestModule
@@ -554,7 +554,7 @@ TEST(Basic, TrailingCommasInLists) {
 
   // Node 6: MyBundle[1, 2, ] >> Out4;
   auto stream6 = std::static_pointer_cast<StreamNode>(nodes.at(6));
-  auto bundle6 = std::static_pointer_cast<BundleNode>(stream6->getLeft());
+  auto bundle6 = std::static_pointer_cast<ArrayNode>(stream6->getLeft());
   EXPECT_EQ(bundle6->getName(), "MyBundle");
   auto idx6 = bundle6->index();
   EXPECT_EQ(idx6->size(), 2);

@@ -94,7 +94,6 @@ NullStream nstream;
     strd::StreamNode *streamNode;
     strd::PropertyNode *propertyNode;
     strd::ArrayNode *arrayNode;
-    strd::BundleNode *bundleNode;
     strd::EntityNode *entityNode;
     strd::FunctionNode *functionNode;
     strd::ExpressionNode *expressionNode;
@@ -105,7 +104,6 @@ NullStream nstream;
     strd::KeywordNode *keywordNode;
     strd::ScopeNode *scopeNode;
     strd::MemberAccessNode *memberAccessNode;
-    strd::PortPropertyNode *portPropertyNode;
 }
 
 /* declare types for nodes */
@@ -124,7 +122,7 @@ NullStream nstream;
 %type <ast> valueComp
 %type <ast> indexExp
 %type <ast> indexComp
-%type <bundleNode> bundleDef
+%type <arrayNode> bundleDef
 %type <listNode> indexList
 %type <rangeNode> indexRange
 %type <functionNode> functionDef
@@ -141,7 +139,7 @@ NullStream nstream;
 %type <ast> valueListExp
 %type <ast> scopeDef
 %type <scopeNode> scope
-%type <portPropertyNode> portPropertyDef
+%type <memberAccessNode> portPropertyDef
 %type <ast> generatorRange
 
 
@@ -585,7 +583,7 @@ functionDef:
             free($1);
         }
     |   bundleDef '(' ')'                   {
-            BundleNode *bundle = $1;
+            ArrayNode *bundle = $1;
             string s = bundle->getName();
             $$ = new FunctionNode(s, NULL, currentFile, yyloc.first_line);
             std::shared_ptr<ArrayNode> array(bundle);
@@ -593,7 +591,7 @@ functionDef:
             COUT << "Indexed User function: " << s << ENDL;
         }
     |   bundleDef '(' properties ')'        {
-            BundleNode *bundle = $1;
+            ArrayNode *bundle = $1;
             string s = bundle->getName();
             $$ = new FunctionNode(s, std::shared_ptr<AST>($3), currentFile, yyloc.first_line);
             std::shared_ptr<ArrayNode> array(bundle);
@@ -1340,19 +1338,19 @@ indexComp:
     |   UVAR            {
             string s;
             s.append($1); /* string constructor leaks otherwise! */
-            $$ = new BlockNode(s, currentFile, yyloc.first_line);
+            $$ = new EntityNode(s, currentFile, yyloc.first_line);
             COUT << "Index/Size User variable: " << $1 << ENDL;
             free($1);
         }
     |   scopeDef UVAR   {
             string s;
             s.append($2);
-            $$ = new BlockNode(s, std::shared_ptr<AST>($1), currentFile, yyloc.first_line);
+            $$ = new EntityNode(s, std::shared_ptr<AST>($1), currentFile, yyloc.first_line);
             COUT << "Index/Size User variable: " << $2 << " in scope!" << ENDL;
             free($2);
         }
     |   bundleDef       {
-            BundleNode *bundle = $1;
+            ArrayNode *bundle = $1;
             COUT << "Resolving indexed bundle ..." << bundle->getName() << ENDL;
         }
     |   portPropertyDef       {
@@ -1367,7 +1365,7 @@ streamComp:
         UVAR            {
             string s;
             s.append($1); /* string constructor leaks otherwise! */
-            $$ = new BlockNode(s, currentFile, yyloc.first_line);
+            $$ = new EntityNode(s, currentFile, yyloc.first_line);
             COUT << "User variable: " << $1 << ENDL;
             COUT << "Streaming ... " << ENDL;
             free($1);
@@ -1375,7 +1373,7 @@ streamComp:
     |   scopeDef UVAR   {
             string s;
             s.append($2);
-            $$ = new BlockNode(s, std::shared_ptr<AST>($1), currentFile, yyloc.first_line);
+            $$ = new EntityNode(s, std::shared_ptr<AST>($1), currentFile, yyloc.first_line);
             COUT << "User variable: " << $2 << " in scope!" << ENDL;
             COUT << "Streaming ... " << ENDL;
             free($2);

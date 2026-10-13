@@ -79,12 +79,6 @@ public:
     Function = 0x22,
     Keyword = 0x23,
 
-    // Backwards-compatible aliases (deprecated)
-    Bundle = Array,
-    BundleDeclaration = ArrayDeclaration,
-    PortProperty = MemberAccess,
-    Block = Entity,
-
     // Invalid
     Invalid
   } Token;

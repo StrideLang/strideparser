@@ -1,9 +1,9 @@
 #include "gtest/gtest.h"
 
+#include "stride/parser/arraynode.h"
 #include "stride/parser/ast.h"
-#include "stride/parser/blocknode.h"
-#include "stride/parser/bundlenode.h"
 #include "stride/parser/declarationnode.h"
+#include "stride/parser/entitynode.h"
 #include "stride/parser/expressionnode.h"
 #include "stride/parser/functionnode.h"
 #include "stride/parser/importnode.h"
@@ -27,15 +27,15 @@ TEST(Stream, Basic) {
   std::vector<ASTNode> streamParts = node->getChildren();
   EXPECT_TRUE(streamParts.size() == 2);
   ASTNode streamComp = streamParts.at(0);
-  EXPECT_TRUE(streamComp->getNodeType() == AST::Block);
+  EXPECT_TRUE(streamComp->getNodeType() == AST::Entity);
   EXPECT_EQ(streamComp->getLine(), 3);
-  auto nameNode = std::static_pointer_cast<BlockNode>(streamComp);
+  auto nameNode = std::static_pointer_cast<EntityNode>(streamComp);
   EXPECT_TRUE(nameNode->getName() == "Val1");
   EXPECT_TRUE(nameNode->getLine() == 3);
   streamComp = streamParts.at(1);
-  EXPECT_TRUE(streamComp->getNodeType() == AST::Block);
+  EXPECT_TRUE(streamComp->getNodeType() == AST::Entity);
   EXPECT_TRUE(streamComp->getLine() == 3);
-  nameNode = std::static_pointer_cast<BlockNode>(streamComp);
+  nameNode = std::static_pointer_cast<EntityNode>(streamComp);
   EXPECT_TRUE(nameNode->getName() == "Val2");
   EXPECT_TRUE(nameNode->getLine() == 3);
 
@@ -63,9 +63,9 @@ TEST(Stream, Basic) {
   EXPECT_TRUE(node->getNodeType() == AST::Stream);
   EXPECT_TRUE(node->getLine() == 6);
   streamComp = node->getLeft();
-  EXPECT_TRUE(streamComp->getNodeType() == AST::Block);
+  EXPECT_TRUE(streamComp->getNodeType() == AST::Entity);
   EXPECT_TRUE(streamComp->getLine() == 6);
-  nameNode = std::static_pointer_cast<BlockNode>(streamComp);
+  nameNode = std::static_pointer_cast<EntityNode>(streamComp);
   EXPECT_TRUE(nameNode->getName() == "Val1");
   EXPECT_TRUE(nameNode->getLine() == 6);
   EXPECT_TRUE(node->getRight()->getNodeType() == AST::Stream);
@@ -85,8 +85,8 @@ TEST(Stream, Basic) {
   functionNode = std::static_pointer_cast<FunctionNode>(streamComp);
   EXPECT_TRUE(functionNode->getName() == "Func2");
   EXPECT_TRUE(functionNode->getLine() == 7);
-  EXPECT_TRUE(node->getRight()->getNodeType() == AST::Block);
-  nameNode = std::static_pointer_cast<BlockNode>(node->getRight());
+  EXPECT_TRUE(node->getRight()->getNodeType() == AST::Entity);
+  nameNode = std::static_pointer_cast<EntityNode>(node->getRight());
   EXPECT_TRUE(nameNode->getName() == "Val2");
   EXPECT_TRUE(nameNode->getLine() == 8);
 
@@ -94,9 +94,9 @@ TEST(Stream, Basic) {
   node = std::static_pointer_cast<StreamNode>(nodes.at(4));
   EXPECT_TRUE(node->getNodeType() == AST::Stream);
   EXPECT_TRUE(node->getLine() == 10);
-  EXPECT_TRUE(node->getLeft()->getNodeType() == AST::Bundle);
-  EXPECT_TRUE(node->getRight()->getNodeType() == AST::Bundle);
-  auto bundle = std::static_pointer_cast<BundleNode>(node->getLeft());
+  EXPECT_TRUE(node->getLeft()->getNodeType() == AST::Array);
+  EXPECT_TRUE(node->getRight()->getNodeType() == AST::Array);
+  auto bundle = std::static_pointer_cast<ArrayNode>(node->getLeft());
   EXPECT_TRUE(bundle->getName() == "Bundle1");
   EXPECT_TRUE(bundle->getLine() == 10);
   auto indexList = bundle->index();
@@ -107,7 +107,7 @@ TEST(Stream, Basic) {
   EXPECT_TRUE(value->getNodeType() == AST::Int);
   EXPECT_TRUE(value->getLine() == 10);
   EXPECT_TRUE(value->getIntValue() == 1);
-  bundle = std::static_pointer_cast<BundleNode>(node->getRight());
+  bundle = std::static_pointer_cast<ArrayNode>(node->getRight());
   EXPECT_TRUE(bundle->getName() == "Bundle2");
   EXPECT_TRUE(bundle->getLine() == 10);
   indexList = bundle->index();
@@ -122,19 +122,19 @@ TEST(Stream, Basic) {
   node = std::static_pointer_cast<StreamNode>(nodes.at(5));
   EXPECT_TRUE(node->getNodeType() == AST::Stream);
   EXPECT_TRUE(node->getLeft()->getNodeType() == AST::Expression);
-  EXPECT_TRUE(node->getRight()->getNodeType() == AST::Bundle);
+  EXPECT_TRUE(node->getRight()->getNodeType() == AST::Array);
   EXPECT_TRUE(node->getLine() == 11);
   auto expression = std::static_pointer_cast<ExpressionNode>(node->getLeft());
   EXPECT_TRUE(expression->getExpressionType() == ExpressionNode::Multiply);
-  EXPECT_TRUE(expression->getLeft()->getNodeType() == AST::Block);
+  EXPECT_TRUE(expression->getLeft()->getNodeType() == AST::Entity);
   EXPECT_TRUE(expression->getLine() == 11);
-  nameNode = std::static_pointer_cast<BlockNode>(expression->getLeft());
+  nameNode = std::static_pointer_cast<EntityNode>(expression->getLeft());
   EXPECT_TRUE(nameNode->getName() == "Val1");
   EXPECT_TRUE(nameNode->getLine() == 11);
   EXPECT_TRUE(expression->getRight()->getNodeType() == AST::Int);
   EXPECT_TRUE(std::static_pointer_cast<ValueNode>(expression->getRight())
                   ->getIntValue() == 3);
-  bundle = std::static_pointer_cast<BundleNode>(node->getRight());
+  bundle = std::static_pointer_cast<ArrayNode>(node->getRight());
   EXPECT_TRUE(bundle->getName() == "Bundle");
   EXPECT_TRUE(bundle->getLine() == 11);
   indexList = bundle->index();
@@ -149,19 +149,19 @@ TEST(Stream, Basic) {
   node = std::static_pointer_cast<StreamNode>(nodes.at(6));
   EXPECT_TRUE(node->getNodeType() == AST::Stream);
   EXPECT_TRUE(node->getLeft()->getNodeType() == AST::Expression);
-  EXPECT_TRUE(node->getRight()->getNodeType() == AST::Bundle);
+  EXPECT_TRUE(node->getRight()->getNodeType() == AST::Array);
   EXPECT_TRUE(node->getLine() == 12);
   expression = std::static_pointer_cast<ExpressionNode>(node->getLeft());
   EXPECT_TRUE(expression->getExpressionType() == ExpressionNode::Multiply);
-  EXPECT_TRUE(expression->getLeft()->getNodeType() == AST::Bundle);
+  EXPECT_TRUE(expression->getLeft()->getNodeType() == AST::Array);
   EXPECT_TRUE(expression->getLine() == 12);
-  bundle = std::static_pointer_cast<BundleNode>(expression->getLeft());
+  bundle = std::static_pointer_cast<ArrayNode>(expression->getLeft());
   EXPECT_TRUE(bundle->getName() == "Bundle1");
   EXPECT_TRUE(bundle->getLine() == 12);
   EXPECT_TRUE(expression->getRight()->getNodeType() == AST::Real);
   EXPECT_TRUE(std::static_pointer_cast<ValueNode>(expression->getRight())
                   ->getRealValue() == 0.5);
-  bundle = std::static_pointer_cast<BundleNode>(node->getRight());
+  bundle = std::static_pointer_cast<ArrayNode>(node->getRight());
   EXPECT_TRUE(bundle->getName() == "Bundle2");
   EXPECT_TRUE(bundle->getLine() == 12);
   indexList = bundle->index();
@@ -175,10 +175,10 @@ TEST(Stream, Basic) {
   //    BundleRange[1:2] >> BundleRange2[3:4];
   node = std::static_pointer_cast<StreamNode>(nodes.at(7));
   EXPECT_TRUE(node->getNodeType() == AST::Stream);
-  EXPECT_TRUE(node->getLeft()->getNodeType() == AST::Bundle);
-  EXPECT_TRUE(node->getRight()->getNodeType() == AST::Bundle);
+  EXPECT_TRUE(node->getLeft()->getNodeType() == AST::Array);
+  EXPECT_TRUE(node->getRight()->getNodeType() == AST::Array);
   EXPECT_TRUE(node->getLine() == 14);
-  bundle = std::static_pointer_cast<BundleNode>(node->getLeft());
+  bundle = std::static_pointer_cast<ArrayNode>(node->getLeft());
   EXPECT_TRUE(bundle->getName() == "BundleRange");
   EXPECT_EQ(bundle->getLine(), 14);
   auto index = std::static_pointer_cast<ListNode>(bundle->index());
@@ -199,7 +199,7 @@ TEST(Stream, Basic) {
   EXPECT_TRUE(value->getLine() == 14);
   EXPECT_TRUE(value->getIntValue() == 2);
 
-  bundle = std::static_pointer_cast<BundleNode>(node->getRight());
+  bundle = std::static_pointer_cast<ArrayNode>(node->getRight());
   EXPECT_TRUE(bundle->getName() == "BundleRange2");
   EXPECT_TRUE(bundle->getLine() == 14);
   index = std::static_pointer_cast<ListNode>(bundle->index());
@@ -222,7 +222,7 @@ TEST(Stream, Basic) {
   //    AudioIn[1] >> level(gain: 1.5) >> AudioOut[1];
   node = std::static_pointer_cast<StreamNode>(nodes.at(8));
   EXPECT_TRUE(node->getNodeType() == AST::Stream);
-  EXPECT_TRUE(node->getLeft()->getNodeType() == AST::Bundle);
+  EXPECT_TRUE(node->getLeft()->getNodeType() == AST::Array);
   EXPECT_TRUE(node->getRight()->getNodeType() == AST::Stream);
   EXPECT_TRUE(node->getLine() == 16);
   node = std::static_pointer_cast<StreamNode>(node->getRight());
@@ -241,9 +241,9 @@ TEST(Stream, Basic) {
   //    A[1:2,3,4] >> B[1,2,3:4] >> C[1,2:3,4] >> D[1,2,3,4];
   node = std::static_pointer_cast<StreamNode>(nodes.at(9));
   EXPECT_TRUE(node->getNodeType() == AST::Stream);
-  EXPECT_TRUE(node->getLeft()->getNodeType() == AST::Bundle);
+  EXPECT_TRUE(node->getLeft()->getNodeType() == AST::Array);
   EXPECT_TRUE(node->getRight()->getNodeType() == AST::Stream);
-  bundle = std::static_pointer_cast<BundleNode>(node->getLeft());
+  bundle = std::static_pointer_cast<ArrayNode>(node->getLeft());
   EXPECT_TRUE(bundle->getName() == "A");
   EXPECT_TRUE(bundle->getLine() == 18);
   auto list = std::static_pointer_cast<ListNode>(bundle->index());
@@ -258,14 +258,14 @@ TEST(Stream, Basic) {
   EXPECT_TRUE(l->size() == 2);
   std::vector<ASTNode> elements = l->getChildren();
   EXPECT_TRUE(elements.size() == 2);
-  EXPECT_TRUE(elements.at(0)->getNodeType() == AST::Bundle);
-  EXPECT_TRUE(elements.at(1)->getNodeType() == AST::Bundle);
+  EXPECT_TRUE(elements.at(0)->getNodeType() == AST::Array);
+  EXPECT_TRUE(elements.at(1)->getNodeType() == AST::Array);
   l = std::static_pointer_cast<ListNode>(node->getRight());
   EXPECT_TRUE(l->size() == 2);
   elements = l->getChildren();
   EXPECT_TRUE(elements.size() == 2);
-  EXPECT_TRUE(elements.at(0)->getNodeType() == AST::Bundle);
-  EXPECT_TRUE(elements.at(1)->getNodeType() == AST::Bundle);
+  EXPECT_TRUE(elements.at(0)->getNodeType() == AST::Array);
+  EXPECT_TRUE(elements.at(1)->getNodeType() == AST::Array);
 
   EXPECT_TRUE(l->getLine() == 20);
 
@@ -294,15 +294,15 @@ TEST(Stream, Iterator) {
     EXPECT_TRUE(it.hasNext());
     auto streamComp = it.next();
     EXPECT_TRUE(streamComp);
-    EXPECT_TRUE(streamComp->getNodeType() == AST::Block);
-    EXPECT_TRUE(std::static_pointer_cast<BlockNode>(streamComp)->getName() ==
+    EXPECT_TRUE(streamComp->getNodeType() == AST::Entity);
+    EXPECT_TRUE(std::static_pointer_cast<EntityNode>(streamComp)->getName() ==
                 "Val1");
     EXPECT_EQ(streamComp->getLine(), 3);
     EXPECT_TRUE(it.hasNext());
     streamComp = it.next();
     EXPECT_TRUE(streamComp);
-    EXPECT_TRUE(streamComp->getNodeType() == AST::Block);
-    EXPECT_TRUE(std::static_pointer_cast<BlockNode>(streamComp)->getName() ==
+    EXPECT_TRUE(streamComp->getNodeType() == AST::Entity);
+    EXPECT_TRUE(std::static_pointer_cast<EntityNode>(streamComp)->getName() ==
                 "Val2");
     EXPECT_TRUE(streamComp->getLine() == 3);
     EXPECT_FALSE(it.hasNext());
@@ -344,8 +344,8 @@ TEST(Stream, Iterator) {
     EXPECT_TRUE(it.hasNext());
     auto streamComp = it.next();
     EXPECT_TRUE(streamComp);
-    EXPECT_TRUE(streamComp->getNodeType() == AST::Block);
-    EXPECT_TRUE(std::static_pointer_cast<BlockNode>(streamComp)->getName() ==
+    EXPECT_TRUE(streamComp->getNodeType() == AST::Entity);
+    EXPECT_TRUE(std::static_pointer_cast<EntityNode>(streamComp)->getName() ==
                 "Val1");
     EXPECT_TRUE(it.hasNext());
     streamComp = it.next();
@@ -362,8 +362,8 @@ TEST(Stream, Iterator) {
     EXPECT_TRUE(functionNode->getLine() == 7);
     EXPECT_TRUE(it.hasNext());
     streamComp = it.next();
-    EXPECT_TRUE(streamComp->getNodeType() == AST::Block);
-    auto nameNode = std::static_pointer_cast<BlockNode>(streamComp);
+    EXPECT_TRUE(streamComp->getNodeType() == AST::Entity);
+    auto nameNode = std::static_pointer_cast<EntityNode>(streamComp);
     EXPECT_TRUE(nameNode->getName() == "Val2");
     EXPECT_TRUE(nameNode->getLine() == 8);
     EXPECT_FALSE(it.hasNext());
@@ -569,24 +569,24 @@ TEST(Stream, Iterator) {
 
 TEST(Stream, Builder) {
   StreamNodeBuilder builder;
-  builder.addNode(std::make_shared<BlockNode>("Name1", __FILE__, __LINE__));
-  builder.addNode(std::make_shared<BlockNode>("Name2", __FILE__, __LINE__));
-  builder.addNode(std::make_shared<BlockNode>("Name3", __FILE__, __LINE__));
-  builder.addNode(std::make_shared<BlockNode>("Name4", __FILE__, __LINE__));
-  builder.addNode(std::make_shared<BlockNode>("Name5", __FILE__, __LINE__));
+  builder.addNode(std::make_shared<EntityNode>("Name1", __FILE__, __LINE__));
+  builder.addNode(std::make_shared<EntityNode>("Name2", __FILE__, __LINE__));
+  builder.addNode(std::make_shared<EntityNode>("Name3", __FILE__, __LINE__));
+  builder.addNode(std::make_shared<EntityNode>("Name4", __FILE__, __LINE__));
+  builder.addNode(std::make_shared<EntityNode>("Name5", __FILE__, __LINE__));
   auto stream = builder.build();
   EXPECT_TRUE(stream->getLeft());
-  EXPECT_EQ(std::static_pointer_cast<BlockNode>(stream->getLeft())->getName(),
+  EXPECT_EQ(std::static_pointer_cast<EntityNode>(stream->getLeft())->getName(),
             "Name1");
   stream = std::static_pointer_cast<StreamNode>(stream->getRight());
-  EXPECT_EQ(std::static_pointer_cast<BlockNode>(stream->getLeft())->getName(),
+  EXPECT_EQ(std::static_pointer_cast<EntityNode>(stream->getLeft())->getName(),
             "Name2");
   stream = std::static_pointer_cast<StreamNode>(stream->getRight());
-  EXPECT_EQ(std::static_pointer_cast<BlockNode>(stream->getLeft())->getName(),
+  EXPECT_EQ(std::static_pointer_cast<EntityNode>(stream->getLeft())->getName(),
             "Name3");
   stream = std::static_pointer_cast<StreamNode>(stream->getRight());
-  EXPECT_EQ(std::static_pointer_cast<BlockNode>(stream->getLeft())->getName(),
+  EXPECT_EQ(std::static_pointer_cast<EntityNode>(stream->getLeft())->getName(),
             "Name4");
-  auto node = std::static_pointer_cast<BlockNode>(stream->getRight());
+  auto node = std::static_pointer_cast<EntityNode>(stream->getRight());
   EXPECT_EQ(node->getName(), "Name5");
 }

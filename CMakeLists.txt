@@ -30,7 +30,6 @@ set(PARSER_HEADERS
   include/stride/parser/streamnode.h
   include/stride/parser/valuenode.h
   include/stride/parser/arraynode.h
-  include/stride/parser/bundlenode.h
   include/stride/parser/propertynode.h
   include/stride/parser/functionnode.h
   include/stride/parser/expressionnode.h
@@ -42,13 +41,11 @@ set(PARSER_HEADERS
   include/stride/parser/strideparser.h
   include/stride/parser/declarationnode.h
   include/stride/parser/entitynode.h
-  include/stride/parser/blocknode.h
   include/stride/parser/scopenode.h
   include/stride/parser/keywordnode.h
   include/stride/parser/platformnode.h
   include/stride/parser/propertynode.h
   include/stride/parser/memberaccessnode.h
-  include/stride/parser/portpropertynode.h
 )
 
 if (WIN32)

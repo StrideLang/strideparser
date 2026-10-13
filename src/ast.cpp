@@ -36,8 +36,8 @@
 #include <cassert>
 
 #include "stride/parser/ast.h"
-#include "stride/parser/blocknode.h"
 #include "stride/parser/declarationnode.h"
+#include "stride/parser/entitynode.h"
 #include "stride/parser/functionnode.h"
 #include "stride/parser/listnode.h"
 #include "stride/parser/propertynode.h"
