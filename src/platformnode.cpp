@@ -86,13 +86,13 @@ std::string SystemNode::toText(int indentOffset, int indentSize,
   return text;
 }
 
-// std::vector<std::string> SystemNode::hwPlatforms() const {
-//   return m_targetPlatforms;
-// }
+std::vector<std::string> SystemNode::hwPlatforms() const {
+  return m_targetPlatforms;
+}
 
-// void SystemNode::setHwPlatforms(const std::vector<std::string> &hwPlatform) {
-//   m_targetPlatforms = hwPlatform;
-// }
+void SystemNode::setHwPlatforms(const std::vector<std::string> &hwPlatform) {
+  m_targetPlatforms = hwPlatform;
+}
 
 std::string SystemNode::platformName() const { return m_systemName; }
 

@@ -79,10 +79,12 @@ void FunctionNode::addChild(ASTNode t) {
 
 void FunctionNode::setChildren(const std::vector<ASTNode> &newChildren) {
   AST::setChildren(newChildren);
+  m_properties.clear();
   for (unsigned int i = 0; i < m_children.size(); i++) {
-    assert(m_children.at(i)->getNodeType() == AST::Property);
-    m_properties.push_back(
-        std::static_pointer_cast<PropertyNode>(m_children.at(i)));
+    if (m_children.at(i) && m_children.at(i)->getNodeType() == AST::Property) {
+      m_properties.push_back(
+          std::static_pointer_cast<PropertyNode>(m_children.at(i)));
+    }
   }
 }
 

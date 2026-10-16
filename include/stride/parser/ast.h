@@ -118,6 +118,12 @@ public:
   ASTNode getCompilerProperty(std::string propertyName) const;
   void removeCompilerProperty(std::string propertyName);
   void appendToPropertyValue(std::string propertyName, ASTNode value);
+  std::shared_ptr<ListNode> getCompilerPropertiesList() const {
+    return m_CompilerProperties;
+  }
+  void setCompilerPropertiesList(std::shared_ptr<ListNode> props) {
+    m_CompilerProperties = std::move(props);
+  }
 
   // Code processing
   virtual std::string toText(int indentOffset = 0, int indentSize = 2,

@@ -107,6 +107,18 @@ DeclarationNode::getProperties() const {
   return m_properties;
 }
 
+void DeclarationNode::setChildren(const std::vector<ASTNode> &newChildren) {
+  AST::setChildren(newChildren);
+  m_properties.clear();
+  unsigned int startIdx = (getNodeType() == AST::ArrayDeclaration) ? 1 : 0;
+  for (unsigned int i = startIdx; i < m_children.size(); i++) {
+    if (m_children.at(i) && m_children.at(i)->getNodeType() == AST::Property) {
+      m_properties.push_back(
+          std::static_pointer_cast<PropertyNode>(m_children.at(i)));
+    }
+  }
+}
+
 bool DeclarationNode::addProperty(std::shared_ptr<PropertyNode> newProperty) {
   for (const auto &prop : m_properties) {
     if (prop->getName() == newProperty->getName()) {

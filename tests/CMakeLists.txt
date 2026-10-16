@@ -30,7 +30,7 @@ set(TEST_SOURCES main.cpp
 add_executable(strideparser_tests ${TEST_SOURCES})
 
 set_target_properties(strideparser_tests PROPERTIES
-  CXX_STANDARD 17
+  CXX_STANDARD 20
   CXX_STANDARD_REQUIRED ON
 )
 

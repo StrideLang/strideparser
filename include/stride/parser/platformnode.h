@@ -54,8 +54,8 @@ public:
   int majorVersion() const;
   int minorVersion() const;
 
-  //    vector<string> hwPlatforms() const;
-  //    void setHwPlatforms(const vector<string> &hwPlatforms);
+  std::vector<std::string> hwPlatforms() const;
+  void setHwPlatforms(const std::vector<std::string> &hwPlatforms);
 
   ASTNode deepCopy() override;
 

@@ -57,6 +57,7 @@ public:
   std::shared_ptr<ArrayNode> getArrayIndex() const;
 
   const std::vector<std::shared_ptr<PropertyNode>> &getProperties() const;
+  void setChildren(const std::vector<ASTNode> &newChildren) override;
   bool addProperty(std::shared_ptr<PropertyNode> newProperty);
   ASTNode getPropertyValue(std::string propertyName);
   void setPropertyValue(std::string propertyName, ASTNode value);
