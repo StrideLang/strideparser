@@ -916,6 +916,16 @@ valueList:
             COUT << "Value list definition ..." << ENDL;
             COUT << "New list item ... " << ENDL;
         }
+    |   valueList COMMA blockDef {
+            ListNode *list = new ListNode(NULL, currentFile, yyloc.first_line);
+            list->stealMembers($1);
+            ListNode *oldList = $1;
+            delete oldList;
+            list->addChild(std::shared_ptr<AST>($3));
+            $$ = list;
+            COUT << "Block definition in value list ..." << ENDL;
+            COUT << "New list item ... " << ENDL;
+        }
     |   valueExp                    {
             $$ = new ListNode(std::shared_ptr<AST>($1), currentFile, yyloc.first_line);
             COUT << "Value expression ..." << ENDL;
@@ -955,6 +965,16 @@ blockList:
             list->addChild(std::shared_ptr<AST>($3));
             $$ = list;
             COUT << "Block definition ... " << ENDL;
+            COUT << "New list item ... " << ENDL;
+        }
+    |   blockList COMMA valueExp    {
+            ListNode *list = new ListNode(NULL, currentFile, yyloc.first_line);
+            list->stealMembers($1);
+            ListNode *oldList = $1;
+            delete oldList;
+            list->addChild(std::shared_ptr<AST>($3));
+            $$ = list;
+            COUT << "Value expression in block list ... " << ENDL;
             COUT << "New list item ... " << ENDL;
         }
     |   blockList blockDef          {
