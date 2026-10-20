@@ -48,6 +48,7 @@
 #include "platformnode.h"
 #include "propertynode.h"
 #include "rangenode.h"
+#include "generatorrangenode.h"
 #include "scopenode.h"
 #include "streamnode.h"
 #include "valuenode.h"

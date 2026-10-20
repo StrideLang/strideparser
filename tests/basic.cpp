@@ -6,6 +6,7 @@
 #include "stride/parser/entitynode.h"
 #include "stride/parser/expressionnode.h"
 #include "stride/parser/functionnode.h"
+#include "stride/parser/generatorrangenode.h"
 #include "stride/parser/importnode.h"
 #include "stride/parser/packagenode.h"
 #include "stride/parser/platformnode.h"
@@ -600,12 +601,12 @@ TEST(Basic, GeneratorSyntax) {
   EXPECT_EQ(std::static_pointer_cast<ValueNode>(var0)->getStringValue(), "Index");
   auto range0 = decl0->getCompilerProperty("_generatorRange");
   ASSERT_NE(range0, nullptr);
-  ASSERT_EQ(range0->getNodeType(), AST::Range);
-  auto r0 = std::static_pointer_cast<RangeNode>(range0);
+  ASSERT_EQ(range0->getNodeType(), AST::GeneratorRange);
+  auto r0 = std::static_pointer_cast<GeneratorRangeNode>(range0);
   EXPECT_EQ(std::static_pointer_cast<ValueNode>(r0->startIndex())->getIntValue(), 0);
   EXPECT_EQ(std::static_pointer_cast<ValueNode>(r0->endIndex())->getIntValue(), 8);
 
-  // Node 1: transition [Index in 1:4] (anonymous generator transition)
+  // Node 1: transition [Index in 1..4] (anonymous generator transition)
   ASSERT_EQ(nodes.at(1)->getNodeType(), AST::Declaration);
   auto decl1 = std::static_pointer_cast<DeclarationNode>(nodes.at(1));
   EXPECT_EQ(decl1->getEntityType(), "transition");
@@ -620,8 +621,8 @@ TEST(Basic, GeneratorSyntax) {
   EXPECT_EQ(std::static_pointer_cast<ValueNode>(var1)->getStringValue(), "Index");
   auto range1 = decl1->getCompilerProperty("_generatorRange");
   ASSERT_NE(range1, nullptr);
-  ASSERT_EQ(range1->getNodeType(), AST::Range);
-  auto r1 = std::static_pointer_cast<RangeNode>(range1);
+  ASSERT_EQ(range1->getNodeType(), AST::GeneratorRange);
+  auto r1 = std::static_pointer_cast<GeneratorRangeNode>(range1);
   EXPECT_EQ(std::static_pointer_cast<ValueNode>(r1->startIndex())->getIntValue(), 1);
   EXPECT_EQ(std::static_pointer_cast<ValueNode>(r1->endIndex())->getIntValue(), 4);
 

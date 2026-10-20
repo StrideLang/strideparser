@@ -66,6 +66,9 @@ HEXLETTER   [A-Fa-f]
 
 "streamRate"    { return STREAMRATE; }
 
+".."            { return DOTDOT; }
+{DIGIT}+/".."   { yylval.ival = atoll(yytext); return INT; }
+
 {DIGIT}+\.{DIGIT}*  { yylval.fval = strtod(yytext, NULL); return REAL; }
 {DIGIT}*\.{DIGIT}+  { yylval.fval = strtod(yytext, NULL); return REAL; }
 0[xX]({DIGIT}|{HEXLETTER})+  { yylval.sval = strdup(yytext); return HEX; }

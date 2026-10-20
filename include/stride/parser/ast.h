@@ -67,6 +67,7 @@ public:
     For,
     Scope,
     MemberAccess,
+    GeneratorRange,
 
     // Built-in types (leaf nodes)
     Int = 0x80,

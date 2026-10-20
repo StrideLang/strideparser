@@ -80,6 +80,7 @@ NullStream nstream;
 %code requires { #include "stride/parser/memberaccessnode.h" }
 %code requires { #include "stride/parser/propertynode.h" }
 %code requires { #include "stride/parser/rangenode.h" }
+%code requires { #include "stride/parser/generatorrangenode.h" }
 %code requires { #include "stride/parser/scopenode.h" }
 %code requires { #include "stride/parser/streamnode.h" }
 %code requires { #include "stride/parser/valuenode.h" }
@@ -101,6 +102,7 @@ NullStream nstream;
     strd::ImportNode *importNode;
     strd::PackageNode *packageNode;
     strd::RangeNode *rangeNode;
+    strd::GeneratorRangeNode *generatorRangeNode;
     strd::KeywordNode *keywordNode;
     strd::ScopeNode *scopeNode;
     strd::MemberAccessNode *memberAccessNode;
@@ -154,12 +156,13 @@ NullStream nstream;
 %token  <sval>  ERROR
 
 %token '[' ']' '{' '}'
-%token DOT COMMA COLON COLONCOLON SEMICOLON
+%token DOT COMMA COLON COLONCOLON SEMICOLON DOTDOT
 %token USE VERSION WITH IMPORT PACKAGE AS FOR IN NONE ON OFF
 %token BITAND BITOR BITNOT AT
 %token STREAMRATE
 
 %left STREAM
+%nonassoc DOTDOT
 %left AND OR
 %left BITAND BITOR
 %left '+' '-'
@@ -1087,8 +1090,13 @@ indexRange:
     ;
 
 generatorRange:
-        indexRange                      {
-            $$ = $1;
+        indexExp DOTDOT indexExp        {
+            $$ = new GeneratorRangeNode(std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), currentFile, yyloc.first_line);
+            COUT << "Resolving Generator Range ..." << ENDL;
+        }
+    |   indexExp DOTDOT indexExp DOTDOT indexExp {
+            $$ = new GeneratorRangeNode(std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), std::shared_ptr<AST>($5), currentFile, yyloc.first_line);
+            COUT << "Resolving Stepped Generator Range ..." << ENDL;
         }
     |   valueListDef                    {
             $$ = $1;
@@ -1313,6 +1321,14 @@ valueExp:
     |   NOT valueExp %prec NOT          {
             $$ = new ExpressionNode(ExpressionNode::LogicalNot, std::shared_ptr<AST>($2), currentFile, yyloc.first_line);
             COUT << "Logical NOT ... " << ENDL;
+        }
+    |   valueExp DOTDOT valueExp        {
+            $$ = new GeneratorRangeNode(std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), currentFile, yyloc.first_line);
+            COUT << "Generator range expression ..." << ENDL;
+        }
+    |   valueExp DOTDOT valueExp DOTDOT valueExp {
+            $$ = new GeneratorRangeNode(std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), std::shared_ptr<AST>($5), currentFile, yyloc.first_line);
+            COUT << "Stepped generator range expression ..." << ENDL;
         }
     |   valueComp                       {
             $$ = $1;
