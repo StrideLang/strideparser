@@ -643,5 +643,180 @@ TEST(Basic, GeneratorSyntax) {
   EXPECT_EQ(range2->getChildren().size(), 3);
 }
 
+TEST(Basic, GeneratorRangeUsage) {
+  ASTNode tree = AST::parseFile(TESTS_SOURCE_DIR "basic/26_generator_usage.stride");
+  ASSERT_NE(tree, nullptr);
+  const auto &nodes = tree->getChildren();
+  ASSERT_EQ(nodes.size(), 10);
 
+  // 1. Used in streams
+  // Node 0: [0..8] >> StreamTarget1;
+  ASSERT_EQ(nodes.at(0)->getNodeType(), AST::Stream);
+  auto stream0 = std::static_pointer_cast<StreamNode>(nodes.at(0));
+  ASSERT_EQ(stream0->getLeft()->getNodeType(), AST::List);
+  auto list0 = std::static_pointer_cast<ListNode>(stream0->getLeft());
+  ASSERT_EQ(list0->getChildren().size(), 1);
+  ASSERT_EQ(list0->getChildren().at(0)->getNodeType(), AST::GeneratorRange);
+  auto gen0 = std::static_pointer_cast<GeneratorRangeNode>(list0->getChildren().at(0));
+  EXPECT_EQ(std::static_pointer_cast<ValueNode>(gen0->startIndex())->getIntValue(), 0);
+  EXPECT_EQ(std::static_pointer_cast<ValueNode>(gen0->endIndex())->getIntValue(), 8);
+  EXPECT_EQ(gen0->stepIndex(), nullptr);
+  ASSERT_EQ(stream0->getRight()->getNodeType(), AST::Entity);
+  EXPECT_EQ(std::static_pointer_cast<EntityNode>(stream0->getRight())->getName(), "StreamTarget1");
 
+  // Node 1: [1, 2..5, 10] >> StreamTarget2;
+  ASSERT_EQ(nodes.at(1)->getNodeType(), AST::Stream);
+  auto stream1 = std::static_pointer_cast<StreamNode>(nodes.at(1));
+  ASSERT_EQ(stream1->getLeft()->getNodeType(), AST::List);
+  auto list1 = std::static_pointer_cast<ListNode>(stream1->getLeft());
+  ASSERT_EQ(list1->getChildren().size(), 3);
+  EXPECT_EQ(std::static_pointer_cast<ValueNode>(list1->getChildren().at(0))->getIntValue(), 1);
+  ASSERT_EQ(list1->getChildren().at(1)->getNodeType(), AST::GeneratorRange);
+  auto gen1 = std::static_pointer_cast<GeneratorRangeNode>(list1->getChildren().at(1));
+  EXPECT_EQ(std::static_pointer_cast<ValueNode>(gen1->startIndex())->getIntValue(), 2);
+  EXPECT_EQ(std::static_pointer_cast<ValueNode>(gen1->endIndex())->getIntValue(), 5);
+  EXPECT_EQ(std::static_pointer_cast<ValueNode>(list1->getChildren().at(2))->getIntValue(), 10);
+  ASSERT_EQ(stream1->getRight()->getNodeType(), AST::Entity);
+  EXPECT_EQ(std::static_pointer_cast<EntityNode>(stream1->getRight())->getName(), "StreamTarget2");
+
+  // Node 2: StreamSource1 >> [0..8];
+  ASSERT_EQ(nodes.at(2)->getNodeType(), AST::Stream);
+  auto stream2 = std::static_pointer_cast<StreamNode>(nodes.at(2));
+  EXPECT_EQ(std::static_pointer_cast<EntityNode>(stream2->getLeft())->getName(), "StreamSource1");
+  ASSERT_EQ(stream2->getRight()->getNodeType(), AST::List);
+  auto list2 = std::static_pointer_cast<ListNode>(stream2->getRight());
+  ASSERT_EQ(list2->getChildren().size(), 1);
+  ASSERT_EQ(list2->getChildren().at(0)->getNodeType(), AST::GeneratorRange);
+  auto gen2 = std::static_pointer_cast<GeneratorRangeNode>(list2->getChildren().at(0));
+  EXPECT_EQ(std::static_pointer_cast<ValueNode>(gen2->startIndex())->getIntValue(), 0);
+  EXPECT_EQ(std::static_pointer_cast<ValueNode>(gen2->endIndex())->getIntValue(), 8);
+
+  // Node 3: StreamSource2 >> [0..8] >> StreamTarget3;
+  ASSERT_EQ(nodes.at(3)->getNodeType(), AST::Stream);
+  auto stream3 = std::static_pointer_cast<StreamNode>(nodes.at(3));
+  EXPECT_EQ(std::static_pointer_cast<EntityNode>(stream3->getLeft())->getName(), "StreamSource2");
+  ASSERT_EQ(stream3->getRight()->getNodeType(), AST::Stream);
+  auto subStream3 = std::static_pointer_cast<StreamNode>(stream3->getRight());
+  ASSERT_EQ(subStream3->getLeft()->getNodeType(), AST::List);
+  auto list3 = std::static_pointer_cast<ListNode>(subStream3->getLeft());
+  ASSERT_EQ(list3->getChildren().size(), 1);
+  ASSERT_EQ(list3->getChildren().at(0)->getNodeType(), AST::GeneratorRange);
+  auto gen3 = std::static_pointer_cast<GeneratorRangeNode>(list3->getChildren().at(0));
+  EXPECT_EQ(std::static_pointer_cast<ValueNode>(gen3->startIndex())->getIntValue(), 0);
+  EXPECT_EQ(std::static_pointer_cast<ValueNode>(gen3->endIndex())->getIntValue(), 8);
+  EXPECT_EQ(std::static_pointer_cast<EntityNode>(subStream3->getRight())->getName(), "StreamTarget3");
+
+  // 2. Passed to properties in functions
+  // Node 4: FuncInList(range: [0..8]);
+  ASSERT_EQ(nodes.at(4)->getNodeType(), AST::Stream);
+  auto stream4 = std::static_pointer_cast<StreamNode>(nodes.at(4));
+  ASSERT_EQ(stream4->getLeft()->getNodeType(), AST::Function);
+  auto func4 = std::static_pointer_cast<FunctionNode>(stream4->getLeft());
+  EXPECT_EQ(func4->getName(), "FuncInList");
+  ASSERT_EQ(func4->getProperties().size(), 1);
+  EXPECT_EQ(func4->getProperties().at(0)->getName(), "range");
+  ASSERT_EQ(func4->getProperties().at(0)->getValue()->getNodeType(), AST::List);
+  auto funcList4 = std::static_pointer_cast<ListNode>(func4->getProperties().at(0)->getValue());
+  ASSERT_EQ(funcList4->getChildren().size(), 1);
+  ASSERT_EQ(funcList4->getChildren().at(0)->getNodeType(), AST::GeneratorRange);
+  auto funcGen4 = std::static_pointer_cast<GeneratorRangeNode>(funcList4->getChildren().at(0));
+  EXPECT_EQ(std::static_pointer_cast<ValueNode>(funcGen4->startIndex())->getIntValue(), 0);
+  EXPECT_EQ(std::static_pointer_cast<ValueNode>(funcGen4->endIndex())->getIntValue(), 8);
+
+  // Node 5: FuncMultiple(first: [0..4] second: [10..20]);
+  ASSERT_EQ(nodes.at(5)->getNodeType(), AST::Stream);
+  auto stream5 = std::static_pointer_cast<StreamNode>(nodes.at(5));
+  ASSERT_EQ(stream5->getLeft()->getNodeType(), AST::Function);
+  auto func5 = std::static_pointer_cast<FunctionNode>(stream5->getLeft());
+  EXPECT_EQ(func5->getName(), "FuncMultiple");
+  ASSERT_EQ(func5->getProperties().size(), 2);
+  EXPECT_EQ(func5->getProperties().at(0)->getName(), "first");
+  ASSERT_EQ(func5->getProperties().at(0)->getValue()->getNodeType(), AST::List);
+  auto listFirst = std::static_pointer_cast<ListNode>(func5->getProperties().at(0)->getValue());
+  ASSERT_EQ(listFirst->getChildren().size(), 1);
+  ASSERT_EQ(listFirst->getChildren().at(0)->getNodeType(), AST::GeneratorRange);
+  auto genFirst = std::static_pointer_cast<GeneratorRangeNode>(listFirst->getChildren().at(0));
+  EXPECT_EQ(std::static_pointer_cast<ValueNode>(genFirst->startIndex())->getIntValue(), 0);
+  EXPECT_EQ(std::static_pointer_cast<ValueNode>(genFirst->endIndex())->getIntValue(), 4);
+  EXPECT_EQ(func5->getProperties().at(1)->getName(), "second");
+  ASSERT_EQ(func5->getProperties().at(1)->getValue()->getNodeType(), AST::List);
+  auto listSecond = std::static_pointer_cast<ListNode>(func5->getProperties().at(1)->getValue());
+  ASSERT_EQ(listSecond->getChildren().size(), 1);
+  ASSERT_EQ(listSecond->getChildren().at(0)->getNodeType(), AST::GeneratorRange);
+  auto genSecond = std::static_pointer_cast<GeneratorRangeNode>(listSecond->getChildren().at(0));
+  EXPECT_EQ(std::static_pointer_cast<ValueNode>(genSecond->startIndex())->getIntValue(), 10);
+  EXPECT_EQ(std::static_pointer_cast<ValueNode>(genSecond->endIndex())->getIntValue(), 20);
+
+  // Node 6: StreamSource3 >> FuncInStream(range: [0..8]) >> StreamTarget4;
+  ASSERT_EQ(nodes.at(6)->getNodeType(), AST::Stream);
+  auto stream6 = std::static_pointer_cast<StreamNode>(nodes.at(6));
+  EXPECT_EQ(std::static_pointer_cast<EntityNode>(stream6->getLeft())->getName(), "StreamSource3");
+  ASSERT_EQ(stream6->getRight()->getNodeType(), AST::Stream);
+  auto subStream6 = std::static_pointer_cast<StreamNode>(stream6->getRight());
+  ASSERT_EQ(subStream6->getLeft()->getNodeType(), AST::Function);
+  auto func6 = std::static_pointer_cast<FunctionNode>(subStream6->getLeft());
+  EXPECT_EQ(func6->getName(), "FuncInStream");
+  ASSERT_EQ(func6->getProperties().size(), 1);
+  EXPECT_EQ(func6->getProperties().at(0)->getName(), "range");
+  ASSERT_EQ(func6->getProperties().at(0)->getValue()->getNodeType(), AST::List);
+  auto funcList6 = std::static_pointer_cast<ListNode>(func6->getProperties().at(0)->getValue());
+  ASSERT_EQ(funcList6->getChildren().size(), 1);
+  ASSERT_EQ(funcList6->getChildren().at(0)->getNodeType(), AST::GeneratorRange);
+  auto funcGen6 = std::static_pointer_cast<GeneratorRangeNode>(funcList6->getChildren().at(0));
+  EXPECT_EQ(std::static_pointer_cast<ValueNode>(funcGen6->startIndex())->getIntValue(), 0);
+  EXPECT_EQ(std::static_pointer_cast<ValueNode>(funcGen6->endIndex())->getIntValue(), 8);
+  EXPECT_EQ(std::static_pointer_cast<EntityNode>(subStream6->getRight())->getName(), "StreamTarget4");
+
+  // 3. Passed to properties in declarations
+  // Node 7: constant ConstListRange { value: [0..8] }
+  ASSERT_EQ(nodes.at(7)->getNodeType(), AST::Declaration);
+  auto decl7 = std::static_pointer_cast<DeclarationNode>(nodes.at(7));
+  EXPECT_EQ(decl7->getName(), "ConstListRange");
+  EXPECT_EQ(decl7->getEntityType(), "constant");
+  auto valProp7 = decl7->getPropertyValue("value");
+  ASSERT_NE(valProp7, nullptr);
+  ASSERT_EQ(valProp7->getNodeType(), AST::List);
+  auto list7 = std::static_pointer_cast<ListNode>(valProp7);
+  ASSERT_EQ(list7->getChildren().size(), 1);
+  ASSERT_EQ(list7->getChildren().at(0)->getNodeType(), AST::GeneratorRange);
+  auto declGen7 = std::static_pointer_cast<GeneratorRangeNode>(list7->getChildren().at(0));
+  EXPECT_EQ(std::static_pointer_cast<ValueNode>(declGen7->startIndex())->getIntValue(), 0);
+  EXPECT_EQ(std::static_pointer_cast<ValueNode>(declGen7->endIndex())->getIntValue(), 8);
+
+  // Node 8: module TestModule { range: [0..8], listRange: [0..8] }
+  ASSERT_EQ(nodes.at(8)->getNodeType(), AST::Declaration);
+  auto decl8 = std::static_pointer_cast<DeclarationNode>(nodes.at(8));
+  EXPECT_EQ(decl8->getName(), "TestModule");
+  EXPECT_EQ(decl8->getEntityType(), "module");
+  auto propRange8 = decl8->getPropertyValue("range");
+  ASSERT_NE(propRange8, nullptr);
+  ASSERT_EQ(propRange8->getNodeType(), AST::List);
+  auto listRange8 = std::static_pointer_cast<ListNode>(propRange8);
+  ASSERT_EQ(listRange8->getChildren().size(), 1);
+  ASSERT_EQ(listRange8->getChildren().at(0)->getNodeType(), AST::GeneratorRange);
+  auto declGen8 = std::static_pointer_cast<GeneratorRangeNode>(listRange8->getChildren().at(0));
+  EXPECT_EQ(std::static_pointer_cast<ValueNode>(declGen8->startIndex())->getIntValue(), 0);
+  EXPECT_EQ(std::static_pointer_cast<ValueNode>(declGen8->endIndex())->getIntValue(), 8);
+
+  auto propList8 = decl8->getPropertyValue("listRange");
+  ASSERT_NE(propList8, nullptr);
+  ASSERT_EQ(propList8->getNodeType(), AST::List);
+  auto list8 = std::static_pointer_cast<ListNode>(propList8);
+  ASSERT_EQ(list8->getChildren().size(), 1);
+  ASSERT_EQ(list8->getChildren().at(0)->getNodeType(), AST::GeneratorRange);
+
+  // Node 9: signal TestSignal[9] { default: [0..8] }
+  ASSERT_EQ(nodes.at(9)->getNodeType(), AST::ArrayDeclaration);
+  auto decl9 = std::static_pointer_cast<DeclarationNode>(nodes.at(9));
+  EXPECT_EQ(decl9->getName(), "TestSignal");
+  EXPECT_EQ(decl9->getEntityType(), "signal");
+  auto propDefault9 = decl9->getPropertyValue("default");
+  ASSERT_NE(propDefault9, nullptr);
+  ASSERT_EQ(propDefault9->getNodeType(), AST::List);
+  auto list9 = std::static_pointer_cast<ListNode>(propDefault9);
+  ASSERT_EQ(list9->getChildren().size(), 1);
+  ASSERT_EQ(list9->getChildren().at(0)->getNodeType(), AST::GeneratorRange);
+  auto declGen9 = std::static_pointer_cast<GeneratorRangeNode>(list9->getChildren().at(0));
+  EXPECT_EQ(std::static_pointer_cast<ValueNode>(declGen9->startIndex())->getIntValue(), 0);
+  EXPECT_EQ(std::static_pointer_cast<ValueNode>(declGen9->endIndex())->getIntValue(), 8);
+}

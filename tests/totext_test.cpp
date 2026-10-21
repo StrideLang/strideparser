@@ -4,6 +4,7 @@
 #include "stride/parser/entitynode.h"
 #include "stride/parser/expressionnode.h"
 #include "stride/parser/functionnode.h"
+#include "stride/parser/generatorrangenode.h"
 #include "stride/parser/importnode.h"
 #include "stride/parser/listnode.h"
 #include "stride/parser/memberaccessnode.h"
@@ -144,5 +145,24 @@ TEST(ToTextTest, PackageNode) {
   EXPECT_EQ(segs[0], "Audio");
   EXPECT_EQ(segs[1], "Filters");
   EXPECT_EQ(segs[2], "Biquad");
+}
+
+TEST(ToTextTest, GeneratorRangeNode) {
+  auto start = std::make_shared<ValueNode>((int64_t)0, "test", 1);
+  auto end = std::make_shared<ValueNode>((int64_t)8, "test", 1);
+  GeneratorRangeNode gen(start, end, "test", 1);
+  EXPECT_EQ(gen.toText(0, 2, false), "0..8");
+
+  auto startStep = std::make_shared<ValueNode>((int64_t)0, "test", 1);
+  auto step = std::make_shared<ValueNode>((int64_t)2, "test", 1);
+  auto endStep = std::make_shared<ValueNode>((int64_t)8, "test", 1);
+  GeneratorRangeNode genStepped(startStep, step, endStep, "test", 1);
+  EXPECT_EQ(genStepped.toText(0, 2, false), "0..2..8");
+
+  auto startRev = std::make_shared<ValueNode>((int64_t)8, "test", 1);
+  auto stepRev = std::make_shared<ValueNode>((int64_t)-2, "test", 1);
+  auto endRev = std::make_shared<ValueNode>((int64_t)0, "test", 1);
+  GeneratorRangeNode genRev(startRev, stepRev, endRev, "test", 1);
+  EXPECT_EQ(genRev.toText(0, 2, false), "8..-2..0");
 }
 

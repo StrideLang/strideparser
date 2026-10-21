@@ -1,0 +1,24 @@
+# List generators in streams
+[0..8] >> StreamTarget1;
+[1, 2..5, 10] >> StreamTarget2;
+StreamSource1 >> [0..8];
+StreamSource2 >> [0..8] >> StreamTarget3;
+
+# List generators passed to properties in functions
+FuncInList(range: [0..8]);
+FuncMultiple(first: [0..4] second: [10..20]);
+StreamSource3 >> FuncInStream(range: [0..8]) >> StreamTarget4;
+
+# List generators passed to properties in declarations
+constant ConstListRange {
+    value: [0..8]
+}
+
+module TestModule {
+    range: [0..8]
+    listRange: [0..8]
+}
+
+signal TestSignal[9] {
+    default: [0..8]
+}
