@@ -929,6 +929,26 @@ valueList:
             COUT << "Block definition in value list ..." << ENDL;
             COUT << "New list item ... " << ENDL;
         }
+    |   valueList COMMA valueExp DOTDOT valueExp {
+            ListNode *list = new ListNode(NULL, currentFile, yyloc.first_line);
+            list->stealMembers($1);
+            ListNode *oldList = $1;
+            delete oldList;
+            list->addChild(std::make_shared<GeneratorRangeNode>(std::shared_ptr<AST>($3), std::shared_ptr<AST>($5), currentFile, yyloc.first_line));
+            $$ = list;
+            COUT << "Generator range in value list ..." << ENDL;
+            COUT << "New list item ... " << ENDL;
+        }
+    |   valueList COMMA valueExp DOTDOT valueExp DOTDOT valueExp {
+            ListNode *list = new ListNode(NULL, currentFile, yyloc.first_line);
+            list->stealMembers($1);
+            ListNode *oldList = $1;
+            delete oldList;
+            list->addChild(std::make_shared<GeneratorRangeNode>(std::shared_ptr<AST>($3), std::shared_ptr<AST>($5), std::shared_ptr<AST>($7), currentFile, yyloc.first_line));
+            $$ = list;
+            COUT << "Stepped generator range in value list ..." << ENDL;
+            COUT << "New list item ... " << ENDL;
+        }
     |   valueExp                    {
             $$ = new ListNode(std::shared_ptr<AST>($1), currentFile, yyloc.first_line);
             COUT << "Value expression ..." << ENDL;
@@ -937,6 +957,18 @@ valueList:
     |   valueListDef                {
             $$ = new ListNode(std::shared_ptr<AST>($1), currentFile, yyloc.first_line);
             COUT << "Value list definition ..." << ENDL;
+            COUT << "New list item ... " << ENDL;
+        }
+    |   valueExp DOTDOT valueExp    {
+            auto genNode = std::make_shared<GeneratorRangeNode>(std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), currentFile, yyloc.first_line);
+            $$ = new ListNode(genNode, currentFile, yyloc.first_line);
+            COUT << "Generator range in value list ..." << ENDL;
+            COUT << "New list item ... " << ENDL;
+        }
+    |   valueExp DOTDOT valueExp DOTDOT valueExp {
+            auto genNode = std::make_shared<GeneratorRangeNode>(std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), std::shared_ptr<AST>($5), currentFile, yyloc.first_line);
+            $$ = new ListNode(genNode, currentFile, yyloc.first_line);
+            COUT << "Stepped generator range in value list ..." << ENDL;
             COUT << "New list item ... " << ENDL;
         }
     ;
@@ -1321,14 +1353,6 @@ valueExp:
     |   NOT valueExp %prec NOT          {
             $$ = new ExpressionNode(ExpressionNode::LogicalNot, std::shared_ptr<AST>($2), currentFile, yyloc.first_line);
             COUT << "Logical NOT ... " << ENDL;
-        }
-    |   valueExp DOTDOT valueExp        {
-            $$ = new GeneratorRangeNode(std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), currentFile, yyloc.first_line);
-            COUT << "Generator range expression ..." << ENDL;
-        }
-    |   valueExp DOTDOT valueExp DOTDOT valueExp {
-            $$ = new GeneratorRangeNode(std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), std::shared_ptr<AST>($5), currentFile, yyloc.first_line);
-            COUT << "Stepped generator range expression ..." << ENDL;
         }
     |   valueComp                       {
             $$ = $1;
