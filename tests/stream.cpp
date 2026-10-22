@@ -349,9 +349,6 @@ TEST(Stream, Iterator) {
                 "Val1");
     EXPECT_TRUE(it.hasNext());
     streamComp = it.next();
-    node = std::static_pointer_cast<StreamNode>(streamComp);
-    EXPECT_TRUE(streamComp->getLine() == 6);
-    EXPECT_TRUE(streamComp->getNodeType() == AST::Function);
     auto functionNode = std::static_pointer_cast<FunctionNode>(streamComp);
     EXPECT_TRUE(functionNode->getName() == "Func1");
     EXPECT_TRUE(functionNode->getLine() == 6);

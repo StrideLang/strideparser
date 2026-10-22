@@ -166,7 +166,7 @@ TEST(Basic, Lists) {
   EXPECT_TRUE(list->getNodeType() == AST::List);
   std::vector<ASTNode> members = list->getChildren();
   EXPECT_TRUE(members.size() == 4);
-  for (ASTNode member : members) {
+  for (const ASTNode &member : members) {
     ValueNode *value = static_cast<ValueNode *>(member.get());
     EXPECT_TRUE(value->getNodeType() == AST::Int);
   }
@@ -215,9 +215,10 @@ TEST(Basic, Lists) {
     EXPECT_TRUE(value->getNodeType() == AST::Switch);
   }
 
-  //    constant List_Names [4] {
-  //            value: [ Name1, Name2, Name3, Name4 ]
-  //    }
+  // constant List_Mixed [4] {
+  //     value: [ List_Integer[1], List_Real[2], List_Strings[3],
+  //     List_Switches[4] ]
+  // }
   block = static_cast<DeclarationNode *>(nodes.at(5).get());
   EXPECT_TRUE(block->getNodeType() == AST::ArrayDeclaration);
   props = block->getProperties();
@@ -225,9 +226,8 @@ TEST(Basic, Lists) {
   EXPECT_TRUE(list->getNodeType() == AST::List);
   members = list->getChildren();
   EXPECT_TRUE(members.size() == 4);
-  for (ASTNode &member : members) {
-    EntityNode *value = static_cast<EntityNode *>(member.get());
-    EXPECT_TRUE(value->getNodeType() == AST::Array);
+  for (const ASTNode &member : members) {
+    EXPECT_TRUE(member->getNodeType() == AST::Array);
   }
 
   //    constant List_Namespaces [4] {
@@ -509,16 +509,24 @@ TEST(Basic, TrailingCommasInLists) {
   auto list1 = std::static_pointer_cast<ListNode>(stream1->getLeft());
   EXPECT_EQ(list1->getNodeType(), AST::List);
   EXPECT_EQ(list1->size(), 3);
-  EXPECT_EQ(std::static_pointer_cast<ValueNode>(list1->getChildren()[0])->getIntValue(), 1);
-  EXPECT_EQ(std::static_pointer_cast<ValueNode>(list1->getChildren()[1])->getIntValue(), 2);
-  EXPECT_EQ(std::static_pointer_cast<ValueNode>(list1->getChildren()[2])->getIntValue(), 3);
+  EXPECT_EQ(std::static_pointer_cast<ValueNode>(list1->getChildren()[0])
+                ->getIntValue(),
+            1);
+  EXPECT_EQ(std::static_pointer_cast<ValueNode>(list1->getChildren()[1])
+                ->getIntValue(),
+            2);
+  EXPECT_EQ(std::static_pointer_cast<ValueNode>(list1->getChildren()[2])
+                ->getIntValue(),
+            3);
 
   // Node 2: [ 42, ] >> Out2;
   auto stream2 = std::static_pointer_cast<StreamNode>(nodes.at(2));
   auto list2 = std::static_pointer_cast<ListNode>(stream2->getLeft());
   EXPECT_EQ(list2->getNodeType(), AST::List);
   EXPECT_EQ(list2->size(), 1);
-  EXPECT_EQ(std::static_pointer_cast<ValueNode>(list2->getChildren()[0])->getIntValue(), 42);
+  EXPECT_EQ(std::static_pointer_cast<ValueNode>(list2->getChildren()[0])
+                ->getIntValue(),
+            42);
 
   // Node 3: [ [ 1, 2, ], [ 3, 4, ], ] >> Out3;
   auto stream3 = std::static_pointer_cast<StreamNode>(nodes.at(3));
@@ -529,10 +537,18 @@ TEST(Basic, TrailingCommasInLists) {
   auto subList2 = std::static_pointer_cast<ListNode>(list3->getChildren()[1]);
   EXPECT_EQ(subList1->size(), 2);
   EXPECT_EQ(subList2->size(), 2);
-  EXPECT_EQ(std::static_pointer_cast<ValueNode>(subList1->getChildren()[0])->getIntValue(), 1);
-  EXPECT_EQ(std::static_pointer_cast<ValueNode>(subList1->getChildren()[1])->getIntValue(), 2);
-  EXPECT_EQ(std::static_pointer_cast<ValueNode>(subList2->getChildren()[0])->getIntValue(), 3);
-  EXPECT_EQ(std::static_pointer_cast<ValueNode>(subList2->getChildren()[1])->getIntValue(), 4);
+  EXPECT_EQ(std::static_pointer_cast<ValueNode>(subList1->getChildren()[0])
+                ->getIntValue(),
+            1);
+  EXPECT_EQ(std::static_pointer_cast<ValueNode>(subList1->getChildren()[1])
+                ->getIntValue(),
+            2);
+  EXPECT_EQ(std::static_pointer_cast<ValueNode>(subList2->getChildren()[0])
+                ->getIntValue(),
+            3);
+  EXPECT_EQ(std::static_pointer_cast<ValueNode>(subList2->getChildren()[1])
+                ->getIntValue(),
+            4);
 
   // Node 4: signal MySignal[4, ] { default: 0 }
   auto signalDecl = std::static_pointer_cast<DeclarationNode>(nodes.at(4));
@@ -543,13 +559,16 @@ TEST(Basic, TrailingCommasInLists) {
   auto moduleDecl = std::static_pointer_cast<DeclarationNode>(nodes.at(5));
   EXPECT_EQ(moduleDecl->getNodeType(), AST::Declaration);
   EXPECT_EQ(moduleDecl->getName(), "TestModule");
-  auto portsList = std::static_pointer_cast<ListNode>(moduleDecl->getPropertyValue("ports"));
+  auto portsList =
+      std::static_pointer_cast<ListNode>(moduleDecl->getPropertyValue("ports"));
   EXPECT_TRUE(portsList != nullptr);
   EXPECT_EQ(portsList->size(), 2);
-  auto blocksList = std::static_pointer_cast<ListNode>(moduleDecl->getPropertyValue("blocks"));
+  auto blocksList = std::static_pointer_cast<ListNode>(
+      moduleDecl->getPropertyValue("blocks"));
   EXPECT_TRUE(blocksList != nullptr);
   EXPECT_EQ(blocksList->size(), 2);
-  auto streamsList = std::static_pointer_cast<ListNode>(moduleDecl->getPropertyValue("streams"));
+  auto streamsList = std::static_pointer_cast<ListNode>(
+      moduleDecl->getPropertyValue("streams"));
   EXPECT_TRUE(streamsList != nullptr);
   EXPECT_EQ(streamsList->size(), 1);
 
@@ -559,8 +578,12 @@ TEST(Basic, TrailingCommasInLists) {
   EXPECT_EQ(bundle6->getName(), "MyBundle");
   auto idx6 = bundle6->index();
   EXPECT_EQ(idx6->size(), 2);
-  EXPECT_EQ(std::static_pointer_cast<ValueNode>(idx6->getChildren()[0])->getIntValue(), 1);
-  EXPECT_EQ(std::static_pointer_cast<ValueNode>(idx6->getChildren()[1])->getIntValue(), 2);
+  EXPECT_EQ(std::static_pointer_cast<ValueNode>(idx6->getChildren()[0])
+                ->getIntValue(),
+            1);
+  EXPECT_EQ(std::static_pointer_cast<ValueNode>(idx6->getChildren()[1])
+                ->getIntValue(),
+            2);
 }
 
 TEST(Basic, PackageDeclaration) {
@@ -598,13 +621,16 @@ TEST(Basic, GeneratorSyntax) {
   EXPECT_TRUE(std::static_pointer_cast<ValueNode>(isGen0)->getSwitchValue());
   auto var0 = decl0->getCompilerProperty("_generatorVar");
   ASSERT_NE(var0, nullptr);
-  EXPECT_EQ(std::static_pointer_cast<ValueNode>(var0)->getStringValue(), "Index");
+  EXPECT_EQ(std::static_pointer_cast<ValueNode>(var0)->getStringValue(),
+            "Index");
   auto range0 = decl0->getCompilerProperty("_generatorRange");
   ASSERT_NE(range0, nullptr);
   ASSERT_EQ(range0->getNodeType(), AST::GeneratorRange);
   auto r0 = std::static_pointer_cast<GeneratorRangeNode>(range0);
-  EXPECT_EQ(std::static_pointer_cast<ValueNode>(r0->startIndex())->getIntValue(), 0);
-  EXPECT_EQ(std::static_pointer_cast<ValueNode>(r0->endIndex())->getIntValue(), 8);
+  EXPECT_EQ(
+      std::static_pointer_cast<ValueNode>(r0->startIndex())->getIntValue(), 0);
+  EXPECT_EQ(std::static_pointer_cast<ValueNode>(r0->endIndex())->getIntValue(),
+            8);
 
   // Node 1: transition [Index in 1..4] (anonymous generator transition)
   ASSERT_EQ(nodes.at(1)->getNodeType(), AST::Declaration);
@@ -618,13 +644,16 @@ TEST(Basic, GeneratorSyntax) {
   EXPECT_TRUE(std::static_pointer_cast<ValueNode>(isGen1)->getSwitchValue());
   auto var1 = decl1->getCompilerProperty("_generatorVar");
   ASSERT_NE(var1, nullptr);
-  EXPECT_EQ(std::static_pointer_cast<ValueNode>(var1)->getStringValue(), "Index");
+  EXPECT_EQ(std::static_pointer_cast<ValueNode>(var1)->getStringValue(),
+            "Index");
   auto range1 = decl1->getCompilerProperty("_generatorRange");
   ASSERT_NE(range1, nullptr);
   ASSERT_EQ(range1->getNodeType(), AST::GeneratorRange);
   auto r1 = std::static_pointer_cast<GeneratorRangeNode>(range1);
-  EXPECT_EQ(std::static_pointer_cast<ValueNode>(r1->startIndex())->getIntValue(), 1);
-  EXPECT_EQ(std::static_pointer_cast<ValueNode>(r1->endIndex())->getIntValue(), 4);
+  EXPECT_EQ(
+      std::static_pointer_cast<ValueNode>(r1->startIndex())->getIntValue(), 1);
+  EXPECT_EQ(std::static_pointer_cast<ValueNode>(r1->endIndex())->getIntValue(),
+            4);
 
   // Node 2: action DoSomething[Item in [A, B, C]]
   ASSERT_EQ(nodes.at(2)->getNodeType(), AST::Declaration);
@@ -636,12 +665,10 @@ TEST(Basic, GeneratorSyntax) {
   EXPECT_TRUE(std::static_pointer_cast<ValueNode>(isGen2)->getSwitchValue());
   auto var2 = decl2->getCompilerProperty("_generatorVar");
   ASSERT_NE(var2, nullptr);
-  EXPECT_EQ(std::static_pointer_cast<ValueNode>(var2)->getStringValue(), "Item");
+  EXPECT_EQ(std::static_pointer_cast<ValueNode>(var2)->getStringValue(),
+            "Item");
   auto range2 = decl2->getCompilerProperty("_generatorRange");
   ASSERT_NE(range2, nullptr);
   ASSERT_EQ(range2->getNodeType(), AST::List);
   EXPECT_EQ(range2->getChildren().size(), 3);
 }
-
-
-
