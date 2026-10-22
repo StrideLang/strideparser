@@ -42,6 +42,8 @@ Property Name := [a-z][A-Za-z0-9_]*    // Lowercase start
 * **Entity Type (Lowercase):** Specifies the category/type of the entity being declared (e.g., `signal`, `domain`, `module`, `reaction`, `type`).
 * **Property Name (Lowercase):** Identifies key-value attributes in declarations and ports in function calls (e.g., `default`, `rate`, `in`, `out`, `gain`).
 
+Entities and type names can also start with '_', but it is recommended only for internal use.
+
 ### 2.2 Built-in Literals & Keywords
 Stride reserves lowercase keywords for control states and empty/null values:
 
@@ -54,6 +56,10 @@ Stride reserves lowercase keywords for control states and empty/null values:
 * **Empty / Null Literal (`none`):** Represents an unassigned value, empty port connection, or absent state.
   ```stride
   reset: none
+  ```
+* **Generator (`in`):** Connects an entity to a list generator for declaration generation. See below.
+  ```stride
+  [Index in 0..5]
   ```
 
 ---
@@ -97,7 +103,38 @@ signal Channels[InPort.size] {
 }
 ```
 
-### 3.3 Declaration Properties
+### 3.3 Generator Declaration
+A **Generator Declaration** expands a parameterized template across a range or collection of values. Syntactically, it declares an entity with an iteration variable and a range expression within brackets using the `in` keyword:
+
+```stride
+<entityType> <EntityName>[<IterationVar> in <GeneratorRange>] {
+    <properties...>
+}
+```
+
+*Examples:*
+```stride
+# Generator with range:
+item Items[I in 0..3] {
+    label: ["Item0", "Item1", "Item2", "Item3"]
+}
+
+# Generator with stepped range:
+signal Downsampled[I in 0..2..30] {
+    rate: AudioRate
+}
+
+# Generator over a list:
+transition Move[Sq in [1, 2, 4, 8]] {
+    guard: Legal[Sq]
+}
+```
+
+> **Range Syntax Note:**
+> * **Generator Ranges (`..`):** Generator notation strictly uses double dots `..` to express inclusive bounds (`start..end` or `start..step..end`), parsed as `GeneratorRangeNode` (`AST::GeneratorRange`).
+> * **Slice / Index Ranges (`:`):** Array slicing and bundle indexing use colon notation `:` (e.g., `Signal[0:31]`), parsed as `RangeNode` (`AST::Range`).
+
+### 3.4 Declaration Properties
 Inside an entity declaration body, **Properties** configure attributes, initial states, or nested structures for that entity.
 
 ```stride
@@ -144,6 +181,10 @@ gain: 0.75
   ```stride
   Voices[0]
   ```
+* **Slice Access (`Target[start:end]`):** Uses bracket colon notation to address a contiguous slice or bundle of elements within an array entity.
+  ```stride
+  Signals[0:7]
+  ```
 
 ---
 
@@ -157,8 +198,11 @@ gain: 0.75
 | **Literals / Keywords** | `on`, `off`, `none` | Reserved literals for state/null | `default: off`, `reset: none` |
 | **Entity Declaration** | `entityType EntityName { ... }` | Single entity declaration | `signal Cutoff { ... }` |
 | **Array Declaration** | `entityType EntityName[Size] { ... }` | Array entity declaration | `signal Voices[4] { ... }` |
+| **Generator Declaration** | `entityType EntityName[Var in Range] { ... }` | Parameterized template generator | `item Items[I in 0..3] { ... }` |
+| **Generator Range** | `start..end` or `start..step..end` | Generator range expression | `0..3`, `0..2..30` |
 | **Stream** | `Source >> Transform >> Sink` | Dataflow pipeline expression | `In >> Filter() >> Out` |
 | **Invocation** | `CalleeName( ... )` | Function/module call expression | `Gain(in: AudioIn, out: Out)` |
 | **Property** | `propertyName: Value` | Inside declarations or invocations | `rate: 44100`, `in: AudioIn` |
 | **Member Access** | `Target.member` | Dot-notation accessor | `Filter.out` |
-| **Index Access** | `Target[index]` | Bracket-notation accessor | `Voices[0]` |
+| **Index Access** | `Target[index]` | Single-element accessor | `Voices[0]` |
+| **Slice Access** | `Target[start:end]` | Bracket-notation bundle slice | `Signals[0:7]` |
