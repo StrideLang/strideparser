@@ -62,6 +62,7 @@ public:
     UnresolvedRate,
     ConstraintFail,
     ReadOnlyPort,
+    UnresolvedType,
     None
   } ErrorType;
 

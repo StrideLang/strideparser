@@ -60,6 +60,12 @@ std::string LangError::getErrorText() {
     errorText += "Invalid Port '" + errorTokens[1] + "' for type '" +
                  errorTokens[0] + "'";
     break;
+  case UnresolvedType:
+    errorText += "Can't resolve the data type of '" + errorTokens[0] +
+                 "'. The output type of '" + errorTokens[1] +
+                 "' comes from its output port. Declare '" + errorTokens[0] +
+                 "' with a type";
+    break;
   case ReadOnlyPort:
     errorText += "Port '" + errorTokens[1] + "' of type '" + errorTokens[0] +
                  "' is read only. It is set by the compiler";
