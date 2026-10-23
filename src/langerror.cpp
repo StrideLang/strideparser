@@ -60,6 +60,10 @@ std::string LangError::getErrorText() {
     errorText += "Invalid Port '" + errorTokens[1] + "' for type '" +
                  errorTokens[0] + "'";
     break;
+  case ReadOnlyPort:
+    errorText += "Port '" + errorTokens[1] + "' of type '" + errorTokens[0] +
+                 "' is read only. It is set by the compiler";
+    break;
   case InvalidPortType:
     errorText += "Invalid port type Error. Port '" + errorTokens[1] +
                  "' in Entity '" + errorTokens[0] + "' expects '" +

@@ -61,6 +61,7 @@ public:
     SystemRedefinition,
     UnresolvedRate,
     ConstraintFail,
+    ReadOnlyPort,
     None
   } ErrorType;
 

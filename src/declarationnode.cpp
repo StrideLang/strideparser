@@ -184,6 +184,10 @@ void DeclarationNode::setDomainString(std::string domain) {
 
 std::string DeclarationNode::getEntityType() const { return m_entityType; }
 
+void DeclarationNode::setEntityType(const std::string &entityType) {
+  m_entityType = entityType;
+}
+
 std::string DeclarationNode::toText(int indentOffset, int indentSize,
                                     bool newLine) const {
   std::string outText;
