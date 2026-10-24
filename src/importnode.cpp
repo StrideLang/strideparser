@@ -41,8 +41,8 @@
 using namespace strd;
 
 ImportNode::ImportNode(std::string name, ASTNode scope, const char *filename,
-                       int line, std::string alias)
-    : AST(AST::Import, filename, line) {
+                       int line, int column, std::string alias)
+    : AST(AST::Import, filename, line, column) {
   m_importName = name;
   m_importAlias = alias;
   // resolveScope(scope);
@@ -56,12 +56,20 @@ ImportNode::ImportNode(std::string name, ASTNode scope, const char *filename,
   }
 }
 
+ImportNode::ImportNode(std::string name, ASTNode scope, const char *filename,
+                       int line, std::string alias)
+    : ImportNode(name, scope, filename, line, -1, alias) {}
+
 ImportNode::ImportNode(std::string name, const char *filename, int line,
-                       std::string alias)
-    : AST(AST::Import, filename, line) {
+                       int column, std::string alias)
+    : AST(AST::Import, filename, line, column) {
   m_importName = name;
   m_importAlias = alias;
 }
+
+ImportNode::ImportNode(std::string name, const char *filename, int line,
+                       std::string alias)
+    : ImportNode(name, filename, line, -1, alias) {}
 
 std::string ImportNode::importName() const { return m_importName; }
 
@@ -88,7 +96,8 @@ void ImportNode::resolveScope(ASTNode scope) {
 
 ASTNode ImportNode::deepCopy() {
   auto newImportNode = std::make_shared<ImportNode>(
-      m_importName, m_filename.data(), getLine(), m_importAlias);
+      m_importName, m_filename.data(), getLine(), getColumn(), m_importAlias);
+  copyLocationTo(newImportNode);
   for (unsigned int i = 0; i < this->getScopeLevels(); i++) {
     newImportNode->addScope(this->getScopeAt(i));
   }

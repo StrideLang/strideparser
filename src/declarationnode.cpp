@@ -43,8 +43,9 @@ using namespace strd;
 
 DeclarationNode::DeclarationNode(std::string name, std::string entityType,
                                  ASTNode propertiesList, const char *filename,
-                                 int line, std::vector<std::string> scope)
-    : AST(AST::Declaration, filename, line, scope) {
+                                 int line, int column,
+                                 std::vector<std::string> scope)
+    : AST(AST::Declaration, filename, line, column, scope) {
   m_name = name;
   m_entityType = entityType;
   if (propertiesList) {
@@ -64,11 +65,17 @@ DeclarationNode::DeclarationNode(std::string name, std::string entityType,
   m_CompilerProperties = std::make_shared<ListNode>(__FILE__, __LINE__);
 }
 
+DeclarationNode::DeclarationNode(std::string name, std::string entityType,
+                                 ASTNode propertiesList, const char *filename,
+                                 int line, std::vector<std::string> scope)
+    : DeclarationNode(name, entityType, propertiesList, filename, line, -1,
+                      scope) {}
+
 DeclarationNode::DeclarationNode(std::shared_ptr<ArrayNode> arrayIndex,
                                  std::string entityType, ASTNode propertiesList,
-                                 const char *filename, int line,
+                                 const char *filename, int line, int column,
                                  std::vector<std::string> scope)
-    : AST(AST::ArrayDeclaration, filename, line, scope) {
+    : AST(AST::ArrayDeclaration, filename, line, column, scope) {
   addChild(arrayIndex);
   m_entityType = entityType;
   if (propertiesList) {
@@ -84,6 +91,13 @@ DeclarationNode::DeclarationNode(std::shared_ptr<ArrayNode> arrayIndex,
 
   m_CompilerProperties = std::make_shared<ListNode>(__FILE__, __LINE__);
 }
+
+DeclarationNode::DeclarationNode(std::shared_ptr<ArrayNode> arrayIndex,
+                                 std::string entityType, ASTNode propertiesList,
+                                 const char *filename, int line,
+                                 std::vector<std::string> scope)
+    : DeclarationNode(arrayIndex, entityType, propertiesList, filename, line,
+                      -1, scope) {}
 
 DeclarationNode::~DeclarationNode() {}
 
@@ -235,10 +249,13 @@ ASTNode DeclarationNode::deepCopy() {
   if (getNodeType() == AST::ArrayDeclaration) {
     node = std::make_shared<DeclarationNode>(
         std::static_pointer_cast<ArrayNode>(getArrayIndex()->deepCopy()),
-        m_entityType, newProps, m_filename.data(), m_line, m_scope);
+        m_entityType, newProps, m_filename.data(), m_line, m_column, m_scope);
   } else if (getNodeType() == AST::Declaration) {
     node = std::make_shared<DeclarationNode>(
-        m_name, m_entityType, newProps, m_filename.data(), m_line, m_scope);
+        m_name, m_entityType, newProps, m_filename.data(), m_line, m_column, m_scope);
+  }
+  if (node) {
+    copyLocationTo(node);
   }
   if (this->m_CompilerProperties) {
     node->m_CompilerProperties = std::static_pointer_cast<ListNode>(

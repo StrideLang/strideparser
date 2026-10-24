@@ -44,9 +44,9 @@ namespace strd {
 class FunctionNode : public AST {
 public:
   FunctionNode(std::string name, ASTNode propertiesList, const char *filename,
-               int line);
+               int line, int column = -1);
   FunctionNode(std::string name, ASTNode scope, ASTNode propertiesList,
-               const char *filename, int line);
+               const char *filename, int line, int column = -1);
   ~FunctionNode();
 
   virtual void addChild(ASTNode t) override;

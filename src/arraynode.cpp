@@ -43,19 +43,24 @@
 using namespace strd;
 
 ArrayNode::ArrayNode(std::string name, std::shared_ptr<ListNode> indexList,
-                     const char *filename, int line,
+                     const char *filename, int line, int column,
                      std::vector<std::string> scope)
-    : AST(AST::Array, filename, line, scope) {
+    : AST(AST::Array, filename, line, column, scope) {
   addChild(indexList);
   m_name = name;
 
   m_CompilerProperties = std::make_shared<ListNode>(__FILE__, __LINE__);
 }
 
+ArrayNode::ArrayNode(std::string name, std::shared_ptr<ListNode> indexList,
+                     const char *filename, int line,
+                     std::vector<std::string> scope)
+    : ArrayNode(name, indexList, filename, line, -1, scope) {}
+
 ArrayNode::ArrayNode(std::string name, ASTNode scope,
                      std::shared_ptr<ListNode> indexList,
-                     const char *filename, int line)
-    : AST(AST::Array, filename, line) {
+                     const char *filename, int line, int column)
+    : AST(AST::Array, filename, line, column) {
   addChild(indexList);
   m_name = name;
   resolveScope(scope);
@@ -127,7 +132,8 @@ ASTNode ArrayNode::deepCopy() {
   if (getNodeType() == AST::Array) {
     std::shared_ptr<ArrayNode> newArray = std::make_shared<ArrayNode>(
         m_name, std::static_pointer_cast<ListNode>(index()->deepCopy()),
-        m_filename.data(), m_line);
+        m_filename.data(), m_line, m_column);
+    copyLocationTo(newArray);
     for (unsigned int i = 0; i < this->getScopeLevels(); i++) {
       newArray->addScope(this->getScopeAt(i));
     }

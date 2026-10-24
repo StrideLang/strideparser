@@ -47,10 +47,18 @@ class DeclarationNode : public AST {
 public:
   DeclarationNode(std::string name, std::string entityType,
                   ASTNode propertiesList, const char *filename, int line,
+                  int column = -1,
+                  std::vector<std::string> scope = std::vector<std::string>());
+  DeclarationNode(std::string name, std::string entityType,
+                  ASTNode propertiesList, const char *filename, int line,
+                  std::vector<std::string> scope);
+  DeclarationNode(std::shared_ptr<ArrayNode> arrayIndex, std::string entityType,
+                  ASTNode propertiesList, const char *filename, int line,
+                  int column = -1,
                   std::vector<std::string> scope = std::vector<std::string>());
   DeclarationNode(std::shared_ptr<ArrayNode> arrayIndex, std::string entityType,
                   ASTNode propertiesList, const char *filename, int line,
-                  std::vector<std::string> scope = std::vector<std::string>());
+                  std::vector<std::string> scope);
   ~DeclarationNode() override;
 
   std::string getName() const;

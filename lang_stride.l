@@ -7,7 +7,12 @@
 using namespace std;
 
 char * buffer;
-#define YY_USER_ACTION yylloc.first_line = yylloc.last_line = yylineno;
+int yycolumn = 1;
+#define YY_USER_ACTION \
+    yylloc.first_line = yylloc.last_line = yylineno; \
+    yylloc.first_column = yycolumn; \
+    yylloc.last_column = yycolumn + yyleng - 1; \
+    yycolumn += yyleng;
 
 %}
 
@@ -90,7 +95,8 @@ HEXLETTER   [A-Fa-f]
                         free(buffer);
                         return STRING; }
 
-[ \t\n]             {   /* Skip white spaces */ }
+[ \t]+              {   /* Skip spaces and tabs */ }
+\r?\n               {   yycolumn = 1; /* Reset column on newline */ }
 "#".*               {   /* Ignore Comments */ }
 .                   {   yylval.sval = strdup(yytext);
                         return ERROR; }

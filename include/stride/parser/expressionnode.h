@@ -55,9 +55,9 @@ public:
   } ExpressionType;
 
   ExpressionNode(ExpressionType type, ASTNode left, ASTNode right,
-                 const char *filename, int line);
+                 const char *filename, int line, int column = -1);
   ExpressionNode(ExpressionType type, ASTNode value, const char *filename,
-                 int line);
+                 int line, int column = -1);
   ~ExpressionNode();
 
   bool isUnary() const;

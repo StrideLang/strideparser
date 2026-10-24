@@ -42,7 +42,8 @@
 namespace strd {
 class PropertyNode : public AST {
 public:
-  PropertyNode(std::string name, ASTNode value, const char *filename, int line);
+  PropertyNode(std::string name, ASTNode value, const char *filename, int line,
+               int column = -1);
   ~PropertyNode();
 
   std::string getName() const { return m_name; }

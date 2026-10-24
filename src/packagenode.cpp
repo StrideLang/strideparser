@@ -41,8 +41,8 @@
 using namespace strd;
 
 PackageNode::PackageNode(std::string name, ASTNode scope, const char *filename,
-                         int line)
-    : AST(AST::Package, filename, line) {
+                         int line, int column)
+    : AST(AST::Package, filename, line, column) {
   m_packageName = name;
   if (scope) {
     for (unsigned int i = 0; i < scope->getChildren().size(); i++) {
@@ -54,8 +54,9 @@ PackageNode::PackageNode(std::string name, ASTNode scope, const char *filename,
   }
 }
 
-PackageNode::PackageNode(std::string name, const char *filename, int line)
-    : AST(AST::Package, filename, line) {
+PackageNode::PackageNode(std::string name, const char *filename, int line,
+                         int column)
+    : AST(AST::Package, filename, line, column) {
   m_packageName = name;
 }
 
@@ -102,7 +103,8 @@ void PackageNode::resolveScope(ASTNode scope) {
 
 ASTNode PackageNode::deepCopy() {
   auto newPackageNode = std::make_shared<PackageNode>(
-      m_packageName, m_filename.data(), getLine());
+      m_packageName, m_filename.data(), getLine(), getColumn());
+  copyLocationTo(newPackageNode);
   for (unsigned int i = 0; i < this->getScopeLevels(); i++) {
     newPackageNode->addScope(this->getScopeAt(i));
   }

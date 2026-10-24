@@ -43,8 +43,11 @@ namespace strd {
 class SystemNode : public AST {
 public:
   SystemNode(std::string platformName, int majorVersion, int minorVersion,
-             const char *filename, int line,
+             const char *filename, int line, int column = -1,
              std::vector<std::string> hwPlatforms = std::vector<std::string>());
+  SystemNode(std::string platformName, int majorVersion, int minorVersion,
+             const char *filename, int line,
+             std::vector<std::string> hwPlatforms);
 
   ~SystemNode();
 

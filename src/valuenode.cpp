@@ -41,43 +41,45 @@
 
 using namespace strd;
 
-ValueNode::ValueNode(const char *filename, int line)
-    : AST(AST::None, filename, line) {
+ValueNode::ValueNode(const char *filename, int line, int column)
+    : AST(AST::None, filename, line, column) {
   m_CompilerProperties = std::make_shared<ListNode>(__FILE__, __LINE__);
 }
 
-ValueNode::ValueNode(int64_t value, const char *filename, int line)
-    : AST(AST::Int, filename, line) {
+ValueNode::ValueNode(int64_t value, const char *filename, int line, int column)
+    : AST(AST::Int, filename, line, column) {
   m_value = value;
   m_CompilerProperties = std::make_shared<ListNode>(__FILE__, __LINE__);
 }
 
-ValueNode::ValueNode(float value, const char *filename, int line)
-    : AST(AST::Real, filename, line) {
+ValueNode::ValueNode(float value, const char *filename, int line, int column)
+    : AST(AST::Real, filename, line, column) {
   m_value = double(value);
   m_CompilerProperties = std::make_shared<ListNode>(__FILE__, __LINE__);
 }
 
-ValueNode::ValueNode(double value, const char *filename, int line)
-    : AST(AST::Real, filename, line) {
+ValueNode::ValueNode(double value, const char *filename, int line, int column)
+    : AST(AST::Real, filename, line, column) {
   m_value = value;
   m_CompilerProperties = std::make_shared<ListNode>(__FILE__, __LINE__);
 }
 
-ValueNode::ValueNode(const char *value, const char *filename, int line)
-    : AST(AST::String, filename, line) {
+ValueNode::ValueNode(const char *value, const char *filename, int line,
+                     int column)
+    : AST(AST::String, filename, line, column) {
   m_value = std::string(value); // Assign const char* to std::string in variant
   m_CompilerProperties = std::make_shared<ListNode>(__FILE__, __LINE__);
 }
 
-ValueNode::ValueNode(std::string value, const char *filename, int line)
-    : AST(AST::String, filename, line) {
+ValueNode::ValueNode(std::string value, const char *filename, int line,
+                     int column)
+    : AST(AST::String, filename, line, column) {
   m_value = value;
   m_CompilerProperties = std::make_shared<ListNode>(__FILE__, __LINE__);
 }
 
-ValueNode::ValueNode(bool value, const char *filename, int line)
-    : AST(AST::Switch, filename, line) {
+ValueNode::ValueNode(bool value, const char *filename, int line, int column)
+    : AST(AST::Switch, filename, line, column) {
   m_value = value;
   m_CompilerProperties = std::make_shared<ListNode>(__FILE__, __LINE__);
 }
@@ -156,30 +158,28 @@ ASTNode ValueNode::deepCopy() {
   std::shared_ptr<ValueNode> newNode;
   if (getNodeType() == AST::Int) {
     newNode = std::make_shared<ValueNode>(std::get<int64_t>(m_value),
-                                          m_filename.c_str(), getLine());
+                                          m_filename.c_str(), getLine(), getColumn());
   } else if (getNodeType() == AST::Real) {
     newNode = std::make_shared<ValueNode>(std::get<double>(m_value),
-                                          m_filename.c_str(), getLine());
+                                          m_filename.c_str(), getLine(), getColumn());
   } else if (getNodeType() == AST::String) {
     newNode = std::make_shared<ValueNode>(std::get<std::string>(m_value),
-                                          m_filename.c_str(), getLine());
+                                          m_filename.c_str(), getLine(), getColumn());
   } else if (getNodeType() == AST::Switch) {
     newNode = std::make_shared<ValueNode>(std::get<bool>(m_value),
-                                          m_filename.c_str(), getLine());
+                                          m_filename.c_str(), getLine(), getColumn());
   } else if (getNodeType() == AST::None) {
-    newNode = std::make_shared<ValueNode>(m_filename.data(), getLine());
+    newNode = std::make_shared<ValueNode>(m_filename.data(), getLine(), getColumn());
   } else {
     assert(0); // Invalid type
     return nullptr;
   }
+  copyLocationTo(newNode);
   if (this->m_CompilerProperties) {
     newNode->m_CompilerProperties = std::static_pointer_cast<ListNode>(
         this->m_CompilerProperties->deepCopy());
-  }
-  // Let's just do what AST::deepCopy does but for newNode
-  if (this->m_CompilerProperties) {
-    newNode->m_CompilerProperties = std::static_pointer_cast<ListNode>(
-        this->m_CompilerProperties->deepCopy());
+  } else {
+    newNode->m_CompilerProperties = nullptr;
   }
   return newNode;
 }

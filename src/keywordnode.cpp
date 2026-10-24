@@ -37,14 +37,16 @@
 
 using namespace strd;
 
-KeywordNode::KeywordNode(std::string keyword, const char *filename, int line)
-    : AST(AST::Keyword, filename, line) {
+KeywordNode::KeywordNode(std::string keyword, const char *filename, int line,
+                         int column)
+    : AST(AST::Keyword, filename, line, column) {
   m_kw = keyword;
 }
 
 ASTNode KeywordNode::deepCopy() {
   auto newNode =
-      std::make_shared<KeywordNode>(m_kw, m_filename.data(), getLine());
+      std::make_shared<KeywordNode>(m_kw, m_filename.data(), getLine(), getColumn());
+  copyLocationTo(newNode);
   if (this->m_CompilerProperties) {
     newNode->m_CompilerProperties = std::static_pointer_cast<ListNode>(
         this->m_CompilerProperties->deepCopy());

@@ -41,13 +41,19 @@ using namespace strd;
 
 SystemNode::SystemNode(std::string platformName, int majorVersion,
                        int minorVersion, const char *filename, int line,
-                       std::vector<std::string> hwPlatform)
-    : AST(AST::Platform, filename, line) {
+                       int column, std::vector<std::string> hwPlatform)
+    : AST(AST::Platform, filename, line, column) {
   m_systemName = platformName;
   m_majorVersion = majorVersion;
   m_minorVersion = minorVersion;
   m_targetPlatforms = hwPlatform;
 }
+
+SystemNode::SystemNode(std::string platformName, int majorVersion,
+                       int minorVersion, const char *filename, int line,
+                       std::vector<std::string> hwPlatform)
+    : SystemNode(platformName, majorVersion, minorVersion, filename, line, -1,
+                 hwPlatform) {}
 
 SystemNode::~SystemNode() {}
 
@@ -58,7 +64,8 @@ int SystemNode::minorVersion() const { return m_minorVersion; }
 ASTNode SystemNode::deepCopy() {
   auto newNode = std::make_shared<SystemNode>(m_systemName, m_majorVersion,
                                               m_minorVersion, m_filename.data(),
-                                              m_line, m_targetPlatforms);
+                                              m_line, m_column, m_targetPlatforms);
+  copyLocationTo(newNode);
   for (auto &child : getChildren()) {
     newNode->addChild(child->deepCopy());
   }

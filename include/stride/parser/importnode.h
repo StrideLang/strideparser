@@ -43,9 +43,13 @@ namespace strd {
 class ImportNode : public AST {
 public:
   ImportNode(std::string name, ASTNode scope, const char *filename, int line,
-             std::string alias = std::string());
+             int column = -1, std::string alias = std::string());
+  ImportNode(std::string name, ASTNode scope, const char *filename, int line,
+             std::string alias);
   ImportNode(std::string name, const char *filename, int line,
-             std::string alias = std::string());
+             int column = -1, std::string alias = std::string());
+  ImportNode(std::string name, const char *filename, int line,
+             std::string alias);
 
   std::string importName() const;
   void setImportName(const std::string &importName);

@@ -40,7 +40,8 @@
 namespace strd {
 class KeywordNode : public AST {
 public:
-  KeywordNode(std::string keyword, const char *filename, int line);
+  KeywordNode(std::string keyword, const char *filename, int line,
+              int column = -1);
 
   std::string keyword() { return m_kw; }
 

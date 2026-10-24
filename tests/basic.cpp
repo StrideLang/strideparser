@@ -923,3 +923,43 @@ TEST(Basic, GeneratorRangeUsage) {
       std::static_pointer_cast<ValueNode>(declGen9->endIndex())->getIntValue(),
       8);
 }
+
+TEST(Basic, SourceLocationAndDualPaths) {
+  const char *sourceRel = "custom_rel/02_basic_blocks.stride";
+  ASTNode tree = AST::parseFile(TESTS_SOURCE_DIR "basic/02_basic_blocks.stride", sourceRel);
+  ASSERT_TRUE(tree != nullptr);
+
+  EXPECT_EQ(tree->getRelativeFilename(), sourceRel);
+  EXPECT_FALSE(tree->getAbsoluteFilename().empty());
+
+  const auto &nodes = tree->getChildren();
+  ASSERT_GE(nodes.size(), 2);
+
+  // Node 0: signal GuitarIn
+  auto decl0 = nodes.at(0);
+  EXPECT_EQ(decl0->getRelativeFilename(), sourceRel);
+  EXPECT_FALSE(decl0->getAbsoluteFilename().empty());
+  EXPECT_EQ(decl0->getLine(), 1);
+  EXPECT_EQ(decl0->getColumn(), 1);
+
+  // Check children have valid lines and columns
+  for (const auto &child : decl0->getChildren()) {
+    EXPECT_EQ(child->getRelativeFilename(), sourceRel);
+    EXPECT_GT(child->getLine(), 1);
+    EXPECT_GT(child->getColumn(), 0);
+  }
+
+  // Node 1: constant Integer (starts on line 6)
+  auto decl1 = nodes.at(1);
+  EXPECT_EQ(decl1->getRelativeFilename(), sourceRel);
+  EXPECT_EQ(decl1->getLine(), 6);
+  EXPECT_EQ(decl1->getColumn(), 1);
+
+  // Deep copy preserves location metadata
+  auto copy0 = decl0->deepCopy();
+  EXPECT_EQ(copy0->getRelativeFilename(), decl0->getRelativeFilename());
+  EXPECT_EQ(copy0->getAbsoluteFilename(), decl0->getAbsoluteFilename());
+  EXPECT_EQ(copy0->getLine(), decl0->getLine());
+  EXPECT_EQ(copy0->getColumn(), decl0->getColumn());
+}
+

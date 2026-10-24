@@ -84,8 +84,10 @@ public:
     Invalid
   } Token;
 
-  AST(Token token, const char *filename, int line = -1,
+  AST(Token token, const char *filename, int line = -1, int column = -1,
       std::vector<std::string> scope = std::vector<std::string>());
+  AST(Token token, const char *filename, int line,
+      std::vector<std::string> scope);
   virtual ~AST();
 
   // parsing
@@ -105,7 +107,19 @@ public:
 
   std::string getFilename() const;
   void setFilename(const std::string &filename);
+  std::string getRelativeFilename() const;
+  void setRelativeFilename(const std::string &relFilename);
+  std::string getAbsoluteFilename() const;
+  void setAbsoluteFilename(const std::string &absFilename);
+  void setFilenames(const std::string &relFilename, const std::string &absFilename);
+
   int getLine() const { return m_line; }
+  void setLine(int line) { m_line = line; }
+  int getColumn() const { return m_column; }
+  void setColumn(int column) { m_column = column; }
+
+  void copyLocationFrom(const AST &other);
+  void copyLocationTo(ASTNode other) const;
 
   void addScope(std::string newScope);
   void setRootScope(std::string scopeName);
@@ -139,7 +153,10 @@ protected:
   Token m_token;                   // From which token did we create node?
   std::vector<ASTNode> m_children; // normalized list of children
   std::string m_filename;          // file where the node was generated
+  std::string m_relativeFilename;  // relative path from project root / include path
+  std::string m_absoluteFilename;  // canonical absolute path
   int m_line;
+  int m_column{-1};
   std::vector<std::string> m_scope;
   std::shared_ptr<ListNode> m_CompilerProperties;
 };

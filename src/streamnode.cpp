@@ -40,8 +40,8 @@
 using namespace strd;
 
 StreamNode::StreamNode(ASTNode left, ASTNode right, const char *filename,
-                       int line)
-    : AST(AST::Stream, filename, line) {
+                       int line, int column)
+    : AST(AST::Stream, filename, line, column) {
   //    assert(left); assert(right);
   assert(left->getNodeType() != AST::Stream); // This is not allowed
   addChild(left);
@@ -110,7 +110,8 @@ void StreamNode::setRight(ASTNode newRight) { m_children.at(1) = newRight; }
 ASTNode StreamNode::deepCopy() {
   std::shared_ptr<StreamNode> newStream = std::make_shared<StreamNode>(
       m_children.at(0)->deepCopy(), m_children.at(1)->deepCopy(),
-      m_filename.data(), m_line);
+      m_filename.data(), m_line, m_column);
+  copyLocationTo(newStream);
 
   if (this->m_CompilerProperties) {
     newStream->m_CompilerProperties = std::static_pointer_cast<ListNode>(

@@ -71,6 +71,7 @@ public:
   std::vector<std::string> errorTokens;
   std::string filename;
   int lineNumber;
+  int columnNumber{-1};
   std::string getErrorText();
 };
 } // namespace strd

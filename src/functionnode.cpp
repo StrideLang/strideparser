@@ -42,8 +42,8 @@
 using namespace strd;
 
 FunctionNode::FunctionNode(std::string name, ASTNode propertiesList,
-                           const char *filename, int line)
-    : AST(AST::Function, filename, line) {
+                           const char *filename, int line, int column)
+    : AST(AST::Function, filename, line, column) {
   m_name = name;
   if (propertiesList) {
     for (ASTNode child : propertiesList->getChildren()) {
@@ -56,8 +56,8 @@ FunctionNode::FunctionNode(std::string name, ASTNode propertiesList,
 
 FunctionNode::FunctionNode(std::string name, ASTNode scope,
                            ASTNode propertiesList, const char *filename,
-                           int line)
-    : AST(AST::Function, filename, line) {
+                           int line, int column)
+    : AST(AST::Function, filename, line, column) {
   m_name = name;
   if (propertiesList) {
     for (ASTNode child : propertiesList->getChildren()) {
@@ -190,7 +190,8 @@ ASTNode FunctionNode::deepCopy() {
   }
   std::shared_ptr<FunctionNode> newFunctionNode =
       std::make_shared<FunctionNode>(m_name, newProps, m_filename.data(),
-                                     m_line);
+                                     m_line, m_column);
+  copyLocationTo(newFunctionNode);
   for (unsigned int i = 0; i < this->getScopeLevels(); i++) {
     newFunctionNode->addScope(this->getScopeAt(i));
   }
