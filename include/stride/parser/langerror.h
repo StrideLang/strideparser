@@ -63,6 +63,7 @@ public:
     ConstraintFail,
     ReadOnlyPort,
     UnresolvedType,
+    ShadowedSymbol,
     None
   } ErrorType;
 

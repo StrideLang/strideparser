@@ -88,6 +88,11 @@ std::string LangError::getErrorText() {
     errorText += "Duplicate Symbol Error. '" + errorTokens[0] +
                  "' redefined in " + errorTokens[1] + ":" + errorTokens[2] + "";
     break;
+  case ShadowedSymbol:
+    errorText += "Shadowed Symbol Error. '" + errorTokens[0] + "' in '" +
+                 errorTokens[1] + "' hides the declaration in " +
+                 errorTokens[2] + ":" + errorTokens[3];
+    break;
   case InconsistentList:
     errorText += "Inconsistent List Error";
     break;
