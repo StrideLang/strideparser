@@ -44,6 +44,9 @@ std::string LangError::getErrorText() {
   std::string errorText = "In file " + filename + ":\n    ";
   std::stringstream lineNumString;
   lineNumString << lineNumber;
+  if (columnNumber > 0) {
+    lineNumString << ":" << columnNumber;
+  }
   errorText += "Line " + lineNumString.str() + " : ";
   switch (type) {
   case Syntax:

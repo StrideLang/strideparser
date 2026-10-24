@@ -37,14 +37,16 @@
 
 using namespace strd;
 
-ScopeNode::ScopeNode(std::string name, const char *filename, int line)
-    : AST(AST::Scope, filename, line) {
+ScopeNode::ScopeNode(std::string name, const char *filename, int line,
+                     int column)
+    : AST(AST::Scope, filename, line, column) {
   m_name = name;
 }
 
 ASTNode ScopeNode::deepCopy() {
   auto newNode =
-      std::make_shared<ScopeNode>(m_name, m_filename.data(), getLine());
+      std::make_shared<ScopeNode>(m_name, m_filename.data(), getLine(), getColumn());
+  copyLocationTo(newNode);
   if (this->m_CompilerProperties) {
     newNode->m_CompilerProperties = std::static_pointer_cast<ListNode>(
         this->m_CompilerProperties->deepCopy());

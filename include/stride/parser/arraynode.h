@@ -45,11 +45,14 @@ namespace strd {
 class ArrayNode : public AST {
 public:
   ArrayNode(std::string name, std::shared_ptr<ListNode> indexList,
-            const char *filename, int line,
+            const char *filename, int line, int column = -1,
             std::vector<std::string> scope = std::vector<std::string>());
+  ArrayNode(std::string name, std::shared_ptr<ListNode> indexList,
+            const char *filename, int line,
+            std::vector<std::string> scope);
   ArrayNode(std::string name, ASTNode scope,
             std::shared_ptr<ListNode> indexList, const char *filename,
-            int line);
+            int line, int column = -1);
   virtual ~ArrayNode();
 
   std::string getName() const;

@@ -44,7 +44,7 @@ namespace strd {
 class MemberAccessNode : public AST {
 public:
   MemberAccessNode(std::string entity, std::string propertyName,
-                   const char *filename, int line);
+                   const char *filename, int line, int column = -1);
   ~MemberAccessNode() override;
 
   std::string getEntity() const { return m_entity; }

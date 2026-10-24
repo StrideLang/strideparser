@@ -40,8 +40,8 @@
 using namespace strd;
 
 PropertyNode::PropertyNode(std::string name, ASTNode value,
-                           const char *filename, int line)
-    : AST(AST::Property, filename, line) {
+                           const char *filename, int line, int column)
+    : AST(AST::Property, filename, line, column) {
   assert(value != nullptr);
   m_name = name;
   addChild(value);
@@ -75,7 +75,8 @@ void PropertyNode::replaceValue(ASTNode newValue) {
 
 ASTNode PropertyNode::deepCopy() {
   auto newNode = std::make_shared<PropertyNode>(
-      m_name, m_children.at(0)->deepCopy(), m_filename.data(), m_line);
+      m_name, m_children.at(0)->deepCopy(), m_filename.data(), m_line, m_column);
+  copyLocationTo(newNode);
   if (this->m_CompilerProperties) {
     newNode->m_CompilerProperties = std::static_pointer_cast<ListNode>(
         this->m_CompilerProperties->deepCopy());

@@ -42,6 +42,7 @@
 #include "stride/parser/listnode.h"
 #include "stride/parser/propertynode.h"
 #include "stride/parser/streamnode.h"
+#include <filesystem>
 #include "stride/parser/valuenode.h"
 
 using namespace strd;
@@ -49,15 +50,23 @@ using namespace strd;
 AST::AST() {
   m_token = AST::None;
   m_line = -1;
+  m_column = -1;
+}
+
+AST::AST(Token token, const char *filename, int line, int column,
+         std::vector<std::string> scope) {
+  m_token = token;
+  if (filename) {
+    setFilename(filename);
+  }
+  m_line = line;
+  m_column = column;
+  m_scope = scope;
 }
 
 AST::AST(Token token, const char *filename, int line,
-         std::vector<std::string> scope) {
-  m_token = token;
-  m_filename.append(filename);
-  m_line = line;
-  m_scope = scope;
-}
+         std::vector<std::string> scope)
+    : AST(token, filename, line, -1, scope) {}
 
 AST::~AST() {}
 
@@ -77,7 +86,8 @@ void AST::setChildren(const std::vector<ASTNode> &newChildren) {
 
 ASTNode AST::deepCopy() {
   ASTNode newNode =
-      std::make_shared<AST>(AST::None, m_filename.data(), m_line, m_scope);
+      std::make_shared<AST>(AST::None, m_filename.data(), m_line, m_column, m_scope);
+  copyLocationTo(newNode);
   for (unsigned int i = 0; i < m_children.size(); i++) {
     newNode->addChild(m_children.at(i)->deepCopy());
   }
@@ -92,7 +102,68 @@ ASTNode AST::deepCopy() {
 
 std::string AST::getFilename() const { return m_filename; }
 
-void AST::setFilename(const std::string &filename) { m_filename = filename; }
+void AST::setFilename(const std::string &filename) {
+  m_filename = filename;
+  if (m_relativeFilename.empty()) {
+    m_relativeFilename = filename;
+  }
+  if (m_absoluteFilename.empty() && !filename.empty()) {
+    std::error_code ec;
+    auto abs = std::filesystem::absolute(filename, ec);
+    if (!ec) {
+      m_absoluteFilename = abs.lexically_normal().string();
+    } else {
+      m_absoluteFilename = filename;
+    }
+  }
+}
+
+std::string AST::getRelativeFilename() const {
+  return m_relativeFilename.empty() ? m_filename : m_relativeFilename;
+}
+
+void AST::setRelativeFilename(const std::string &relFilename) {
+  m_relativeFilename = relFilename;
+}
+
+std::string AST::getAbsoluteFilename() const {
+  if (!m_absoluteFilename.empty()) {
+    return m_absoluteFilename;
+  }
+  if (!m_filename.empty()) {
+    std::error_code ec;
+    auto abs = std::filesystem::absolute(m_filename, ec);
+    if (!ec) {
+      return abs.lexically_normal().string();
+    }
+    return m_filename;
+  }
+  return {};
+}
+
+void AST::setAbsoluteFilename(const std::string &absFilename) {
+  m_absoluteFilename = absFilename;
+}
+
+void AST::setFilenames(const std::string &relFilename, const std::string &absFilename) {
+  m_relativeFilename = relFilename;
+  m_absoluteFilename = absFilename;
+  m_filename = relFilename.empty() ? absFilename : relFilename;
+}
+
+void AST::copyLocationFrom(const AST &other) {
+  m_filename = other.m_filename;
+  m_relativeFilename = other.m_relativeFilename;
+  m_absoluteFilename = other.m_absoluteFilename;
+  m_line = other.m_line;
+  m_column = other.m_column;
+}
+
+void AST::copyLocationTo(ASTNode other) const {
+  if (other) {
+    other->copyLocationFrom(*this);
+  }
+}
 
 void AST::resolveScope(ASTNode scope) {
   (void)scope;    // To remove warning

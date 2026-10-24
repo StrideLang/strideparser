@@ -43,8 +43,10 @@
 namespace strd {
 class PackageNode : public AST {
 public:
-  PackageNode(std::string name, ASTNode scope, const char *filename, int line);
-  PackageNode(std::string name, const char *filename, int line);
+  PackageNode(std::string name, ASTNode scope, const char *filename, int line,
+              int column = -1);
+  PackageNode(std::string name, const char *filename, int line,
+              int column = -1);
 
   std::string packageName() const;
 

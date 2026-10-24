@@ -42,9 +42,12 @@
 namespace strd {
 class EntityNode : public AST {
 public:
-  EntityNode(std::string name, const char *filename, int line,
+  EntityNode(std::string name, const char *filename, int line, int column = -1,
              std::vector<std::string> scope = std::vector<std::string>());
-  EntityNode(std::string name, ASTNode scope, const char *filename, int line);
+  EntityNode(std::string name, const char *filename, int line,
+             std::vector<std::string> scope);
+  EntityNode(std::string name, ASTNode scope, const char *filename, int line,
+             int column = -1);
 
   ~EntityNode() override;
 

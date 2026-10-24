@@ -44,13 +44,13 @@ namespace strd {
 class ValueNode : public AST {
   friend class ASTRuntime; // runtime can set the internal value
 public:
-  ValueNode(const char *filename, int line);
-  ValueNode(int64_t value, const char *filename, int line);
-  ValueNode(float value, const char *filename, int line);
-  ValueNode(double value, const char *filename, int line);
-  ValueNode(const char *value, const char *filename, int line);
-  ValueNode(std::string value, const char *filename, int line);
-  ValueNode(bool value, const char *filename, int line);
+  ValueNode(const char *filename, int line, int column = -1);
+  ValueNode(int64_t value, const char *filename, int line, int column = -1);
+  ValueNode(float value, const char *filename, int line, int column = -1);
+  ValueNode(double value, const char *filename, int line, int column = -1);
+  ValueNode(const char *value, const char *filename, int line, int column = -1);
+  ValueNode(std::string value, const char *filename, int line, int column = -1);
+  ValueNode(bool value, const char *filename, int line, int column = -1);
   ~ValueNode() override;
 
   int64_t getIntValue() const;

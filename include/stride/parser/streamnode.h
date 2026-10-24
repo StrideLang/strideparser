@@ -40,7 +40,8 @@
 namespace strd {
 class StreamNode : public AST {
 public:
-  StreamNode(ASTNode left, ASTNode right, const char *filename, int line);
+  StreamNode(ASTNode left, ASTNode right, const char *filename, int line,
+             int column = -1);
   ~StreamNode();
 
   ASTNode getLeft() const;

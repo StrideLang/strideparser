@@ -40,7 +40,8 @@
 namespace strd {
 class RangeNode : public AST {
 public:
-  RangeNode(ASTNode start, ASTNode end, const char *filename, int line);
+  RangeNode(ASTNode start, ASTNode end, const char *filename, int line,
+            int column = -1);
 
   ASTNode startIndex() const;
   ASTNode endIndex() const;

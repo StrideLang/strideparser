@@ -42,7 +42,7 @@
 namespace strd {
 class ScopeNode : public AST {
 public:
-  ScopeNode(std::string name, const char *filename, int line);
+  ScopeNode(std::string name, const char *filename, int line, int column = -1);
   ~ScopeNode();
 
   std::string getName() const;

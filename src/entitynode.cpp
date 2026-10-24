@@ -41,16 +41,20 @@
 using namespace strd;
 
 EntityNode::EntityNode(std::string name, const char *filename, int line,
-                       std::vector<std::string> scope)
-    : AST(AST::Entity, filename, line, scope) {
+                       int column, std::vector<std::string> scope)
+    : AST(AST::Entity, filename, line, column, scope) {
   m_name = name;
 
   m_CompilerProperties = std::make_shared<ListNode>(__FILE__, __LINE__);
 }
 
+EntityNode::EntityNode(std::string name, const char *filename, int line,
+                       std::vector<std::string> scope)
+    : EntityNode(name, filename, line, -1, scope) {}
+
 EntityNode::EntityNode(std::string name, ASTNode scope, const char *filename,
-                       int line)
-    : AST(AST::Entity, filename, line) {
+                       int line, int column)
+    : AST(AST::Entity, filename, line, column) {
   m_name = name;
   resolveScope(scope);
 
@@ -92,7 +96,8 @@ void EntityNode::resolveScope(ASTNode scope) {
 
 ASTNode EntityNode::deepCopy() {
   std::shared_ptr<EntityNode> newNode =
-      std::make_shared<EntityNode>(m_name, m_filename.data(), m_line, m_scope);
+      std::make_shared<EntityNode>(m_name, m_filename.data(), m_line, m_column, m_scope);
+  copyLocationTo(newNode);
   if (this->m_CompilerProperties) {
     newNode->m_CompilerProperties = std::static_pointer_cast<ListNode>(
         this->m_CompilerProperties->deepCopy());

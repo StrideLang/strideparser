@@ -38,8 +38,8 @@
 using namespace strd;
 
 MemberAccessNode::MemberAccessNode(std::string entity, std::string propertyName,
-                                   const char *filename, int line)
-    : AST(AST::MemberAccess, filename, line) {
+                                   const char *filename, int line, int column)
+    : AST(AST::MemberAccess, filename, line, column) {
   m_entity = entity;
   m_propertyName = propertyName;
 }
@@ -49,7 +49,8 @@ MemberAccessNode::~MemberAccessNode() {}
 ASTNode MemberAccessNode::deepCopy() {
   std::shared_ptr<MemberAccessNode> newMemberAccessNode =
       std::make_shared<MemberAccessNode>(m_entity, m_propertyName,
-                                         m_filename.data(), m_line);
+                                         m_filename.data(), m_line, m_column);
+  copyLocationTo(newMemberAccessNode);
   if (this->m_CompilerProperties) {
     newMemberAccessNode->m_CompilerProperties =
         std::static_pointer_cast<ListNode>(

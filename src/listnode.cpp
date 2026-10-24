@@ -37,11 +37,12 @@
 
 using namespace strd;
 
-ListNode::ListNode(const char *filename, int line)
-    : AST(AST::List, filename, line) {}
+ListNode::ListNode(const char *filename, int line, int column)
+    : AST(AST::List, filename, line, column) {}
 
-ListNode::ListNode(ASTNode newMember, const char *filename, int line)
-    : AST(AST::List, filename, line) {
+ListNode::ListNode(ASTNode newMember, const char *filename, int line,
+                   int column)
+    : AST(AST::List, filename, line, column) {
   if (newMember) {
     addChild(newMember);
   }
@@ -139,13 +140,14 @@ ASTNode ListNode::deepCopy() {
   std::shared_ptr<ListNode> newList;
   if (children.size() > 0) {
     newList = std::make_shared<ListNode>(children.at(0)->deepCopy(),
-                                         m_filename.data(), m_line);
+                                         m_filename.data(), m_line, m_column);
     for (unsigned int i = 1; i < children.size(); i++) {
       newList->addChild(children.at(i)->deepCopy());
     }
   } else {
-    newList = std::make_shared<ListNode>(nullptr, m_filename.data(), m_line);
+    newList = std::make_shared<ListNode>(nullptr, m_filename.data(), m_line, m_column);
   }
+  copyLocationTo(newList);
   if (this->m_CompilerProperties) {
     newList->m_CompilerProperties = std::static_pointer_cast<ListNode>(
         this->m_CompilerProperties->deepCopy());

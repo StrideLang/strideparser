@@ -40,8 +40,8 @@
 using namespace strd;
 
 ExpressionNode::ExpressionNode(ExpressionType type, ASTNode left, ASTNode right,
-                               const char *filename, int line)
-    : AST(AST::Expression, filename, line) {
+                               const char *filename, int line, int column)
+    : AST(AST::Expression, filename, line, column) {
   m_type = type;
   assert(m_type != ExpressionNode::UnaryMinus &&
          m_type != ExpressionNode::LogicalNot);
@@ -52,8 +52,9 @@ ExpressionNode::ExpressionNode(ExpressionType type, ASTNode left, ASTNode right,
 }
 
 ExpressionNode::ExpressionNode(ExpressionNode::ExpressionType type,
-                               ASTNode value, const char *filename, int line)
-    : AST(AST::Expression, filename, line) {
+                               ASTNode value, const char *filename, int line,
+                               int column)
+    : AST(AST::Expression, filename, line, column) {
   m_type = type;
   assert(m_type == ExpressionNode::UnaryMinus ||
          m_type == ExpressionNode::LogicalNot);
@@ -142,7 +143,8 @@ ASTNode ExpressionNode::deepCopy() {
   if (m_type == ExpressionNode::UnaryMinus ||
       m_type == ExpressionNode::LogicalNot) {
     auto newNode = std::make_shared<ExpressionNode>(
-        m_type, m_children.at(0)->deepCopy(), m_filename.data(), m_line);
+        m_type, m_children.at(0)->deepCopy(), m_filename.data(), m_line, m_column);
+    copyLocationTo(newNode);
     if (this->m_CompilerProperties) {
       newNode->m_CompilerProperties = std::static_pointer_cast<ListNode>(
           this->m_CompilerProperties->deepCopy());
@@ -154,7 +156,8 @@ ASTNode ExpressionNode::deepCopy() {
   } else {
     auto newNode = std::make_shared<ExpressionNode>(
         m_type, m_children.at(0)->deepCopy(), m_children.at(1)->deepCopy(),
-        m_filename.data(), m_line);
+        m_filename.data(), m_line, m_column);
+    copyLocationTo(newNode);
     if (this->m_CompilerProperties) {
       newNode->m_CompilerProperties = std::static_pointer_cast<ListNode>(
           this->m_CompilerProperties->deepCopy());

@@ -39,8 +39,9 @@
 
 using namespace strd;
 
-RangeNode::RangeNode(ASTNode start, ASTNode end, const char *filename, int line)
-    : AST(AST::Range, filename, line) {
+RangeNode::RangeNode(ASTNode start, ASTNode end, const char *filename,
+                     int line, int column)
+    : AST(AST::Range, filename, line, column) {
   addChild(start);
   addChild(end);
 }
@@ -50,9 +51,10 @@ ASTNode RangeNode::startIndex() const { return m_children.at(0); }
 ASTNode RangeNode::endIndex() const { return m_children.at(1); }
 
 ASTNode RangeNode::deepCopy() {
-  auto newRangeNode = std::make_shared<RangeNode>(startIndex()->deepCopy(),
-                                                  endIndex()->deepCopy(),
-                                                  m_filename.data(), m_line);
+  auto newRangeNode = std::make_shared<RangeNode>(
+      startIndex()->deepCopy(), endIndex()->deepCopy(), m_filename.data(),
+      m_line, m_column);
+  copyLocationTo(newRangeNode);
 
   if (this->m_CompilerProperties) {
     newRangeNode->m_CompilerProperties = std::static_pointer_cast<ListNode>(
