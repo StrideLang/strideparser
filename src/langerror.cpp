@@ -48,6 +48,9 @@ std::string LangError::getErrorText() {
     lineNumString << ":" << columnNumber;
   }
   errorText += "Line " + lineNumString.str() + " : ";
+  if (severity == Warning) {
+    errorText += "Warning: ";
+  }
   switch (type) {
   case Syntax:
     errorText += "Syntax Error: Unexpected character '" + errorTokens[0] + "'";
@@ -95,6 +98,13 @@ std::string LangError::getErrorText() {
     errorText += "Shadowed Symbol Error. '" + errorTokens[0] + "' in '" +
                  errorTokens[1] + "' hides the declaration in " +
                  errorTokens[2] + ":" + errorTokens[3];
+    break;
+  case LossyConversion:
+    errorText += "Conversion from '" + errorTokens[0] + "' to '" +
+                 errorTokens[1] + "' " + errorTokens[2];
+    break;
+  case InvalidDataType:
+    errorText += "Invalid Data Type '" + errorTokens[0] + "'. " + errorTokens[1];
     break;
   case InconsistentList:
     errorText += "Inconsistent List Error";

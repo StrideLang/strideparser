@@ -64,10 +64,16 @@ public:
     ReadOnlyPort,
     UnresolvedType,
     ShadowedSymbol,
+    InvalidDataType,
+    LossyConversion,
     None
   } ErrorType;
 
+  // Warnings point at code that compiles but may not do what was meant
+  typedef enum { Error, Warning } Severity;
+
   ErrorType type;
+  Severity severity{Error};
   std::vector<std::string> errorTokens;
   std::string filename;
   int lineNumber;

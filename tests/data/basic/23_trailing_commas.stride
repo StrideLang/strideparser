@@ -23,8 +23,8 @@ module TestModule {
         },
     ]
     blocks: [
-        signal In { type: _IntType },
-        signal Out { type: _IntType },
+        signal In { type: Int },
+        signal Out { type: Int },
     ]
     streams: [
         In + 1 >> Out;,
