@@ -24,8 +24,9 @@ using namespace strd;
 //        int errno;        // THIS IS CAUSING A LINKING WARNING WITH MSVC 2015
     }
     extern int yylineno;
-    extern int yycolumn;
 #endif
+
+extern int yycolumn;
 
 extern void yyrestart (FILE *input_file );
 
