@@ -1210,6 +1210,16 @@ indexExp:
             $$ = $2;
             COUT << "Index/Size enclosure ..." << ENDL;
         }
+    |   '-' indexExp %prec UMINUS       {
+            if ($2->getNodeType() == AST::Int) {
+                int64_t val = -static_cast<ValueNode *>($2)->getIntValue();
+                delete $2;
+                $$ = new ValueNode(val, currentFile, yyloc.first_line, yyloc.first_column);
+            } else {
+                $$ = new ExpressionNode(ExpressionNode::UnaryMinus, std::shared_ptr<AST>($2), currentFile, yyloc.first_line, yyloc.first_column);
+            }
+            COUT << "Unary minus ... " << ENDL;
+        }
     |   indexComp                       {
             $$ = $1;
         }
@@ -1379,7 +1389,17 @@ valueExp:
             COUT << "Enclosure ..." << ENDL;
         }
     |   '-' valueExp %prec UMINUS       {
-            $$ = new ExpressionNode(ExpressionNode::UnaryMinus, std::shared_ptr<AST>($2), currentFile, yyloc.first_line, yyloc.first_column);
+            if ($2->getNodeType() == AST::Int) {
+                int64_t val = -static_cast<ValueNode *>($2)->getIntValue();
+                delete $2;
+                $$ = new ValueNode(val, currentFile, yyloc.first_line, yyloc.first_column);
+            } else if ($2->getNodeType() == AST::Real) {
+                double val = -static_cast<ValueNode *>($2)->getRealValue();
+                delete $2;
+                $$ = new ValueNode(val, currentFile, yyloc.first_line, yyloc.first_column);
+            } else {
+                $$ = new ExpressionNode(ExpressionNode::UnaryMinus, std::shared_ptr<AST>($2), currentFile, yyloc.first_line, yyloc.first_column);
+            }
             COUT << "Unary minus ... " << ENDL;
         }
     |   NOT valueExp %prec NOT          {
