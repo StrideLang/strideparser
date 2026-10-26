@@ -9,6 +9,7 @@
 #include "stride/parser/generatorrangenode.h"
 #include "stride/parser/importnode.h"
 #include "stride/parser/packagenode.h"
+#include "stride/parser/propertynode.h"
 #include "stride/parser/platformnode.h"
 #include "stride/parser/rangenode.h"
 #include "stride/parser/streamnode.h"
@@ -961,5 +962,60 @@ TEST(Basic, SourceLocationAndDualPaths) {
   EXPECT_EQ(copy0->getAbsoluteFilename(), decl0->getAbsoluteFilename());
   EXPECT_EQ(copy0->getLine(), decl0->getLine());
   EXPECT_EQ(copy0->getColumn(), decl0->getColumn());
+}
+
+// End positions and comments let tools edit source text without losing
+// formatting or comments.
+TEST(Basic, SourceRangesAndComments) {
+  ASTNode tree =
+      AST::parseFile(TESTS_SOURCE_DIR "basic/27_source_ranges.stride");
+  ASSERT_TRUE(tree != nullptr);
+  const auto &nodes = tree->getChildren();
+  ASSERT_GE(nodes.size(), 2u);
+
+  // signal In: lines 2 to 4, ending on the closing brace
+  auto signalDecl = std::static_pointer_cast<DeclarationNode>(nodes.at(0));
+  EXPECT_EQ(signalDecl->getLine(), 2);
+  EXPECT_EQ(signalDecl->getEndLine(), 4);
+  EXPECT_EQ(signalDecl->getEndColumn(), 1);
+  auto defaultProp = signalDecl->getProperties().at(0);
+  EXPECT_EQ(defaultProp->getLine(), 3);
+  EXPECT_EQ(defaultProp->getEndLine(), 3);
+  EXPECT_EQ(defaultProp->getEndColumn(), 14);
+
+  // module M: lines 6 to 12; each stream ends on its own line
+  auto moduleDecl = std::static_pointer_cast<DeclarationNode>(nodes.at(1));
+  EXPECT_EQ(moduleDecl->getLine(), 6);
+  EXPECT_EQ(moduleDecl->getEndLine(), 12);
+  EXPECT_EQ(moduleDecl->getEndColumn(), 1);
+  auto streams = moduleDecl->getPropertyValue("streams");
+  ASSERT_NE(streams, nullptr);
+  ASSERT_EQ(streams->getChildren().size(), 2u);
+  EXPECT_EQ(streams->getChildren().at(0)->getLine(), 8);
+  EXPECT_EQ(streams->getChildren().at(0)->getEndLine(), 8);
+  EXPECT_GE(streams->getChildren().at(0)->getEndColumn(), 17);
+  EXPECT_EQ(streams->getChildren().at(1)->getLine(), 10);
+  EXPECT_EQ(streams->getChildren().at(1)->getEndLine(), 10);
+
+  // A deep copy keeps the end position
+  auto copy = signalDecl->deepCopy();
+  EXPECT_EQ(copy->getEndLine(), 4);
+  EXPECT_EQ(copy->getEndColumn(), 1);
+
+  // Comments in source order, with the column of the '#'
+  auto comments = AST::getParseComments();
+  ASSERT_EQ(comments.size(), 4u);
+  EXPECT_EQ(comments[0].line, 1);
+  EXPECT_EQ(comments[0].column, 1);
+  EXPECT_EQ(comments[0].text, " Leading comment");
+  EXPECT_EQ(comments[1].line, 3);
+  EXPECT_EQ(comments[1].column, 16);
+  EXPECT_EQ(comments[1].text, " trailing comment");
+  EXPECT_EQ(comments[2].line, 8);
+  EXPECT_EQ(comments[2].column, 21);
+  EXPECT_EQ(comments[2].text, " first stream");
+  EXPECT_EQ(comments[3].line, 9);
+  EXPECT_EQ(comments[3].column, 9);
+  EXPECT_EQ(comments[3].text, " between streams");
 }
 

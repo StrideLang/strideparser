@@ -36,6 +36,8 @@
 #define AST_H
 
 #include <memory>
+#include <string>
+#include <vector>
 
 #include "langerror.h"
 
@@ -43,6 +45,13 @@ namespace strd {
 class AST;
 class ListNode;
 class PropertyNode;
+
+// A comment in the source ('#' to the end of the line, without the '#').
+struct SourceComment {
+  int line{-1};
+  int column{-1}; // Column of the '#'
+  std::string text;
+};
 
 using ASTNode = std::shared_ptr<AST>;
 
@@ -94,6 +103,9 @@ public:
   static ASTNode parseFile(const char *fileName,
                            const char *sourceFilename = nullptr);
   static std::vector<LangError> getParseErrors();
+  // Comments in the last parsed file, in source order. They are not attached
+  // to nodes; tools that edit source use them with node source ranges.
+  static std::vector<SourceComment> getParseComments();
 
   //
   Token getNodeType() const { return m_token; }
@@ -117,6 +129,14 @@ public:
   void setLine(int line) { m_line = line; }
   int getColumn() const { return m_column; }
   void setColumn(int column) { m_column = column; }
+  // Last line and column of the node's source text (inclusive), or -1 when
+  // unknown. Set for declarations, properties and streams.
+  int getEndLine() const { return m_endLine; }
+  int getEndColumn() const { return m_endColumn; }
+  void setEnd(int line, int column) {
+    m_endLine = line;
+    m_endColumn = column;
+  }
 
   void copyLocationFrom(const AST &other);
   void copyLocationTo(ASTNode other) const;
@@ -157,6 +177,8 @@ protected:
   std::string m_absoluteFilename;  // canonical absolute path
   int m_line;
   int m_column{-1};
+  int m_endLine{-1};
+  int m_endColumn{-1};
   std::vector<std::string> m_scope;
   std::shared_ptr<ListNode> m_CompilerProperties;
 };

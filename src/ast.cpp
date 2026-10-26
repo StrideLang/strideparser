@@ -72,12 +72,14 @@ AST::~AST() {}
 
 extern AST *parse(const char *fileName, const char *sourceFilename);
 extern std::vector<LangError> getErrors();
+extern std::vector<SourceComment> getComments();
 
 ASTNode AST::parseFile(const char *fileName, const char *sourceFilename) {
   return std::shared_ptr<AST>(parse(fileName, sourceFilename));
 }
 
 std::vector<LangError> AST::getParseErrors() { return getErrors(); }
+std::vector<SourceComment> AST::getParseComments() { return getComments(); }
 void AST::addChild(ASTNode t) { m_children.push_back(t); }
 
 void AST::setChildren(const std::vector<ASTNode> &newChildren) {
@@ -157,6 +159,8 @@ void AST::copyLocationFrom(const AST &other) {
   m_absoluteFilename = other.m_absoluteFilename;
   m_line = other.m_line;
   m_column = other.m_column;
+  m_endLine = other.m_endLine;
+  m_endColumn = other.m_endColumn;
 }
 
 void AST::copyLocationTo(ASTNode other) const {

@@ -1,0 +1,12 @@
+# Leading comment
+signal In {
+    default: 0 # trailing comment
+}
+
+module M {
+    streams: [
+        In >> Out;  # first stream
+        # between streams
+        In >> Other;
+    ]
+}

@@ -31,6 +31,13 @@ extern int yycolumn;
 extern void yyrestart (FILE *input_file );
 
 std::vector<LangError> parseErrors;
+std::vector<SourceComment> parseComments;
+// Records where a node's source text ends, from the location of the rule
+#define SET_NODE_END(node) \
+    do { if (node) { (node)->setEnd(yyloc.last_line, yyloc.last_column); } } while (0)
+
+// Called by the lexer for each comment
+void recordComment(int line, int column, const char *text);
 
 void yyerror(const char *s);
 
@@ -323,6 +330,7 @@ blockDef:
             COUT << "Block: " << $1 << ", Labelled: " << $2 << ENDL;
             free($1);
             free($2);
+            SET_NODE_END($$);
         }
     |
         WORD UVAR AT UVAR blockType               {
@@ -339,6 +347,7 @@ blockDef:
             COUT << "Block: " << $1 << ", Labelled: " << $2 << ENDL;
             free($1);
             free($2);
+            SET_NODE_END($$);
         }
     |   WORD UVAR blockType                    {
             string word;
@@ -349,6 +358,7 @@ blockDef:
             COUT << "Block: " << $1 << ", Labelled: " << $2 << ENDL;
             free($1);
             free($2);
+            SET_NODE_END($$);
         }
     |   WORD UVAR '[' indexExp ']' blockType    {
             string name;
@@ -362,6 +372,7 @@ blockDef:
             COUT << "Array Declaration: " << $1 << ", Labelled: " << $2 << ENDL;
             free($2);
             free($1);
+             SET_NODE_END($$);
          }
     |   WORD UVAR '[' indexExp COMMA ']' blockType    {
             string name;
@@ -375,6 +386,7 @@ blockDef:
             COUT << "Array Declaration: " << $1 << ", Labelled: " << $2 << ENDL;
             free($2);
             free($1);
+             SET_NODE_END($$);
          }
     |   WORD UVAR '[' UVAR IN generatorRange ']' blockType {
             string word;
@@ -392,6 +404,7 @@ blockDef:
             free($1);
             free($2);
             free($4);
+            SET_NODE_END($$);
         }
     |   anonymousDeclDef     {
         COUT << "Resolving anonymous declaration ... " << ENDL;
@@ -418,16 +431,19 @@ streamDef:
             currentAt.clear();
             $$ = new StreamNode(std::shared_ptr<AST>($3), std::shared_ptr<AST>($5), currentFile, yyloc.first_line, yyloc.first_column);
             COUT << "Stream Resolved!" << ENDL;
+            SET_NODE_END($$);
         }
     |   AT NONE valueListExp STREAM streamExp SEMICOLON     {
             currentAt.clear();
             $$ = new StreamNode(std::shared_ptr<AST>($3), std::shared_ptr<AST>($5), currentFile, yyloc.first_line, yyloc.first_column);
             COUT << "Stream Resolved!" << ENDL;
+            SET_NODE_END($$);
         }
     |   AT NONE streamListDef STREAM streamExp SEMICOLON    {
             currentAt.clear();
             $$ = new StreamNode(std::shared_ptr<AST>($3), std::shared_ptr<AST>($5), currentFile, yyloc.first_line, yyloc.first_column);
             COUT << "Stream Resolved!" << ENDL;
+            SET_NODE_END($$);
         } 
     |   AT UVAR valueExp STREAM streamExp SEMICOLON         {
             currentAt = $2;
@@ -439,6 +455,7 @@ streamDef:
               $$->setCompilerProperty("_at", std::make_shared<ValueNode>(currentAt, currentFile, yyloc.first_line, yyloc.first_column));
             }
             COUT << "Stream Resolved!" << ENDL;
+            SET_NODE_END($$);
         }
     |   AT UVAR valueListExp STREAM streamExp SEMICOLON     {
             currentAt = $2;
@@ -447,6 +464,7 @@ streamDef:
               $$->setCompilerProperty("_at", std::make_shared<ValueNode>(currentAt, currentFile, yyloc.first_line, yyloc.first_column));
             }
             COUT << "Stream Resolved!" << ENDL;
+            SET_NODE_END($$);
         }
     |   AT UVAR streamListDef STREAM streamExp SEMICOLON    {
             currentAt = $2;
@@ -455,6 +473,7 @@ streamDef:
               $$->setCompilerProperty("_at", std::make_shared<ValueNode>(currentAt, currentFile, yyloc.first_line, yyloc.first_column));
             }
             COUT << "Stream Resolved!" << ENDL;
+            SET_NODE_END($$);
         }
     |   valueExp STREAM streamExp SEMICOLON         {
             $$ = new StreamNode(std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), currentFile, yyloc.first_line, yyloc.first_column);
@@ -462,6 +481,7 @@ streamDef:
               $$->setCompilerProperty("_at", std::make_shared<ValueNode>(currentAt, currentFile, yyloc.first_line, yyloc.first_column));
             }
             COUT << "Stream Resolved!" << ENDL;
+            SET_NODE_END($$);
         }
     |   valueListExp STREAM streamExp SEMICOLON     {
             $$ = new StreamNode(std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), currentFile, yyloc.first_line, yyloc.first_column);
@@ -469,6 +489,7 @@ streamDef:
               $$->setCompilerProperty("_at", std::make_shared<ValueNode>(currentAt, currentFile, yyloc.first_line, yyloc.first_column));
             }
             COUT << "Stream Resolved!" << ENDL;
+            SET_NODE_END($$);
         }
     |   streamListDef STREAM streamExp SEMICOLON    {
             $$ = new StreamNode(std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), currentFile, yyloc.first_line, yyloc.first_column);
@@ -476,16 +497,19 @@ streamDef:
               $$->setCompilerProperty("_at", std::make_shared<ValueNode>(currentAt, currentFile, yyloc.first_line, yyloc.first_column));
             }
             COUT << "Stream Resolved!" << ENDL;
+            SET_NODE_END($$);
         }
     |   functionDef SEMICOLON {
             $$ = new StreamNode(std::shared_ptr<AST>($1), nullptr, currentFile, yyloc.first_line, yyloc.first_column);
             if (currentAt.size() > 0) {
               $$->setCompilerProperty("_at", std::make_shared<ValueNode>(currentAt, currentFile, yyloc.first_line, yyloc.first_column));
             }
+            SET_NODE_END($$);
         }
     |   AT NONE functionDef SEMICOLON {
             currentAt.clear();
             $$ = new StreamNode(std::shared_ptr<AST>($3), nullptr, currentFile, yyloc.first_line, yyloc.first_column);
+            SET_NODE_END($$);
         }
     |   AT UVAR functionDef SEMICOLON {
             currentAt = $2;
@@ -494,6 +518,7 @@ streamDef:
               $$->setCompilerProperty("_at", std::make_shared<ValueNode>(currentAt, currentFile, yyloc.first_line, yyloc.first_column));
             }
             free($2);
+            SET_NODE_END($$);
         }
     ;
 
@@ -749,6 +774,7 @@ anonymousDeclDef:
             $$ = decl;
             COUT << "Block: " << $1 << ", Labelled: " << uvar << ENDL;
             free($1);
+            SET_NODE_END($$);
         }
     |   WORD '[' UVAR IN generatorRange ']' blockType {
             string word;
@@ -765,6 +791,7 @@ anonymousDeclDef:
             COUT << "Anonymous Generator Block: " << $1 << "[" << $3 << " in ...], Labelled: " << uvar << ENDL;
             free($1);
             free($3);
+            SET_NODE_END($$);
         }
     ;
 
@@ -811,6 +838,7 @@ property:
             COUT << "Property: " << $1 << ENDL << "New property ... " << ENDL;
             free($1);
             currentAt.clear();
+            SET_NODE_END($$);
         }
     |   WORD COLON STREAMRATE   {
             string s;
@@ -819,6 +847,7 @@ property:
             $$ = node;
             COUT << "Property: " << $1 << ENDL << "New property ... " << ENDL;
             free($1);
+            SET_NODE_END($$);
         }
     ;
 
@@ -834,6 +863,7 @@ propertyType:
     |   blockType           {
             $$ = new DeclarationNode("", "" , std::shared_ptr<AST>($1), currentFile, yyloc.first_line, yyloc.first_column);
             COUT << "Block as property value!" << ENDL;
+            SET_NODE_END($$);
         }
     |   listDef             {
             $$ = $1;
@@ -1368,6 +1398,7 @@ valueExp:
 streamExp:
         streamComp STREAM streamExp {
             $$ = new StreamNode(std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), currentFile, yyloc.first_line, yyloc.first_column);
+            SET_NODE_END($$);
         }
     |   streamComp                  {
             $$ = $1;
@@ -1594,6 +1625,21 @@ std::vector<LangError> getErrors() {
     return parseErrors;
 }
 
+void recordComment(int line, int column, const char *text) {
+    SourceComment comment;
+    comment.line = line;
+    comment.column = column;
+    comment.text = text && text[0] == '#' ? text + 1 : (text ? text : "");
+    if (!comment.text.empty() && comment.text.back() == '\r') {
+        comment.text.pop_back();
+    }
+    parseComments.push_back(comment);
+}
+
+std::vector<SourceComment> getComments() {
+    return parseComments;
+}
+
 static void propagateFilenames(AST *node, const std::string &relFilename, const std::string &absFilename) {
     if (!node) return;
     node->setFilenames(relFilename, absFilename);
@@ -1615,6 +1661,7 @@ AST *parse(const char *filename, const char*sourceFilename){
     }
 
     parseErrors.clear();
+    parseComments.clear();
     file = fopen(filename, "r");
 
     if (!file){

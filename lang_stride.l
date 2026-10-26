@@ -7,6 +7,7 @@
 using namespace std;
 
 char * buffer;
+void recordComment(int line, int column, const char *text);
 int yycolumn = 1;
 #define YY_USER_ACTION \
     yylloc.first_line = yylloc.last_line = yylineno; \
@@ -97,7 +98,7 @@ HEXLETTER   [A-Fa-f]
 
 [ \t]+              {   /* Skip spaces and tabs */ }
 \r?\n               {   yycolumn = 1; /* Reset column on newline */ }
-"#".*               {   /* Ignore Comments */ }
+"#".*               {   recordComment(yylloc.first_line, yylloc.first_column, yytext); }
 .                   {   yylval.sval = strdup(yytext);
                         return ERROR; }
 %%
