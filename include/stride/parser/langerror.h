@@ -66,6 +66,7 @@ public:
     ShadowedSymbol,
     InvalidDataType,
     LossyConversion,
+    IgnoredRateInOneShotDomain,
     None
   } ErrorType;
 

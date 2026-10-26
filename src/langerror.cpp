@@ -122,6 +122,10 @@ std::string LangError::getErrorText() {
   case UnknownPlatform:
     errorText += "Unknown Platform '" + errorTokens[0] + "'";
     break;
+  case IgnoredRateInOneShotDomain:
+    errorText += "Rate on '" + errorTokens[0] +
+                 "' has no effect in one-shot domain '" + errorTokens[1] + "'";
+    break;
   case UnresolvedRate:
     errorText += "Rate Unresolved for '" + errorTokens[0] + "'";
     break;
