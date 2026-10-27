@@ -1032,6 +1032,16 @@ valueList:
             COUT << "Value expression ..." << ENDL;
             COUT << "New list item ... " << ENDL;
         }
+    |   valueList COMMA NONE    {
+            ListNode *list = new ListNode(NULL, currentFile, yyloc.first_line, yyloc.first_column);
+            list->stealMembers($1);
+            ListNode *oldList = $1;
+            delete oldList;
+            list->addChild(std::make_shared<ValueNode>(currentFile, yyloc.first_line, yyloc.first_column));
+            $$ = list;
+            COUT << "None in value list ..." << ENDL;
+            COUT << "New list item ... " << ENDL;
+        }
     |   valueList COMMA valueListDef {
             ListNode *list = new ListNode(NULL, currentFile, yyloc.first_line, yyloc.first_column);
             list->stealMembers($1);
@@ -1075,6 +1085,11 @@ valueList:
     |   valueExp                    {
             $$ = new ListNode(std::shared_ptr<AST>($1), currentFile, yyloc.first_line, yyloc.first_column);
             COUT << "Value expression ..." << ENDL;
+            COUT << "New list item ... " << ENDL;
+        }
+    |   NONE                    {
+            $$ = new ListNode(std::make_shared<ValueNode>(currentFile, yyloc.first_line, yyloc.first_column), currentFile, yyloc.first_line, yyloc.first_column);
+            COUT << "None in value list ..." << ENDL;
             COUT << "New list item ... " << ENDL;
         }
     |   valueListDef                {
