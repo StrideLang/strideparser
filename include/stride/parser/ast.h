@@ -140,6 +140,7 @@ public:
 
   void copyLocationFrom(const AST &other);
   void copyLocationTo(ASTNode other) const;
+  void copyLocationTo(LangError &error) const;
 
   void addScope(std::string newScope);
   void setRootScope(std::string scopeName);

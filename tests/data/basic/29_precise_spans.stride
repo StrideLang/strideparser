@@ -1,0 +1,7 @@
+# Precise spans test
+module SpanTest {
+    streams: [
+        Foo(bar: 100) >> In[0];
+        1234 + 5678 >> Result;
+    ]
+}

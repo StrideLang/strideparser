@@ -79,6 +79,8 @@ public:
   std::string filename;
   int lineNumber;
   int columnNumber{-1};
+  int endLineNumber{-1};
+  int endColumnNumber{-1};
   std::string getErrorText();
 };
 } // namespace strd
