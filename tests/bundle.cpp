@@ -201,7 +201,7 @@ TEST(Bundle, Basic) {
   std::vector<ASTNode> listValues = listnode->getChildren();
   EXPECT_TRUE(listValues.size() == 3);
   EXPECT_TRUE(listValues.at(0)->getNodeType() == AST::Int);
-  EXPECT_TRUE(listValues.at(1)->getNodeType() == AST::Expression);
+  EXPECT_TRUE(listValues.at(1)->getNodeType() == AST::Int);
   EXPECT_TRUE(listValues.at(2)->getNodeType() == AST::Int);
   property = block->getProperties().at(1);
   EXPECT_TRUE(property->getName() == "meta");
@@ -230,7 +230,7 @@ TEST(Bundle, Basic) {
   listValues = listnode->getChildren();
   EXPECT_TRUE(listValues.size() == 4);
   EXPECT_TRUE(listValues.at(0)->getNodeType() == AST::Real);
-  EXPECT_TRUE(listValues.at(1)->getNodeType() == AST::Expression);
+  EXPECT_TRUE(listValues.at(1)->getNodeType() == AST::Real);
   EXPECT_TRUE(listValues.at(2)->getNodeType() == AST::Real);
   EXPECT_TRUE(listValues.at(3)->getNodeType() == AST::Real);
   EXPECT_TRUE(block->getChildren().at(1)->getNodeType() == AST::Property);
