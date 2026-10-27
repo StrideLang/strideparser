@@ -5,3 +5,5 @@ use Gamma
 import File
 import File as F
 
+use Pico version 1.0 on RP2350
+use Pico on RP2040

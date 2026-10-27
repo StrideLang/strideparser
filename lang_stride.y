@@ -237,6 +237,16 @@ languagePlatform:
             COUT << "Platform: " << $2 << ENDL << " Using latest version!" << ENDL;
             free($2);
         }
+    |   USE UVAR ON UVAR        {
+            string s;
+            s.append($2);
+            string dev;
+            dev.append($4);
+            $$ = new SystemNode(s, -1, -1, currentFile, yyloc.first_line, yyloc.first_column, {dev});
+            COUT << "Platform: " << $2 << " on " << $4 << ENDL;
+            free($2);
+            free($4);
+        }
     |   USE UVAR VERSION REAL  {
             string s;
             s.append($2); /* string constructor leaks otherwise! */
@@ -245,6 +255,18 @@ languagePlatform:
             $$ = new SystemNode(s, major, minor, currentFile, yyloc.first_line, yyloc.first_column);
             COUT << "Platform: " << $2 << ENDL << "Version: " << $4 << " line " << yylineno << ENDL;
             free($2);
+        }
+    |   USE UVAR VERSION REAL ON UVAR {
+            string s;
+            s.append($2);
+            int major = int($4);
+            int minor = int(($4 - int($4))*10);
+            string dev;
+            dev.append($6);
+            $$ = new SystemNode(s, major, minor, currentFile, yyloc.first_line, yyloc.first_column, {dev});
+            COUT << "Platform: " << $2 << " on " << $6 << " Version: " << $4 << ENDL;
+            free($2);
+            free($6);
         }
     ;
 

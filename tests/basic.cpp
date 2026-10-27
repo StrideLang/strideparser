@@ -402,6 +402,22 @@ TEST(Basic, Header) {
   EXPECT_TRUE(importnode->importName() == "File");
   EXPECT_TRUE(importnode->importAlias() == "F");
   EXPECT_TRUE(importnode->getLine() == 6);
+
+  node = static_cast<SystemNode *>(nodes.at(4).get());
+  EXPECT_TRUE(node->getNodeType() == AST::Platform);
+  EXPECT_TRUE(node->platformName() == "Pico");
+  EXPECT_TRUE(node->majorVersion() == 1);
+  EXPECT_TRUE(node->minorVersion() == 0);
+  ASSERT_EQ(node->hwPlatforms().size(), 1u);
+  EXPECT_EQ(node->hwPlatforms().at(0), "RP2350");
+
+  node = static_cast<SystemNode *>(nodes.at(5).get());
+  EXPECT_TRUE(node->getNodeType() == AST::Platform);
+  EXPECT_TRUE(node->platformName() == "Pico");
+  EXPECT_TRUE(node->majorVersion() == -1);
+  EXPECT_TRUE(node->minorVersion() == -1);
+  ASSERT_EQ(node->hwPlatforms().size(), 1u);
+  EXPECT_EQ(node->hwPlatforms().at(0), "RP2040");
 }
 
 TEST(Basic, HexAndBinaryLiterals) {
