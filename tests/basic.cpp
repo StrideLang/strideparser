@@ -1019,3 +1019,98 @@ TEST(Basic, SourceRangesAndComments) {
   EXPECT_EQ(comments[3].text, " between streams");
 }
 
+
+TEST(Basic, AnnotatedEntitiesInProperties) {
+  ASTNode tree = AST::parseFile(TESTS_SOURCE_DIR "basic/28_annotated_entities.stride");
+  ASSERT_NE(tree, nullptr);
+  auto errors = AST::getParseErrors();
+  EXPECT_TRUE(errors.empty());
+
+  const auto &nodes = tree->getChildren();
+  ASSERT_GE(nodes.size(), 2u);
+
+  auto decl = std::static_pointer_cast<DeclarationNode>(nodes.at(1));
+  ASSERT_NE(decl, nullptr);
+  EXPECT_EQ(decl->getName(), "TestType");
+
+  // 1. target: Sin@Poly5
+  auto targetVal = decl->getPropertyValue("target");
+  ASSERT_NE(targetVal, nullptr);
+  EXPECT_EQ(targetVal->getNodeType(), AST::Entity);
+  auto targetEntity = std::static_pointer_cast<EntityNode>(targetVal);
+  EXPECT_EQ(targetEntity->getName(), "Sin");
+  auto targetAt = targetEntity->getCompilerProperty("_at");
+  ASSERT_NE(targetAt, nullptr);
+  EXPECT_EQ(targetAt->getNodeType(), AST::String);
+  EXPECT_EQ(std::static_pointer_cast<ValueNode>(targetAt)->getStringValue(), "Poly5");
+  EXPECT_EQ(targetEntity->toText(0, 2, false), "Sin@Poly5");
+
+  // 2. listTarget: [ Sin@Poly5, Cos@Poly5 ]
+  auto listVal = decl->getPropertyValue("listTarget");
+  ASSERT_NE(listVal, nullptr);
+  EXPECT_EQ(listVal->getNodeType(), AST::List);
+  ASSERT_EQ(listVal->getChildren().size(), 2u);
+
+  auto elem0 = std::static_pointer_cast<EntityNode>(listVal->getChildren().at(0));
+  EXPECT_EQ(elem0->getName(), "Sin");
+  auto elem0At = elem0->getCompilerProperty("_at");
+  ASSERT_NE(elem0At, nullptr);
+  EXPECT_EQ(std::static_pointer_cast<ValueNode>(elem0At)->getStringValue(), "Poly5");
+
+  auto elem1 = std::static_pointer_cast<EntityNode>(listVal->getChildren().at(1));
+  EXPECT_EQ(elem1->getName(), "Cos");
+  auto elem1At = elem1->getCompilerProperty("_at");
+  ASSERT_NE(elem1At, nullptr);
+  EXPECT_EQ(std::static_pointer_cast<ValueNode>(elem1At)->getStringValue(), "Poly5");
+
+  // 3. scopedTarget: Math::Sin@Poly5
+  auto scopedVal = decl->getPropertyValue("scopedTarget");
+  ASSERT_NE(scopedVal, nullptr);
+  EXPECT_EQ(scopedVal->getNodeType(), AST::Entity);
+  auto scopedEntity = std::static_pointer_cast<EntityNode>(scopedVal);
+  EXPECT_EQ(scopedEntity->getName(), "Sin");
+  ASSERT_EQ(scopedEntity->getNamespaceList().size(), 1u);
+  EXPECT_EQ(scopedEntity->getNamespaceList().at(0), "Math");
+  auto scopedAt = scopedEntity->getCompilerProperty("_at");
+  ASSERT_NE(scopedAt, nullptr);
+  EXPECT_EQ(std::static_pointer_cast<ValueNode>(scopedAt)->getStringValue(), "Poly5");
+  EXPECT_EQ(scopedEntity->toText(0, 2, false), "Math::Sin@Poly5");
+
+  // 4. scopedList: [ Math::Sin@Poly5, Math::Cos@Poly5 ]
+  auto scopedListVal = decl->getPropertyValue("scopedList");
+  ASSERT_NE(scopedListVal, nullptr);
+  EXPECT_EQ(scopedListVal->getNodeType(), AST::List);
+  ASSERT_EQ(scopedListVal->getChildren().size(), 2u);
+  auto scopedElem0 = std::static_pointer_cast<EntityNode>(scopedListVal->getChildren().at(0));
+  EXPECT_EQ(scopedElem0->toText(0, 2, false), "Math::Sin@Poly5");
+  auto scopedElem1 = std::static_pointer_cast<EntityNode>(scopedListVal->getChildren().at(1));
+  EXPECT_EQ(scopedElem1->toText(0, 2, false), "Math::Cos@Poly5");
+
+  // 5. Verify parsing SinQualityTest.stride
+  ASTNode sinTestTree = AST::parseFile(TESTS_SOURCE_DIR "../../../strideroot/library/1.0/tests/SinQualityTest.stride");
+  ASSERT_NE(sinTestTree, nullptr);
+  auto sinErrors = AST::getParseErrors();
+  EXPECT_TRUE(sinErrors.empty());
+  ASSERT_GE(sinTestTree->getChildren().size(), 2u);
+  auto sinDecl0 = std::static_pointer_cast<DeclarationNode>(sinTestTree->getChildren().at(0));
+  EXPECT_EQ(sinDecl0->getName(), "SinPoly5AccuracyTest");
+  auto sinTarget0 = sinDecl0->getPropertyValue("target");
+  ASSERT_NE(sinTarget0, nullptr);
+  EXPECT_EQ(sinTarget0->getNodeType(), AST::Entity);
+  auto targetEntity0 = std::static_pointer_cast<EntityNode>(sinTarget0);
+  EXPECT_EQ(targetEntity0->getName(), "Sin");
+  auto targetAt0 = targetEntity0->getCompilerProperty("_at");
+  ASSERT_NE(targetAt0, nullptr);
+  EXPECT_EQ(std::static_pointer_cast<ValueNode>(targetAt0)->getStringValue(), "Poly5");
+
+  auto sinDecl1 = std::static_pointer_cast<DeclarationNode>(sinTestTree->getChildren().at(1));
+  EXPECT_EQ(sinDecl1->getName(), "SinDirectAccuracyTest");
+  auto sinTarget1 = sinDecl1->getPropertyValue("target");
+  ASSERT_NE(sinTarget1, nullptr);
+  EXPECT_EQ(sinTarget1->getNodeType(), AST::Entity);
+  auto targetEntity1 = std::static_pointer_cast<EntityNode>(sinTarget1);
+  EXPECT_EQ(targetEntity1->getName(), "Sin");
+  auto targetAt1 = targetEntity1->getCompilerProperty("_at");
+  ASSERT_NE(targetAt1, nullptr);
+  EXPECT_EQ(std::static_pointer_cast<ValueNode>(targetAt1)->getStringValue(), "Direct");
+}

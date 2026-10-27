@@ -159,6 +159,14 @@ std::string ArrayNode::toText(int indentOffset, int indentSize,
   }
   text = text.substr(0, text.size() - 2);
   text += " ]";
+  auto atProp = getCompilerProperty("_at");
+  if (atProp) {
+    if (atProp->getNodeType() == AST::String) {
+      text += "@" + std::static_pointer_cast<ValueNode>(atProp)->getStringValue();
+    } else if (atProp->getNodeType() == AST::Int) {
+      text += "@" + std::to_string(std::static_pointer_cast<ValueNode>(atProp)->getIntValue());
+    }
+  }
   if (newLine) {
     text += "/n";
   }

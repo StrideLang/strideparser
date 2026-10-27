@@ -220,7 +220,16 @@ std::string DeclarationNode::toText(int indentOffset, int indentSize,
   outText += m_entityType + " ";
   auto isAnonymous = getCompilerProperty("anonymous");
   if (!isAnonymous) {
-    outText += getName() + " ";
+    outText += getName();
+    auto atProp = getCompilerProperty("_at");
+    if (atProp) {
+      if (atProp->getNodeType() == AST::String) {
+        outText += "@" + std::static_pointer_cast<ValueNode>(atProp)->getStringValue();
+      } else if (atProp->getNodeType() == AST::Int) {
+        outText += "@" + std::to_string(std::static_pointer_cast<ValueNode>(atProp)->getIntValue());
+      }
+    }
+    outText += " ";
   }
   outText += "{";
   if (m_properties.size() > 0) {

@@ -347,6 +347,25 @@ blockDef:
             COUT << "Block: " << $1 << ", Labelled: " << $2 << ENDL;
             free($1);
             free($2);
+            free($4);
+            SET_NODE_END($$);
+        }
+    |
+        WORD UVAR AT WORD blockType               {
+            string word;
+            word.append($1); /* string constructor leaks otherwise! */
+            string uvar;
+            uvar.append($2); /* string constructor leaks otherwise! */
+            string word2;
+            word2.append($4); /* string constructor leaks otherwise! */
+
+            DeclarationNode *decl = new DeclarationNode(uvar, word, std::shared_ptr<AST>($5), currentFile, yyloc.first_line, yyloc.first_column);
+            decl->setCompilerProperty("_at", std::make_shared<ValueNode>(word2, currentFile, yyloc.first_line, yyloc.first_column));
+            $$ = decl;
+            COUT << "Block: " << $1 << ", Labelled: " << $2 << ENDL;
+            free($1);
+            free($2);
+            free($4);
             SET_NODE_END($$);
         }
     |   WORD UVAR blockType                    {
@@ -360,6 +379,20 @@ blockDef:
             free($2);
             SET_NODE_END($$);
         }
+    |   WORD UVAR '[' ']' blockType    {
+            string name;
+            name.append($2); /* string constructor leaks otherwise! */
+            std::shared_ptr<ListNode> list = std::make_shared<ListNode>(currentFile, yyloc.first_line, yyloc.first_column);
+            std::shared_ptr<ArrayNode> array = std::make_shared<ArrayNode>(name, list, currentFile, yyloc.first_line, yyloc.first_column);
+            COUT << "Unsized Array name: " << name << ENDL;
+            string type;
+            type.append($1); /* string constructor leaks otherwise! */
+            $$ = new DeclarationNode(array, type, std::shared_ptr<AST>($5), currentFile, yyloc.first_line, yyloc.first_column);
+            COUT << "Unsized Array Declaration: " << $1 << ", Labelled: " << $2 << ENDL;
+            free($2);
+            free($1);
+             SET_NODE_END($$);
+         }
     |   WORD UVAR '[' indexExp ']' blockType    {
             string name;
             name.append($2); /* string constructor leaks otherwise! */
@@ -568,6 +601,14 @@ bundleDef:
             COUT << "Array name: " << $1 << ENDL;
             free($1);
         }
+    |   UVAR '[' ']'                    {
+            string s;
+            s.append($1); /* string constructor leaks otherwise! */
+            auto emptyList = std::make_shared<ListNode>(currentFile, yyloc.first_line, yyloc.first_column);
+            $$ = new ArrayNode(s, emptyList, currentFile, yyloc.first_line, yyloc.first_column);
+            COUT << "Unsized Array name: " << $1 << ENDL;
+            free($1);
+        }
     |   scopeDef UVAR '[' indexList ']' {
             string s;
             s.append($2); /* string constructor leaks otherwise! */
@@ -584,6 +625,14 @@ bundleDef:
             COUT << "Streaming ... " << ENDL;
             free($2);
         }
+    |   scopeDef UVAR '[' ']'           {
+            string s;
+            s.append($2); /* string constructor leaks otherwise! */
+            auto emptyList = std::make_shared<ListNode>(currentFile, yyloc.first_line, yyloc.first_column);
+            $$ = new ArrayNode(s, std::shared_ptr<AST>($1), emptyList, currentFile, yyloc.first_line, yyloc.first_column);
+            COUT << "Unsized Array name: " << $2 << " in scope!" << ENDL;
+            free($2);
+        }
     ;
 
 // =================================
@@ -592,6 +641,13 @@ bundleDef:
 
 atDef:
        AT WORD                              {
+            string s;
+            s.append($2); /* string constructor leaks otherwise! */
+            $$ = new ValueNode(s, currentFile, yyloc.first_line, yyloc.first_column);
+            COUT << "At Def: " << $2<< ENDL;
+            free($2);
+       }
+   |   AT UVAR                              {
             string s;
             s.append($2); /* string constructor leaks otherwise! */
             $$ = new ValueNode(s, currentFile, yyloc.first_line, yyloc.first_column);
@@ -763,7 +819,20 @@ functionDef:
 //  ANONYMOUS DECLARATION DEFINITION
 // =================================
 anonymousDeclDef:
-        WORD blockType                    {
+        WORD '[' ']' blockType            {
+            string word;
+            word.append($1); /* string constructor leaks otherwise! */
+            string uvar = "___Anonymous___" + std::to_string(anonymous_counter++);
+            std::shared_ptr<ListNode> list = std::make_shared<ListNode>(currentFile, yyloc.first_line, yyloc.first_column);
+            std::shared_ptr<ArrayNode> array = std::make_shared<ArrayNode>(uvar, list, currentFile, yyloc.first_line, yyloc.first_column);
+            auto decl = new DeclarationNode(array, word, std::shared_ptr<AST>($4), currentFile, yyloc.first_line, yyloc.first_column);
+            decl->setCompilerProperty("anonymous", std::make_shared<ValueNode>(true, __FILE__, __LINE__));
+            $$ = decl;
+            COUT << "Unsized Anonymous Array Block: " << $1 << ", Labelled: " << uvar << ENDL;
+            free($1);
+            SET_NODE_END($$);
+        }
+    |   WORD blockType                    {
             string word;
             word.append($1); /* string constructor leaks otherwise! */
             string uvar = "___Anonymous___" + std::to_string(anonymous_counter++);
@@ -1483,6 +1552,16 @@ streamComp:
             COUT << "Streaming ... " << ENDL;
             free($1);
         }
+    |   UVAR atDef      {
+            string s;
+            s.append($1); /* string constructor leaks otherwise! */
+            auto entity = new EntityNode(s, currentFile, yyloc.first_line, yyloc.first_column);
+            entity->setCompilerProperty("_at", std::shared_ptr<AST>($2));
+            $$ = entity;
+            COUT << "Annotated Entity: " << $1 << ENDL;
+            COUT << "Streaming ... " << ENDL;
+            free($1);
+        }
     |   scopeDef UVAR   {
             string s;
             s.append($2);
@@ -1491,8 +1570,25 @@ streamComp:
             COUT << "Streaming ... " << ENDL;
             free($2);
         }
+    |   scopeDef UVAR atDef {
+            string s;
+            s.append($2);
+            auto entity = new EntityNode(s, std::shared_ptr<AST>($1), currentFile, yyloc.first_line, yyloc.first_column);
+            entity->setCompilerProperty("_at", std::shared_ptr<AST>($3));
+            $$ = entity;
+            COUT << "Annotated Entity: " << $2 << " in scope!" << ENDL;
+            COUT << "Streaming ... " << ENDL;
+            free($2);
+        }
     |   bundleDef       {
             COUT << "Resolving indexed bundle ..." << ENDL;
+            COUT << "Streaming ... " << ENDL;
+        }
+    |   bundleDef atDef {
+            ArrayNode *bundle = $1;
+            bundle->setCompilerProperty("_at", std::shared_ptr<AST>($2));
+            $$ = bundle;
+            COUT << "Annotated Array: " << bundle->getName() << ENDL;
             COUT << "Streaming ... " << ENDL;
         }
     |   anonymousDeclDef     {
@@ -1572,6 +1668,15 @@ streamComp:
             COUT << "Entity: " << $1 << ENDL;
             free($1);
         }
+    |   UVAR atDef      {
+            string s;
+            s.append($1); /* string constructor leaks otherwise! */
+            auto entity = new EntityNode(s, currentFile, yyloc.first_line, yyloc.first_column);
+            entity->setCompilerProperty("_at", std::shared_ptr<AST>($2));
+            $$ = entity;
+            COUT << "Annotated Entity: " << $1 << ENDL;
+            free($1);
+        }
     |   scopeDef UVAR   {
             string s;
             s.append($2);
@@ -1579,9 +1684,24 @@ streamComp:
             COUT << "Entity: " << $2 << " in scope!" << ENDL;
             free($2);
         }
+    |   scopeDef UVAR atDef {
+            string s;
+            s.append($2);
+            auto entity = new EntityNode(s, std::shared_ptr<AST>($1), currentFile, yyloc.first_line, yyloc.first_column);
+            entity->setCompilerProperty("_at", std::shared_ptr<AST>($3));
+            $$ = entity;
+            COUT << "Annotated Entity: " << $2 << " in scope!" << ENDL;
+            free($2);
+        }
     |   bundleDef       {
             $$ = $1;
             COUT << "Resolving indexed array ..." << ENDL;
+        }
+    |   bundleDef atDef {
+            ArrayNode *bundle = $1;
+            bundle->setCompilerProperty("_at", std::shared_ptr<AST>($2));
+            $$ = bundle;
+            COUT << "Annotated Array: " << bundle->getName() << ENDL;
         }
     |   functionDef     {
             $$ = $1;

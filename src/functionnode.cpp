@@ -172,7 +172,16 @@ std::string FunctionNode::toText(int indentOffset, int indentSize,
                                  bool newLine) const {
   (void)indentOffset;
   (void)indentSize;
-  std::string outText = m_name + "(";
+  std::string outText = m_name;
+  auto atProp = getCompilerProperty("_at");
+  if (atProp) {
+    if (atProp->getNodeType() == AST::String) {
+      outText += "@" + std::static_pointer_cast<ValueNode>(atProp)->getStringValue();
+    } else if (atProp->getNodeType() == AST::Int) {
+      outText += "@" + std::to_string(std::static_pointer_cast<ValueNode>(atProp)->getIntValue());
+    }
+  }
+  outText += "(";
   for (const auto &prop : m_properties) {
     outText += prop->toText(0, indentSize, false) + " ";
   }

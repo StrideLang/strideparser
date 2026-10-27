@@ -37,6 +37,7 @@
 #include "stride/parser/entitynode.h"
 #include "stride/parser/listnode.h"
 #include "stride/parser/scopenode.h"
+#include "stride/parser/valuenode.h"
 
 using namespace strd;
 
@@ -77,6 +78,14 @@ std::string EntityNode::toText(int indentOffset, int indentSize,
     }
   }
   outText += m_name;
+  auto atProp = getCompilerProperty("_at");
+  if (atProp) {
+    if (atProp->getNodeType() == AST::String) {
+      outText += "@" + std::static_pointer_cast<ValueNode>(atProp)->getStringValue();
+    } else if (atProp->getNodeType() == AST::Int) {
+      outText += "@" + std::to_string(std::static_pointer_cast<ValueNode>(atProp)->getIntValue());
+    }
+  }
   if (newLine) {
     outText += "\n";
   }
