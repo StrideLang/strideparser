@@ -169,6 +169,14 @@ void AST::copyLocationTo(ASTNode other) const {
   }
 }
 
+void AST::copyLocationTo(LangError &error) const {
+  error.filename = m_filename;
+  error.lineNumber = m_line;
+  error.columnNumber = m_column;
+  error.endLineNumber = m_endLine;
+  error.endColumnNumber = m_endColumn;
+}
+
 void AST::resolveScope(ASTNode scope) {
   (void)scope;    // To remove warning
   assert(0 == 1); // Each type should resolve its scope

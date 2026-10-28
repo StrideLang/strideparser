@@ -1144,3 +1144,78 @@ TEST(Basic, AnnotatedEntitiesInProperties) {
     ASSERT_GE(sinTestTree->getChildren().size(), 2u);
   }
 }
+
+TEST(Basic, PreciseSourceSpansAndErrors) {
+  ASTNode tree = AST::parseFile(TESTS_SOURCE_DIR "basic/29_precise_spans.stride");
+  ASSERT_NE(tree, nullptr);
+  auto errors = AST::getParseErrors();
+  EXPECT_TRUE(errors.empty());
+
+  const auto &nodes = tree->getChildren();
+  ASSERT_EQ(nodes.size(), 1u);
+  auto mod = std::static_pointer_cast<DeclarationNode>(nodes.at(0));
+  EXPECT_EQ(mod->getName(), "SpanTest");
+
+  auto streamsProp = mod->getPropertyValue("streams");
+  ASSERT_NE(streamsProp, nullptr);
+  ASSERT_EQ(streamsProp->getChildren().size(), 2u);
+
+  // Stream 1: Foo(bar: 100) >> In[0];
+  auto stream1 = streamsProp->getChildren().at(0);
+  ASSERT_GE(stream1->getChildren().size(), 2u);
+  auto func = stream1->getChildren().at(0);
+  EXPECT_EQ(func->getNodeType(), AST::Function);
+  EXPECT_EQ(func->getLine(), 4);
+  EXPECT_EQ(func->getColumn(), 9);
+  EXPECT_EQ(func->getEndLine(), 4);
+  EXPECT_EQ(func->getEndColumn(), 21);
+
+  auto array = stream1->getChildren().at(1);
+  EXPECT_EQ(array->getNodeType(), AST::Array);
+  EXPECT_EQ(array->getLine(), 4);
+  EXPECT_EQ(array->getColumn(), 26);
+  EXPECT_EQ(array->getEndLine(), 4);
+  EXPECT_EQ(array->getEndColumn(), 30);
+
+  // Stream 2: 1234 + 5678 >> Result;
+  auto stream2 = streamsProp->getChildren().at(1);
+  ASSERT_GE(stream2->getChildren().size(), 2u);
+  auto expr = stream2->getChildren().at(0);
+  EXPECT_EQ(expr->getNodeType(), AST::Expression);
+  EXPECT_EQ(expr->getLine(), 5);
+  EXPECT_EQ(expr->getColumn(), 9);
+  EXPECT_EQ(expr->getEndLine(), 5);
+  EXPECT_EQ(expr->getEndColumn(), 19);
+
+  ASSERT_EQ(expr->getChildren().size(), 2u);
+  auto leftVal = expr->getChildren().at(0);
+  EXPECT_EQ(leftVal->getNodeType(), AST::Int);
+  EXPECT_EQ(leftVal->getLine(), 5);
+  EXPECT_EQ(leftVal->getColumn(), 9);
+  EXPECT_EQ(leftVal->getEndLine(), 5);
+  EXPECT_EQ(leftVal->getEndColumn(), 12);
+
+  auto rightVal = expr->getChildren().at(1);
+  EXPECT_EQ(rightVal->getNodeType(), AST::Int);
+  EXPECT_EQ(rightVal->getLine(), 5);
+  EXPECT_EQ(rightVal->getColumn(), 16);
+  EXPECT_EQ(rightVal->getEndLine(), 5);
+  EXPECT_EQ(rightVal->getEndColumn(), 19);
+
+  // Test error span
+  ASTNode badTree = AST::parseFile(TESTS_SOURCE_DIR "basic/30_syntax_error_span.stride");
+  auto badErrors = AST::getParseErrors();
+  ASSERT_FALSE(badErrors.empty());
+  EXPECT_GE(badErrors[0].lineNumber, 1);
+  EXPECT_GE(badErrors[0].columnNumber, 1);
+  EXPECT_GE(badErrors[0].endLineNumber, 1);
+  EXPECT_GE(badErrors[0].endColumnNumber, 1);
+
+  // Test copyLocationTo(LangError)
+  LangError err;
+  leftVal->copyLocationTo(err);
+  EXPECT_EQ(err.lineNumber, 5);
+  EXPECT_EQ(err.columnNumber, 9);
+  EXPECT_EQ(err.endLineNumber, 5);
+  EXPECT_EQ(err.endColumnNumber, 12);
+}
