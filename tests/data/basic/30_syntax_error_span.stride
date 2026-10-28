@@ -1,0 +1,5 @@
+module BadSyntax {
+    streams: [
+        10 >> ;
+    ]
+}
