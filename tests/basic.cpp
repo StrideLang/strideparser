@@ -1,3 +1,5 @@
+#include <filesystem>
+#include <cstdlib>
 #include "gtest/gtest.h"
 
 #include "stride/parser/arraynode.h"
@@ -1102,13 +1104,9 @@ TEST(Basic, AnnotatedEntitiesInProperties) {
   auto scopedElem1 = std::static_pointer_cast<EntityNode>(scopedListVal->getChildren().at(1));
   EXPECT_EQ(scopedElem1->toText(0, 2, false), "Math::Cos@Poly5");
 
-  // 5. Verify parsing SinQualityTest.stride
-  ASTNode sinTestTree = AST::parseFile(TESTS_SOURCE_DIR "../../../strideroot/library/1.0/tests/SinQualityTest.stride");
-  ASSERT_NE(sinTestTree, nullptr);
-  auto sinErrors = AST::getParseErrors();
-  EXPECT_TRUE(sinErrors.empty());
-  ASSERT_GE(sinTestTree->getChildren().size(), 2u);
-  auto sinDecl0 = std::static_pointer_cast<DeclarationNode>(sinTestTree->getChildren().at(0));
+  // 5. Verify test entity declarations with target: Sin@Poly5
+  ASSERT_GE(nodes.size(), 4u);
+  auto sinDecl0 = std::static_pointer_cast<DeclarationNode>(nodes.at(2));
   EXPECT_EQ(sinDecl0->getName(), "SinPoly5AccuracyTest");
   auto sinTarget0 = sinDecl0->getPropertyValue("target");
   ASSERT_NE(sinTarget0, nullptr);
@@ -1119,7 +1117,7 @@ TEST(Basic, AnnotatedEntitiesInProperties) {
   ASSERT_NE(targetAt0, nullptr);
   EXPECT_EQ(std::static_pointer_cast<ValueNode>(targetAt0)->getStringValue(), "Poly5");
 
-  auto sinDecl1 = std::static_pointer_cast<DeclarationNode>(sinTestTree->getChildren().at(1));
+  auto sinDecl1 = std::static_pointer_cast<DeclarationNode>(nodes.at(3));
   EXPECT_EQ(sinDecl1->getName(), "SinDirectAccuracyTest");
   auto sinTarget1 = sinDecl1->getPropertyValue("target");
   ASSERT_NE(sinTarget1, nullptr);
@@ -1129,4 +1127,20 @@ TEST(Basic, AnnotatedEntitiesInProperties) {
   auto targetAt1 = targetEntity1->getCompilerProperty("_at");
   ASSERT_NE(targetAt1, nullptr);
   EXPECT_EQ(std::static_pointer_cast<ValueNode>(targetAt1)->getStringValue(), "Direct");
+
+  // 6. Verify parsing SinQualityTest.stride if strideroot is available
+  std::string sinQualityPath = TESTS_SOURCE_DIR "../../../strideroot/library/1.0/tests/SinQualityTest.stride";
+  if (!std::filesystem::exists(sinQualityPath)) {
+    const char *striderootEnv = std::getenv("STRIDEROOT");
+    if (striderootEnv) {
+      sinQualityPath = std::string(striderootEnv) + "/library/1.0/tests/SinQualityTest.stride";
+    }
+  }
+  if (std::filesystem::exists(sinQualityPath)) {
+    ASTNode sinTestTree = AST::parseFile(sinQualityPath.c_str());
+    ASSERT_NE(sinTestTree, nullptr);
+    auto sinErrors = AST::getParseErrors();
+    EXPECT_TRUE(sinErrors.empty());
+    ASSERT_GE(sinTestTree->getChildren().size(), 2u);
+  }
 }

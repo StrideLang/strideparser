@@ -6,3 +6,11 @@ type TestType {
   scopedTarget: Math::Sin@Poly5
   scopedList: [ Math::Sin@Poly5, Math::Cos@Poly5 ]
 }
+
+test SinPoly5AccuracyTest {
+  target: Sin@Poly5
+}
+
+test SinDirectAccuracyTest {
+  target: Sin@Direct
+}
