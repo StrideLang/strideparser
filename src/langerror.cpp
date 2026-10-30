@@ -122,6 +122,24 @@ std::string LangError::getErrorText() {
   case UnknownPlatform:
     errorText += "Unknown Platform '" + errorTokens[0] + "'";
     break;
+  case ConstantWrittenTwice:
+    errorText += "Constant '" + errorTokens[0] +
+                 "' is written once and is already written by " +
+                 errorTokens[1];
+    break;
+  case ReactionMainInput:
+    errorText += errorTokens[0] + " '" + errorTokens[1] +
+                 "' declares the main input port '" + errorTokens[2] +
+                 "'. The input of a reaction or an action is the trigger that "
+                 "runs it, which also sets the domain it runs in (a switch "
+                 "converts to a trigger): pass values through property ports, "
+                 "or make it a module";
+    break;
+  case UnsizedPort:
+    errorText += "'" + errorTokens[0] + "()' takes the size of its " +
+                 errorTokens[1] + " from " + errorTokens[2] + " (" +
+                 errorTokens[3] + ".size), so " + errorTokens[4];
+    break;
   case IgnoredRateInOneShotDomain:
     errorText += "Rate on '" + errorTokens[0] +
                  "' has no effect in one-shot domain '" + errorTokens[1] + "'";

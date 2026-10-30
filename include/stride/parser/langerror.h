@@ -67,6 +67,9 @@ public:
     InvalidDataType,
     LossyConversion,
     IgnoredRateInOneShotDomain,
+    ConstantWrittenTwice,
+    UnsizedPort,
+    ReactionMainInput,
     None
   } ErrorType;
 
