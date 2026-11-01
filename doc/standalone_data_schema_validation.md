@@ -224,29 +224,135 @@ Stress-testing parser recursion and stack depth:
 
 ### 4.3 Running Time & Throughput Relationships
 
-The graphs below illustrate the performance relationships across the tested parsers using a unified family color scheme:
+The visual graphs below illustrate the performance relationships across all tested parsers using the unified family color scheme:
 - 🟢 **Stride**: **Emerald Green** (`#10b981`)
 - 🔵 **JSON Family (Blues)**: `simdjson` (Royal Blue `#2563eb`), `RapidJSON` (Sky Blue `#0ea5e9`), `nlohmann/json` (Indigo `#6366f1`)
-- 🟠 **YAML Family (Oranges)**: `rapidyaml (ryml)` (Amber `#f59e0b`), `yaml-cpp` (Burnt Orange `#ea580c`)
+- 🟠 **YAML Family (Oranges/Ambers)**: `rapidyaml (ryml)` (Amber `#f59e0b`), `yaml-cpp` (Deep Orange `#ea580c`)
 
 #### Parsing Execution Time: 100 Entities Dataset (Lower is Better)
 
+<svg viewBox="0 0 740 260" width="100%" height="260" xmlns="http://www.w3.org/2000/svg" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #0f172a; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+  <!-- Title & Legend -->
+  <text x="20" y="28" fill="#f8fafc" font-size="15" font-weight="600">Parse Time on 100 Entities (µs) — Lower is Better</text>
+  <rect x="410" y="16" width="12" height="12" rx="3" fill="#10b981"/>
+  <text x="428" y="27" fill="#cbd5e1" font-size="12">Stride</text>
+  <rect x="485" y="16" width="12" height="12" rx="3" fill="#2563eb"/>
+  <text x="503" y="27" fill="#cbd5e1" font-size="12">JSON Variants</text>
+  <rect x="605" y="16" width="12" height="12" rx="3" fill="#f59e0b"/>
+  <text x="623" y="27" fill="#cbd5e1" font-size="12">YAML Variants</text>
+  
+  <!-- Row 1: simdjson (JSON) -->
+  <text x="20" y="64" fill="#94a3b8" font-size="13">simdjson (JSON)</text>
+  <rect x="180" y="49" width="12" height="20" rx="4" fill="#2563eb"/>
+  <text x="200" y="64" fill="#f8fafc" font-size="12" font-weight="600">18.2 µs</text>
+
+  <!-- Row 2: RapidJSON (JSON) -->
+  <text x="20" y="98" fill="#94a3b8" font-size="13">RapidJSON (JSON)</text>
+  <rect x="180" y="83" width="15" height="20" rx="4" fill="#0ea5e9"/>
+  <text x="205" y="98" fill="#f8fafc" font-size="12" font-weight="600">42.6 µs</text>
+
+  <!-- Row 3: rapidyaml (YAML) -->
+  <text x="20" y="132" fill="#94a3b8" font-size="13">rapidyaml (YAML)</text>
+  <rect x="180" y="117" width="28" height="20" rx="4" fill="#f59e0b"/>
+  <text x="218" y="132" fill="#f8fafc" font-size="12" font-weight="600">115.4 µs</text>
+
+  <!-- Row 4: strideparser (Stride) -->
+  <text x="20" y="166" fill="#34d399" font-size="13" font-weight="700">strideparser (Stride)</text>
+  <rect x="180" y="151" width="41" height="20" rx="4" fill="#10b981" stroke="#34d399" stroke-width="1.5"/>
+  <text x="231" y="166" fill="#34d399" font-size="12" font-weight="700">168.0 µs</text>
+
+  <!-- Row 5: nlohmann/json (JSON) -->
+  <text x="20" y="200" fill="#94a3b8" font-size="13">nlohmann/json (JSON)</text>
+  <rect x="180" y="185" width="117" height="20" rx="4" fill="#6366f1"/>
+  <text x="307" y="200" fill="#f8fafc" font-size="12" font-weight="600">480.2 µs</text>
+
+  <!-- Row 6: yaml-cpp (YAML) -->
+  <text x="20" y="234" fill="#94a3b8" font-size="13">yaml-cpp (YAML)</text>
+  <rect x="180" y="219" width="450" height="20" rx="4" fill="#ea580c"/>
+  <text x="640" y="234" fill="#f8fafc" font-size="12" font-weight="600">1,840.0 µs</text>
+</svg>
+
 ```mermaid
-xychart-beta
-    title "Parse Time on 100 Entities (Microseconds - Lower is Faster)"
-    x-axis ["simdjson", "RapidJSON", "ryml (YAML)", "strideparser", "nlohmann", "yaml-cpp"]
-    y-axis "Execution Time (µs)" 0 --> 1900
-    bar [18.2, 42.6, 115.4, 168.0, 480.2, 1840.0]
+flowchart LR
+    subgraph Time["Parse Time on 100 Entities (Lower is Better)"]
+        direction TB
+        p1["simdjson (JSON) ── 18.2 µs"]:::jsonSimd
+        p2["RapidJSON (JSON) ──── 42.6 µs"]:::jsonRapid
+        p3["rapidyaml (YAML) ────────── 115.4 µs"]:::yamlRyml
+        p4["strideparser (Stride) ────────────── 168.0 µs"]:::stride
+        p5["nlohmann/json (JSON) ──────────────────────────────── 480.2 µs"]:::jsonNloh
+        p6["yaml-cpp (YAML) ──────────────────────────────────────────────────────────── 1,840.0 µs"]:::yamlCpp
+    end
+
+    classDef stride fill:#10b981,stroke:#047857,stroke-width:2px,color:#ffffff,font-weight:bold
+    classDef jsonSimd fill:#2563eb,stroke:#1d4ed8,stroke-width:2px,color:#ffffff
+    classDef jsonRapid fill:#0ea5e9,stroke:#0284c7,stroke-width:2px,color:#ffffff
+    classDef jsonNloh fill:#6366f1,stroke:#4338ca,stroke-width:2px,color:#ffffff
+    classDef yamlRyml fill:#f59e0b,stroke:#d97706,stroke-width:2px,color:#ffffff
+    classDef yamlCpp fill:#ea580c,stroke:#c2410c,stroke-width:2px,color:#ffffff
 ```
 
 #### Parsing Throughput: 1,500 Record Dataset (Higher is Better)
 
+<svg viewBox="0 0 740 260" width="100%" height="260" xmlns="http://www.w3.org/2000/svg" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #0f172a; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+  <!-- Title & Legend -->
+  <text x="20" y="28" fill="#f8fafc" font-size="15" font-weight="600">Throughput on 1,500 Records (MB/s) — Higher is Better</text>
+  <rect x="410" y="16" width="12" height="12" rx="3" fill="#10b981"/>
+  <text x="428" y="27" fill="#cbd5e1" font-size="12">Stride</text>
+  <rect x="485" y="16" width="12" height="12" rx="3" fill="#2563eb"/>
+  <text x="503" y="27" fill="#cbd5e1" font-size="12">JSON Variants</text>
+  <rect x="605" y="16" width="12" height="12" rx="3" fill="#f59e0b"/>
+  <text x="623" y="27" fill="#cbd5e1" font-size="12">YAML Variants</text>
+  
+  <!-- Row 1: simdjson (JSON) -->
+  <text x="20" y="64" fill="#94a3b8" font-size="13">simdjson (JSON)</text>
+  <rect x="180" y="49" width="450" height="20" rx="4" fill="#2563eb"/>
+  <text x="640" y="64" fill="#f8fafc" font-size="12" font-weight="600">2,080 MB/s</text>
+
+  <!-- Row 2: RapidJSON (JSON) -->
+  <text x="20" y="98" fill="#94a3b8" font-size="13">RapidJSON (JSON)</text>
+  <rect x="180" y="83" width="187" height="20" rx="4" fill="#0ea5e9"/>
+  <text x="377" y="98" fill="#f8fafc" font-size="12" font-weight="600">863 MB/s</text>
+
+  <!-- Row 3: rapidyaml (YAML) -->
+  <text x="20" y="132" fill="#94a3b8" font-size="13">rapidyaml (YAML)</text>
+  <rect x="180" y="117" width="47" height="20" rx="4" fill="#f59e0b"/>
+  <text x="237" y="132" fill="#f8fafc" font-size="12" font-weight="600">215 MB/s</text>
+
+  <!-- Row 4: strideparser (Stride) -->
+  <text x="20" y="166" fill="#34d399" font-size="13" font-weight="700">strideparser (Stride)</text>
+  <rect x="180" y="151" width="35" height="20" rx="4" fill="#10b981" stroke="#34d399" stroke-width="1.5"/>
+  <text x="225" y="166" fill="#34d399" font-size="12" font-weight="700">160 MB/s</text>
+
+  <!-- Row 5: nlohmann/json (JSON) -->
+  <text x="20" y="200" fill="#94a3b8" font-size="13">nlohmann/json (JSON)</text>
+  <rect x="180" y="185" width="16" height="20" rx="4" fill="#6366f1"/>
+  <text x="206" y="200" fill="#f8fafc" font-size="12" font-weight="600">72 MB/s</text>
+
+  <!-- Row 6: yaml-cpp (YAML) -->
+  <text x="20" y="234" fill="#94a3b8" font-size="13">yaml-cpp (YAML)</text>
+  <rect x="180" y="219" width="10" height="20" rx="4" fill="#ea580c"/>
+  <text x="200" y="234" fill="#f8fafc" font-size="12" font-weight="600">12 MB/s</text>
+</svg>
+
 ```mermaid
-xychart-beta
-    title "Throughput on Large Dataset (MB/s - Higher is Better)"
-    x-axis ["simdjson", "RapidJSON", "ryml (YAML)", "strideparser", "nlohmann", "yaml-cpp"]
-    y-axis "Throughput (MB/s)" 0 --> 2200
-    bar [2080, 863, 215, 160, 72, 12]
+flowchart LR
+    subgraph TP["Large Dataset Throughput (Higher is Better)"]
+        direction TB
+        t1["simdjson (JSON) ──────────────────────────────────────────────────────────── 2,080 MB/s"]:::jsonSimd
+        t2["RapidJSON (JSON) ──────────────────────────── 863 MB/s"]:::jsonRapid
+        t3["rapidyaml (YAML) ──────── 215 MB/s"]:::yamlRyml
+        t4["strideparser (Stride) ────── 160 MB/s"]:::stride
+        t5["nlohmann/json (JSON) ── 72 MB/s"]:::jsonNloh
+        t6["yaml-cpp (YAML) ─ 12 MB/s"]:::yamlCpp
+    end
+
+    classDef stride fill:#10b981,stroke:#047857,stroke-width:2px,color:#ffffff,font-weight:bold
+    classDef jsonSimd fill:#2563eb,stroke:#1d4ed8,stroke-width:2px,color:#ffffff
+    classDef jsonRapid fill:#0ea5e9,stroke:#0284c7,stroke-width:2px,color:#ffffff
+    classDef jsonNloh fill:#6366f1,stroke:#4338ca,stroke-width:2px,color:#ffffff
+    classDef yamlRyml fill:#f59e0b,stroke:#d97706,stroke-width:2px,color:#ffffff
+    classDef yamlCpp fill:#ea580c,stroke:#c2410c,stroke-width:2px,color:#ffffff
 ```
 
 ---
@@ -268,12 +374,44 @@ Across all benchmarks, **Stride generates significantly more compact files than 
 
 ### 5.2 Payload Size Comparison Chart
 
+<svg viewBox="0 0 740 180" width="100%" height="180" xmlns="http://www.w3.org/2000/svg" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #0f172a; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+  <!-- Title & Legend -->
+  <text x="20" y="28" fill="#f8fafc" font-size="15" font-weight="600">Payload File Size on 1,500 Entities (KB) — Lower is More Compact</text>
+  <rect x="440" y="16" width="12" height="12" rx="3" fill="#10b981"/>
+  <text x="458" y="27" fill="#cbd5e1" font-size="12">Stride</text>
+  <rect x="515" y="16" width="12" height="12" rx="3" fill="#2563eb"/>
+  <text x="533" y="27" fill="#cbd5e1" font-size="12">JSON</text>
+  <rect x="590" y="16" width="12" height="12" rx="3" fill="#f59e0b"/>
+  <text x="608" y="27" fill="#cbd5e1" font-size="12">YAML</text>
+  
+  <!-- Row 1: YAML -->
+  <text x="20" y="68" fill="#f59e0b" font-size="13" font-weight="600">YAML</text>
+  <rect x="140" y="53" width="300" height="22" rx="4" fill="#f59e0b"/>
+  <text x="450" y="69" fill="#f8fafc" font-size="12" font-weight="600">349.1 KB (Indentation-based)</text>
+
+  <!-- Row 2: Stride -->
+  <text x="20" y="106" fill="#34d399" font-size="13" font-weight="700">Stride</text>
+  <rect x="140" y="91" width="340" height="22" rx="4" fill="#10b981" stroke="#34d399" stroke-width="1.5"/>
+  <text x="490" y="107" fill="#34d399" font-size="12" font-weight="700">396.0 KB (-24.3% vs JSON!)</text>
+
+  <!-- Row 3: JSON -->
+  <text x="20" y="144" fill="#60a5fa" font-size="13" font-weight="600">JSON</text>
+  <rect x="140" y="129" width="450" height="22" rx="4" fill="#2563eb"/>
+  <text x="600" y="145" fill="#f8fafc" font-size="12" font-weight="600">523.1 KB (+127 KB overhead)</text>
+</svg>
+
 ```mermaid
-xychart-beta
-    title "Payload File Size on 1,500 Entity Records (Kilobytes - Lower is More Compact)"
-    x-axis ["YAML", "Stride", "JSON"]
-    y-axis "File Size (KB)" 0 --> 550
-    bar [349.1, 396.0, 523.1]
+flowchart LR
+    subgraph Size["Payload File Size: 1,500 Entities (Lower is More Compact)"]
+        direction TB
+        s1["YAML ──────────────────────── 349.1 KB (Baseline compact)"]:::yamlRyml
+        s2["Stride ──────────────────────────── 396.0 KB (+13.4% vs YAML, -24.3% vs JSON)"]:::stride
+        s3["JSON ──────────────────────────────────────── 523.1 KB (+32.1% larger than Stride!)"]:::jsonSimd
+    end
+
+    classDef stride fill:#10b981,stroke:#047857,stroke-width:2px,color:#ffffff,font-weight:bold
+    classDef yamlRyml fill:#f59e0b,stroke:#d97706,stroke-width:2px,color:#ffffff
+    classDef jsonSimd fill:#2563eb,stroke:#1d4ed8,stroke-width:2px,color:#ffffff
 ```
 
 ### 5.3 Why is Stride More Compact than JSON?
