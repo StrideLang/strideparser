@@ -224,7 +224,10 @@ Stress-testing parser recursion and stack depth:
 
 ### 4.3 Running Time & Throughput Relationships
 
-The graphs below illustrate the performance relationships across the tested parsers:
+The graphs below illustrate the performance relationships across the tested parsers using a unified family color scheme:
+- 🟢 **Stride**: **Emerald Green** (`#10b981`)
+- 🔵 **JSON Family (Blues)**: `simdjson` (Royal Blue `#2563eb`), `RapidJSON` (Sky Blue `#0ea5e9`), `nlohmann/json` (Indigo `#6366f1`)
+- 🟠 **YAML Family (Oranges)**: `rapidyaml (ryml)` (Amber `#f59e0b`), `yaml-cpp` (Burnt Orange `#ea580c`)
 
 #### Parsing Execution Time: 100 Entities Dataset (Lower is Better)
 
