@@ -170,6 +170,15 @@ NullStream nstream;
 %token BITAND BITOR BITNOT AT
 %token STREAMRATE
 
+/* Rules marked %prec PREFER_SHIFT reduce only when the lookahead is not
+   ON, SEMICOLON or AT, which resolves these shift/reduce conflicts:
+     use Name on Target       ON is the target, not an 'on' value
+     name: Func();            the ';' ends a streamDef, not a valueExp
+     Name[](...), Name[] @x   the '(' or AT starts a functionDef, not a bundle
+*/
+%nonassoc PREFER_SHIFT
+%nonassoc ON SEMICOLON AT
+
 %left STREAM
 %nonassoc DOTDOT
 %left AND OR
@@ -230,7 +239,7 @@ systemDef:
     ;
 
 languagePlatform:
-        USE UVAR                {
+        USE UVAR %prec PREFER_SHIFT {
             string s;
             s.append($2); /* string constructor leaks otherwise! */
             $$ = new SystemNode(s, -1, -1, currentFile, yyloc.first_line, yyloc.first_column);
@@ -247,7 +256,7 @@ languagePlatform:
             free($2);
             free($4);
         }
-    |   USE UVAR VERSION REAL  {
+    |   USE UVAR VERSION REAL %prec PREFER_SHIFT {
             string s;
             s.append($2); /* string constructor leaks otherwise! */
             int major = int($4);
@@ -401,6 +410,7 @@ blockDef:
             free($2);
             SET_NODE_END($$);
         }
+        // Test
     |   WORD UVAR '[' ']' blockType    {
             string name;
             name.append($2); /* string constructor leaks otherwise! */
@@ -413,7 +423,7 @@ blockDef:
             COUT << "Unsized Array Declaration: " << $1 << ", Labelled: " << $2 << ENDL;
             free($2);
             free($1);
-             SET_NODE_END($$);
+            SET_NODE_END($$);
          }
     |   WORD UVAR '[' indexExp ']' blockType    {
             string name;
@@ -427,7 +437,7 @@ blockDef:
             COUT << "Array Declaration: " << $1 << ", Labelled: " << $2 << ENDL;
             free($2);
             free($1);
-             SET_NODE_END($$);
+            SET_NODE_END($$);
          }
     |   WORD UVAR '[' indexExp COMMA ']' blockType    {
             string name;
@@ -625,7 +635,7 @@ bundleDef:
             COUT << "Array name: " << $1 << ENDL;
             free($1);
         }
-    |   UVAR '[' ']'                    {
+    |   UVAR '[' ']' %prec PREFER_SHIFT {
             string s;
             s.append($1); /* string constructor leaks otherwise! */
             auto emptyList = std::make_shared<ListNode>(currentFile, yyloc.first_line, yyloc.first_column);
@@ -652,7 +662,7 @@ bundleDef:
             COUT << "Streaming ... " << ENDL;
             free($2);
         }
-    |   scopeDef UVAR '[' ']'           {
+    |   scopeDef UVAR '[' ']' %prec PREFER_SHIFT {
             string s;
             s.append($2); /* string constructor leaks otherwise! */
             auto emptyList = std::make_shared<ListNode>(currentFile, yyloc.first_line, yyloc.first_column);
@@ -1626,6 +1636,8 @@ indexComp:
             COUT << "Resolving indexed bundle ..." << bundle->getName() << ENDL;
         }
     |   portPropertyDef       {
+            $$ = $1;
+            SET_NODE_END($$);
         }
     ;
 
@@ -1805,11 +1817,13 @@ streamComp:
             $$ = bundle;
             COUT << "Annotated Array: " << bundle->getName() << ENDL;
         }
-    |   functionDef     {
+    |   functionDef %prec PREFER_SHIFT {
             $$ = $1;
             COUT << "Resolving function definition ..." << ENDL;
         }
     |   portPropertyDef     {
+            $$ = $1;
+            SET_NODE_END($$);
             COUT << "Resolving port property definition ... " << ENDL;
         }
     |   '{' valueList '}'     {

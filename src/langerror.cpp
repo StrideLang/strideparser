@@ -135,6 +135,10 @@ std::string LangError::getErrorText() {
                  "converts to a trigger): pass values through property ports, "
                  "or make it a module";
     break;
+  case PrivatePort:
+    errorText += "Port '" + errorTokens[1] + "' of type '" + errorTokens[0] +
+                 "' is private and cannot be accessed externally";
+    break;
   case UnsizedPort:
     errorText += "'" + errorTokens[0] + "()' takes the size of its " +
                  errorTokens[1] + " from " + errorTokens[2] + " (" +

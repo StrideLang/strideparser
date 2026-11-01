@@ -70,6 +70,7 @@ public:
     ConstantWrittenTwice,
     UnsizedPort,
     ReactionMainInput,
+    PrivatePort,
     None
   } ErrorType;
 
