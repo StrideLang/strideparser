@@ -24,6 +24,7 @@ set(TEST_SOURCES main.cpp
   function.cpp
   stream.cpp
   totext_test.cpp
+  callable_syntax_tests.cpp
 )
 
 

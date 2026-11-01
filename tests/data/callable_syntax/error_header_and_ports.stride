@@ -1,0 +1,10 @@
+use DesktopAudio version 1.0
+
+module In >> BadMod() >> Out {
+    ports: [
+        mainInputPort InPort { entity: In }
+    ]
+    code: [
+        In >> Out;
+    ]
+}

@@ -1,0 +1,7 @@
+use DesktopAudio version 1.0
+
+module [AudioIn[2], SidechainIn] >> MultiPortMod() >> [AudioOut[2], signal GainReduction { rate: 100 }] {
+    code: [
+        AudioIn[0] >> AudioOut[0];
+    ]
+}

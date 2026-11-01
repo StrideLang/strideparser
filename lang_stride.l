@@ -72,6 +72,11 @@ HEXLETTER   [A-Fa-f]
 
 "streamRate"    { return STREAMRATE; }
 
+"module"        { yylval.sval = strdup(yytext); return MODULE; }
+"reaction"      { yylval.sval = strdup(yytext); return REACTION; }
+"loop"          { yylval.sval = strdup(yytext); return LOOP; }
+"code"          { yylval.sval = strdup(yytext); return CODE; }
+
 ".."            { return DOTDOT; }
 {DIGIT}+/".."   { yylval.ival = atoll(yytext); return INT; }
 

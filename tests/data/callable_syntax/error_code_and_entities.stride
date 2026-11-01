@@ -1,0 +1,10 @@
+use DesktopAudio version 1.0
+
+module BadMod {
+    entities: [
+        signal S { default: 0.0 }
+    ]
+    code: [
+        signal S2 { default: 0.0 }
+    ]
+}

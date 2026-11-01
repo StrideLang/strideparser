@@ -71,6 +71,8 @@ public:
     UnsizedPort,
     ReactionMainInput,
     PrivatePort,
+    HeaderPortsWithPortsProperty,
+    CodeWithEntitiesOrStreams,
     None
   } ErrorType;
 

@@ -1,0 +1,7 @@
+use DesktopAudio version 1.0
+
+reaction In >> BadReaction() >> Out {
+    code: [
+        In >> Out;
+    ]
+}

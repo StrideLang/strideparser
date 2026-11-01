@@ -1,0 +1,7 @@
+use DesktopAudio version 1.0
+
+module Input >> Amplifier(gain: signal Gain { default: 1.0 }) >> Output {
+    code: [
+        Input * Gain >> Output;
+    ]
+}

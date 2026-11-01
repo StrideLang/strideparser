@@ -93,6 +93,7 @@ NullStream nstream;
 %code requires { #include "stride/parser/scopenode.h" }
 %code requires { #include "stride/parser/streamnode.h" }
 %code requires { #include "stride/parser/valuenode.h" }
+%code requires { #include "stride/parser/desugar.h" }
 
 %union {
     int64_t     ival;
@@ -152,6 +153,17 @@ NullStream nstream;
 %type <scopeNode> scope
 %type <memberAccessNode> portPropertyDef
 %type <ast> generatorRange
+%type <declarationNode> callableDef
+%type <declarationNode> portItem
+%type <listNode> portGroup
+%type <listNode> portItemList
+%type <propertyNode> propertyPort
+%type <listNode> propertyPortList
+%type <listNode> propertyPortListOpt
+%type <listNode> codeItemList
+%type <listNode> codeItemListOpt
+%type <ast> codeItem
+%type <sval> wordToken
 
 
 /* declare tokens */
@@ -161,6 +173,10 @@ NullStream nstream;
 %token  <sval>  BIN
 %token  <sval>  UVAR
 %token  <sval>  WORD
+%token  <sval>  MODULE
+%token  <sval>  REACTION
+%token  <sval>  LOOP
+%token  <sval>  CODE
 %token  <sval>  STRING
 %token  <sval>  ERROR
 
@@ -475,6 +491,9 @@ blockDef:
         COUT << "Resolving anonymous declaration ... " << ENDL;
         COUT << "Streaming ... " << ENDL;
     }
+    |   callableDef {
+        $$ = $1;
+    }
     ;
 
 blockType:
@@ -484,6 +503,327 @@ blockType:
         }
     |   '{' properties '}'  {
             $$ = $2;
+        }
+    ;
+
+// =================================
+//  CALLABLE DEFINITION & DESUGARING
+// =================================
+
+callableDef:
+    // Module forms:
+        MODULE portGroup STREAM UVAR '(' propertyPortListOpt ')' STREAM portGroup blockType {
+            string type($1); free($1);
+            string name($4); free($4);
+            $$ = desugarCallable(type, name, std::shared_ptr<AST>($2), std::shared_ptr<AST>($6), std::shared_ptr<AST>($9), std::shared_ptr<AST>($10), currentFile, yyloc.first_line, yyloc.first_column);
+            SET_NODE_END($$);
+        }
+    |   MODULE portGroup STREAM UVAR '(' propertyPortListOpt ')' blockType {
+            string type($1); free($1);
+            string name($4); free($4);
+            $$ = desugarCallable(type, name, std::shared_ptr<AST>($2), std::shared_ptr<AST>($6), nullptr, std::shared_ptr<AST>($8), currentFile, yyloc.first_line, yyloc.first_column);
+            SET_NODE_END($$);
+        }
+    |   MODULE portGroup STREAM UVAR STREAM portGroup blockType {
+            string type($1); free($1);
+            string name($4); free($4);
+            $$ = desugarCallable(type, name, std::shared_ptr<AST>($2), nullptr, std::shared_ptr<AST>($6), std::shared_ptr<AST>($7), currentFile, yyloc.first_line, yyloc.first_column);
+            SET_NODE_END($$);
+        }
+    |   MODULE UVAR '(' propertyPortListOpt ')' STREAM portGroup blockType {
+            string type($1); free($1);
+            string name($2); free($2);
+            $$ = desugarCallable(type, name, nullptr, std::shared_ptr<AST>($4), std::shared_ptr<AST>($7), std::shared_ptr<AST>($8), currentFile, yyloc.first_line, yyloc.first_column);
+            SET_NODE_END($$);
+        }
+    |   MODULE UVAR '(' propertyPortListOpt ')' blockType {
+            string type($1); free($1);
+            string name($2); free($2);
+            $$ = desugarCallable(type, name, nullptr, std::shared_ptr<AST>($4), nullptr, std::shared_ptr<AST>($6), currentFile, yyloc.first_line, yyloc.first_column);
+            SET_NODE_END($$);
+        }
+    |   MODULE UVAR blockType {
+            string type($1); free($1);
+            string name($2); free($2);
+            $$ = desugarCallable(type, name, nullptr, nullptr, nullptr, std::shared_ptr<AST>($3), currentFile, yyloc.first_line, yyloc.first_column);
+            SET_NODE_END($$);
+        }
+
+    // Loop forms:
+    |   LOOP portGroup STREAM UVAR '(' propertyPortListOpt ')' STREAM portGroup blockType {
+            string type($1); free($1);
+            string name($4); free($4);
+            $$ = desugarCallable(type, name, std::shared_ptr<AST>($2), std::shared_ptr<AST>($6), std::shared_ptr<AST>($9), std::shared_ptr<AST>($10), currentFile, yyloc.first_line, yyloc.first_column);
+            SET_NODE_END($$);
+        }
+    |   LOOP portGroup STREAM UVAR '(' propertyPortListOpt ')' blockType {
+            string type($1); free($1);
+            string name($4); free($4);
+            $$ = desugarCallable(type, name, std::shared_ptr<AST>($2), std::shared_ptr<AST>($6), nullptr, std::shared_ptr<AST>($8), currentFile, yyloc.first_line, yyloc.first_column);
+            SET_NODE_END($$);
+        }
+    |   LOOP portGroup STREAM UVAR STREAM portGroup blockType {
+            string type($1); free($1);
+            string name($4); free($4);
+            $$ = desugarCallable(type, name, std::shared_ptr<AST>($2), nullptr, std::shared_ptr<AST>($6), std::shared_ptr<AST>($7), currentFile, yyloc.first_line, yyloc.first_column);
+            SET_NODE_END($$);
+        }
+    |   LOOP UVAR '(' propertyPortListOpt ')' STREAM portGroup blockType {
+            string type($1); free($1);
+            string name($2); free($2);
+            $$ = desugarCallable(type, name, nullptr, std::shared_ptr<AST>($4), std::shared_ptr<AST>($7), std::shared_ptr<AST>($8), currentFile, yyloc.first_line, yyloc.first_column);
+            SET_NODE_END($$);
+        }
+    |   LOOP UVAR '(' propertyPortListOpt ')' blockType {
+            string type($1); free($1);
+            string name($2); free($2);
+            $$ = desugarCallable(type, name, nullptr, std::shared_ptr<AST>($4), nullptr, std::shared_ptr<AST>($6), currentFile, yyloc.first_line, yyloc.first_column);
+            SET_NODE_END($$);
+        }
+    |   LOOP UVAR blockType {
+            string type($1); free($1);
+            string name($2); free($2);
+            $$ = desugarCallable(type, name, nullptr, nullptr, nullptr, std::shared_ptr<AST>($3), currentFile, yyloc.first_line, yyloc.first_column);
+            SET_NODE_END($$);
+        }
+
+    // Reaction forms:
+    |   REACTION UVAR '(' propertyPortListOpt ')' STREAM portGroup blockType {
+            string type($1); free($1);
+            string name($2); free($2);
+            $$ = desugarCallable(type, name, nullptr, std::shared_ptr<AST>($4), std::shared_ptr<AST>($7), std::shared_ptr<AST>($8), currentFile, yyloc.first_line, yyloc.first_column);
+            SET_NODE_END($$);
+        }
+    |   REACTION UVAR '(' propertyPortListOpt ')' blockType {
+            string type($1); free($1);
+            string name($2); free($2);
+            $$ = desugarCallable(type, name, nullptr, std::shared_ptr<AST>($4), nullptr, std::shared_ptr<AST>($6), currentFile, yyloc.first_line, yyloc.first_column);
+            SET_NODE_END($$);
+        }
+    |   REACTION UVAR blockType {
+            string type($1); free($1);
+            string name($2); free($2);
+            $$ = desugarCallable(type, name, nullptr, nullptr, nullptr, std::shared_ptr<AST>($3), currentFile, yyloc.first_line, yyloc.first_column);
+            SET_NODE_END($$);
+        }
+    |   REACTION portGroup STREAM UVAR '(' propertyPortListOpt ')' STREAM portGroup blockType {
+            string type($1); free($1);
+            string name($4); free($4);
+            LangError err;
+            err.type = LangError::ReactionMainInput;
+            err.errorTokens = {type, name, "mainInputPort"};
+            err.filename = currentFile;
+            err.lineNumber = yyloc.first_line;
+            err.columnNumber = yyloc.first_column;
+            parseErrors.push_back(err);
+            $$ = desugarCallable(type, name, std::shared_ptr<AST>($2), std::shared_ptr<AST>($6), std::shared_ptr<AST>($9), std::shared_ptr<AST>($10), currentFile, yyloc.first_line, yyloc.first_column);
+            SET_NODE_END($$);
+        }
+    |   REACTION portGroup STREAM UVAR '(' propertyPortListOpt ')' blockType {
+            string type($1); free($1);
+            string name($4); free($4);
+            LangError err;
+            err.type = LangError::ReactionMainInput;
+            err.errorTokens = {type, name, "mainInputPort"};
+            err.filename = currentFile;
+            err.lineNumber = yyloc.first_line;
+            err.columnNumber = yyloc.first_column;
+            parseErrors.push_back(err);
+            $$ = desugarCallable(type, name, std::shared_ptr<AST>($2), std::shared_ptr<AST>($6), nullptr, std::shared_ptr<AST>($8), currentFile, yyloc.first_line, yyloc.first_column);
+            SET_NODE_END($$);
+        }
+    ;
+
+portGroup:
+        portItem {
+            ListNode *list = new ListNode(currentFile, yyloc.first_line, yyloc.first_column);
+            list->addChild(std::shared_ptr<AST>($1));
+            $$ = list;
+        }
+    |   '[' portItemList ']' {
+            $$ = $2;
+        }
+    |   '[' portItemList COMMA ']' {
+            $$ = $2;
+        }
+    ;
+
+portItemList:
+        portItemList COMMA portItem {
+            ListNode *list = $1;
+            list->addChild(std::shared_ptr<AST>($3));
+            $$ = list;
+        }
+    |   portItem {
+            ListNode *list = new ListNode(currentFile, yyloc.first_line, yyloc.first_column);
+            list->addChild(std::shared_ptr<AST>($1));
+            $$ = list;
+        }
+    ;
+
+portItem:
+        UVAR {
+            string name($1);
+            free($1);
+            auto defaultVal = std::make_shared<ValueNode>(0.0, currentFile, yyloc.first_line, yyloc.first_column);
+            auto defaultProp = std::make_shared<PropertyNode>("default", defaultVal, currentFile, yyloc.first_line, yyloc.first_column);
+            auto propsList = std::make_shared<AST>();
+            propsList->addChild(defaultProp);
+            $$ = new DeclarationNode(name, "signal", propsList, currentFile, yyloc.first_line, yyloc.first_column);
+            SET_NODE_END($$);
+        }
+    |   UVAR '[' ']' {
+            string name($1);
+            free($1);
+            auto defaultVal = std::make_shared<ValueNode>(0.0, currentFile, yyloc.first_line, yyloc.first_column);
+            auto defaultProp = std::make_shared<PropertyNode>("default", defaultVal, currentFile, yyloc.first_line, yyloc.first_column);
+            auto propsList = std::make_shared<AST>();
+            propsList->addChild(defaultProp);
+            auto emptyList = std::make_shared<ListNode>(currentFile, yyloc.first_line, yyloc.first_column);
+            auto arr = std::make_shared<ArrayNode>(name, emptyList, currentFile, yyloc.first_line, yyloc.first_column);
+            auto decl = new DeclarationNode(arr, "signal", propsList, currentFile, yyloc.first_line, yyloc.first_column);
+            decl->setCompilerProperty("_autoPortSize", std::make_shared<ValueNode>(true, currentFile, yyloc.first_line, yyloc.first_column));
+            $$ = decl;
+            SET_NODE_END($$);
+        }
+    |   UVAR '[' indexExp ']' {
+            string name($1);
+            free($1);
+            auto defaultVal = std::make_shared<ValueNode>(0.0, currentFile, yyloc.first_line, yyloc.first_column);
+            auto defaultProp = std::make_shared<PropertyNode>("default", defaultVal, currentFile, yyloc.first_line, yyloc.first_column);
+            auto propsList = std::make_shared<AST>();
+            propsList->addChild(defaultProp);
+            auto idxList = std::make_shared<ListNode>(std::shared_ptr<AST>($3), currentFile, yyloc.first_line, yyloc.first_column);
+            auto arr = std::make_shared<ArrayNode>(name, idxList, currentFile, yyloc.first_line, yyloc.first_column);
+            $$ = new DeclarationNode(arr, "signal", propsList, currentFile, yyloc.first_line, yyloc.first_column);
+            SET_NODE_END($$);
+        }
+    |   WORD UVAR blockType {
+            string kind($1);
+            string name($2);
+            free($1);
+            free($2);
+            $$ = new DeclarationNode(name, kind, std::shared_ptr<AST>($3), currentFile, yyloc.first_line, yyloc.first_column);
+            SET_NODE_END($$);
+        }
+    |   WORD UVAR '[' ']' blockType {
+            string kind($1);
+            string name($2);
+            free($1);
+            free($2);
+            auto emptyList = std::make_shared<ListNode>(currentFile, yyloc.first_line, yyloc.first_column);
+            auto arr = std::make_shared<ArrayNode>(name, emptyList, currentFile, yyloc.first_line, yyloc.first_column);
+            auto decl = new DeclarationNode(arr, kind, std::shared_ptr<AST>($5), currentFile, yyloc.first_line, yyloc.first_column);
+            decl->setCompilerProperty("_autoPortSize", std::make_shared<ValueNode>(true, currentFile, yyloc.first_line, yyloc.first_column));
+            $$ = decl;
+            SET_NODE_END($$);
+        }
+    |   WORD UVAR '[' indexExp ']' blockType {
+            string kind($1);
+            string name($2);
+            free($1);
+            free($2);
+            auto idxList = std::make_shared<ListNode>(std::shared_ptr<AST>($4), currentFile, yyloc.first_line, yyloc.first_column);
+            auto arr = std::make_shared<ArrayNode>(name, idxList, currentFile, yyloc.first_line, yyloc.first_column);
+            $$ = new DeclarationNode(arr, kind, std::shared_ptr<AST>($6), currentFile, yyloc.first_line, yyloc.first_column);
+            SET_NODE_END($$);
+        }
+    ;
+
+propertyPort:
+        wordToken COLON portItem {
+            string s($1);
+            free($1);
+            $$ = new PropertyNode(s, std::shared_ptr<AST>($3), currentFile, yyloc.first_line, yyloc.first_column);
+            SET_NODE_END($$);
+        }
+    ;
+
+propertyPortList:
+        propertyPortList COMMA propertyPort {
+            ListNode *list = $1;
+            list->addChild(std::shared_ptr<AST>($3));
+            $$ = list;
+        }
+    |   propertyPort {
+            ListNode *list = new ListNode(currentFile, yyloc.first_line, yyloc.first_column);
+            list->addChild(std::shared_ptr<AST>($1));
+            $$ = list;
+        }
+    ;
+
+propertyPortListOpt:
+        /* epsilon */ {
+            $$ = new ListNode(currentFile, yyloc.first_line, yyloc.first_column);
+        }
+    |   propertyPortList {
+            $$ = $1;
+        }
+    |   propertyPortList COMMA {
+            $$ = $1;
+        }
+    ;
+
+codeItemListOpt:
+        /* epsilon */ {
+            $$ = new ListNode(currentFile, yyloc.first_line, yyloc.first_column);
+        }
+    |   codeItemList {
+            $$ = $1;
+        }
+    ;
+
+codeItemList:
+        codeItemList codeItem {
+            ListNode *list = $1;
+            if ($2) {
+                list->addChild(std::shared_ptr<AST>($2));
+            }
+            $$ = list;
+        }
+    |   codeItemList COMMA codeItem {
+            ListNode *list = $1;
+            if ($3) {
+                list->addChild(std::shared_ptr<AST>($3));
+            }
+            $$ = list;
+        }
+    |   codeItem {
+            ListNode *list = new ListNode(currentFile, yyloc.first_line, yyloc.first_column);
+            if ($1) {
+                list->addChild(std::shared_ptr<AST>($1));
+            }
+            $$ = list;
+        }
+    ;
+
+codeItem:
+        blockDef {
+            $$ = $1;
+        }
+    |   streamDef {
+            $$ = $1;
+        }
+    |   SEMICOLON {
+            $$ = NULL;
+        }
+    ;
+
+wordToken:
+        WORD {
+            $$ = $1;
+        }
+    |   MODULE {
+            $$ = $1;
+        }
+    |   REACTION {
+            $$ = $1;
+        }
+    |   LOOP {
+            $$ = $1;
+        }
+    |   CODE {
+            $$ = $1;
         }
     ;
 
@@ -956,7 +1296,7 @@ properties:
     ;
 
 property:
-        WORD COLON propertyType {
+        wordToken COLON propertyType {
             string s;
             s.append($1); /* string constructor leaks otherwise! */
             $$ = new PropertyNode(s, std::shared_ptr<AST>($3), currentFile, yyloc.first_line, yyloc.first_column);
@@ -965,12 +1305,17 @@ property:
             currentAt.clear();
             SET_NODE_END($$);
         }
-    |   WORD COLON STREAMRATE   {
+    |   wordToken COLON STREAMRATE   {
             string s;
             s.append($1); /* string constructor leaks otherwise! */
             PropertyNode * node = new PropertyNode(s, std::make_shared<ValueNode>((string) "streamRate", __FILE__, __LINE__), currentFile, yyloc.first_line, yyloc.first_column);
             $$ = node;
             COUT << "Property: " << $1 << ENDL << "New property ... " << ENDL;
+            free($1);
+            SET_NODE_END($$);
+        }
+    |   CODE COLON '[' codeItemListOpt ']' {
+            $$ = new PropertyNode("code", std::shared_ptr<AST>($4), currentFile, yyloc.first_line, yyloc.first_column);
             free($1);
             SET_NODE_END($$);
         }
@@ -1012,7 +1357,7 @@ propertyType:
 // =================================
 
 portPropertyDef:
-        UVAR DOT WORD   {
+        UVAR DOT wordToken   {
             string s;
             s.append($1); /* string constructor leaks otherwise! */
             string p;
@@ -1025,7 +1370,7 @@ portPropertyDef:
     ;
 
 portPropertyDef:
-        DOT WORD   {
+        DOT wordToken   {
             string s; // empty entity name for "this"
             string p;
             p.append($2); /* string constructor leaks otherwise! */

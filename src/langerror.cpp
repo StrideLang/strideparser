@@ -139,6 +139,14 @@ std::string LangError::getErrorText() {
     errorText += "Port '" + errorTokens[1] + "' of type '" + errorTokens[0] +
                  "' is private and cannot be accessed externally";
     break;
+  case HeaderPortsWithPortsProperty:
+    errorText += errorTokens[0] + " '" + errorTokens[1] +
+                 "' declares ports in its header and cannot also declare 'ports' in its body";
+    break;
+  case CodeWithEntitiesOrStreams:
+    errorText += errorTokens[0] + " '" + errorTokens[1] +
+                 "' specifies 'code' and cannot also specify '" + errorTokens[2] + "' in its body";
+    break;
   case UnsizedPort:
     errorText += "'" + errorTokens[0] + "()' takes the size of its " +
                  errorTokens[1] + " from " + errorTokens[2] + " (" +

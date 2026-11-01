@@ -1,0 +1,7 @@
+use DesktopAudio version 1.0
+
+reaction ComputeEnvelope(buffer: signal Win[] { type: Real }) >> DetectedLevel {
+    code: [
+        Win[0] >> DetectedLevel;
+    ]
+}

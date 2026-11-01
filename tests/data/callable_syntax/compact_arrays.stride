@@ -1,0 +1,7 @@
+use DesktopAudio version 1.0
+
+module Frame[] >> SizedArrayMod(ratio: 2.0) >> AudioOut[2] {
+    code: [
+        Frame[0] >> AudioOut[0];
+    ]
+}

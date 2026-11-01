@@ -1,0 +1,12 @@
+use DesktopAudio version 1.0
+
+loop Guess >> SolveMakeup(target: signal Target { default: 1.0 }) >> BestGain {
+    until: Converged
+    maxIterations: 8
+    code: [
+        switch Converged { default: off }
+        signal Next { default: 0.0 }
+
+        Guess - 0.5 >> Next >> Guess >> BestGain;
+    ]
+}

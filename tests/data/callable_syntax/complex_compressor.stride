@@ -1,0 +1,57 @@
+use DesktopAudio version 1.0
+
+module [AudioIn[2], SidechainIn] 
+    >> SpectralCompressor(
+        threshold: signal Thresh  { default: -18.0 },
+        ratio:     signal Ratio   { default: 4.0 },
+        attack:    signal Attack  { default: 0.01 },
+        release:   signal Release { default: 0.1 },
+        reset:     switch Reset   { default: off }
+    ) 
+    >> [AudioOut[2], signal GainReduction { rate: 100 }] 
+{
+    code: [
+        signal Env { default: 0.0  reset: Reset  persistent: on }
+        switch OverThresh { default: off }
+
+        buffer ScWindow {
+            type:        Real
+            capacity:    256
+            frameSize:   256
+            hop:         64
+            mode:        Buffer::ModeSliding
+            triggerMode: Buffer::TriggerPeriodic
+            trigger:     Reset
+        }
+
+        # Short-Circuit Loop: iterative gain solver
+        loop Guess >> SolveMakeup(target: signal Target { default: 1.0 }) >> BestGain {
+            until: Converged
+            maxIterations: 8
+            code: [
+                switch Converged { default: off }
+                signal Next { default: 0.0 }
+
+                Guess - ((Guess * Guess - Target) / (2.0 * Guess)) >> Next >> Guess >> BestGain;
+                [Abs(Next - Guess), 0.0001] >> Less() >> Converged;
+            ]
+        }
+
+        # Triggered Reaction: runs every 64 samples when ScWindow.ready fires
+        reaction ComputeEnvelope(buffer: signal Win[] { type: Real }) >> DetectedLevel {
+            code: [
+                Win >> Sqrt() >> DetectedLevel;
+            ]
+        }
+
+        # Processing Pipelines
+        SidechainIn >> ScWindow;
+        ScWindow.ready >> ComputeEnvelope(buffer: ScWindow) >> Env;
+
+        [Env, Thresh] >> Greater() >> OverThresh;
+        (Env - Thresh) * (1.0 - (1.0 / Ratio)) >> SolveMakeup(target: Ratio) >> GainReduction;
+
+        AudioIn[0] * GainReduction >> AudioOut[0];
+        AudioIn[1] * GainReduction >> AudioOut[1];
+    ]
+}
