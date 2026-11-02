@@ -155,7 +155,9 @@ NullStream nstream;
 %type <ast> generatorRange
 %type <declarationNode> callableDef
 %type <declarationNode> portItem
+%type <declarationNode> inputPortItem
 %type <ast> propertyPortValue
+%type <listNode> inputPortGroup
 %type <listNode> portGroup
 %type <listNode> portItemList
 %type <propertyNode> propertyPort
@@ -499,26 +501,26 @@ blockType:
 // =================================
 
 callableDef:
-    // With input stream (portGroup >> UVAR):
-        WORD portGroup STREAM UVAR '(' propertyPortListOpt ')' STREAM portGroup blockType {
+    // With input stream (inputPortGroup >> UVAR):
+        WORD inputPortGroup STREAM UVAR '(' propertyPortListOpt ')' STREAM portGroup blockType {
             string type($1); free($1);
             string name($4); free($4);
             $$ = desugarCallable(type, name, std::shared_ptr<AST>($2), std::shared_ptr<AST>($6), std::shared_ptr<AST>($9), std::shared_ptr<AST>($10), currentFile, yyloc.first_line, yyloc.first_column);
             SET_NODE_END($$);
         }
-    |   WORD portGroup STREAM UVAR '(' propertyPortListOpt ')' blockType {
+    |   WORD inputPortGroup STREAM UVAR '(' propertyPortListOpt ')' blockType {
             string type($1); free($1);
             string name($4); free($4);
             $$ = desugarCallable(type, name, std::shared_ptr<AST>($2), std::shared_ptr<AST>($6), nullptr, std::shared_ptr<AST>($8), currentFile, yyloc.first_line, yyloc.first_column);
             SET_NODE_END($$);
         }
-    |   WORD portGroup STREAM UVAR STREAM portGroup blockType {
+    |   WORD inputPortGroup STREAM UVAR STREAM portGroup blockType {
             string type($1); free($1);
             string name($4); free($4);
             $$ = desugarCallable(type, name, std::shared_ptr<AST>($2), nullptr, std::shared_ptr<AST>($6), std::shared_ptr<AST>($7), currentFile, yyloc.first_line, yyloc.first_column);
             SET_NODE_END($$);
         }
-    |   WORD portGroup STREAM UVAR blockType {
+    |   WORD inputPortGroup STREAM UVAR blockType {
             string type($1); free($1);
             string name($4); free($4);
             $$ = desugarCallable(type, name, std::shared_ptr<AST>($2), nullptr, nullptr, std::shared_ptr<AST>($5), currentFile, yyloc.first_line, yyloc.first_column);
@@ -536,6 +538,59 @@ callableDef:
             string type($1); free($1);
             string name($2); free($2);
             $$ = desugarCallable(type, name, nullptr, std::shared_ptr<AST>($4), nullptr, std::shared_ptr<AST>($6), currentFile, yyloc.first_line, yyloc.first_column);
+            SET_NODE_END($$);
+        }
+    ;
+
+inputPortGroup:
+        inputPortItem {
+            ListNode *list = new ListNode(currentFile, yyloc.first_line, yyloc.first_column);
+            list->addChild(std::shared_ptr<AST>($1));
+            $$ = list;
+        }
+    |   '[' portItemList ']' {
+            $$ = $2;
+        }
+    |   '[' portItemList COMMA ']' {
+            $$ = $2;
+        }
+    ;
+
+inputPortItem:
+        UVAR {
+            string name($1);
+            free($1);
+            auto defaultVal = std::make_shared<ValueNode>(0.0, currentFile, yyloc.first_line, yyloc.first_column);
+            auto defaultProp = std::make_shared<PropertyNode>("default", defaultVal, currentFile, yyloc.first_line, yyloc.first_column);
+            auto propsList = std::make_shared<AST>();
+            propsList->addChild(defaultProp);
+            $$ = new DeclarationNode(name, "signal", propsList, currentFile, yyloc.first_line, yyloc.first_column);
+            SET_NODE_END($$);
+        }
+    |   UVAR '[' ']' {
+            string name($1);
+            free($1);
+            auto defaultVal = std::make_shared<ValueNode>(0.0, currentFile, yyloc.first_line, yyloc.first_column);
+            auto defaultProp = std::make_shared<PropertyNode>("default", defaultVal, currentFile, yyloc.first_line, yyloc.first_column);
+            auto propsList = std::make_shared<AST>();
+            propsList->addChild(defaultProp);
+            auto emptyList = std::make_shared<ListNode>(currentFile, yyloc.first_line, yyloc.first_column);
+            auto arr = std::make_shared<ArrayNode>(name, emptyList, currentFile, yyloc.first_line, yyloc.first_column);
+            auto decl = new DeclarationNode(arr, "signal", propsList, currentFile, yyloc.first_line, yyloc.first_column);
+            decl->setCompilerProperty("_autoPortSize", std::make_shared<ValueNode>(true, currentFile, yyloc.first_line, yyloc.first_column));
+            $$ = decl;
+            SET_NODE_END($$);
+        }
+    |   UVAR '[' indexExp ']' {
+            string name($1);
+            free($1);
+            auto defaultVal = std::make_shared<ValueNode>(0.0, currentFile, yyloc.first_line, yyloc.first_column);
+            auto defaultProp = std::make_shared<PropertyNode>("default", defaultVal, currentFile, yyloc.first_line, yyloc.first_column);
+            auto propsList = std::make_shared<AST>();
+            propsList->addChild(defaultProp);
+            auto idxList = std::make_shared<ListNode>(std::shared_ptr<AST>($3), currentFile, yyloc.first_line, yyloc.first_column);
+            auto arr = std::make_shared<ArrayNode>(name, idxList, currentFile, yyloc.first_line, yyloc.first_column);
+            $$ = new DeclarationNode(arr, "signal", propsList, currentFile, yyloc.first_line, yyloc.first_column);
             SET_NODE_END($$);
         }
     ;
@@ -1395,16 +1450,6 @@ blockList:
             list->addChild(std::shared_ptr<AST>($3));
             $$ = list;
         }
-    |   blockList COMMA valueExp    {
-            ListNode *list = new ListNode(NULL, currentFile, yyloc.first_line, yyloc.first_column);
-            list->stealMembers($1);
-            ListNode *oldList = $1;
-            delete oldList;
-            list->addChild(std::shared_ptr<AST>($3));
-            $$ = list;
-            COUT << "Value expression in block list ... " << ENDL;
-            COUT << "New list item ... " << ENDL;
-        }
     |   blockList blockDef          {
             ListNode *list = new ListNode(NULL, currentFile, yyloc.first_line, yyloc.first_column);
             list->stealMembers($1);
@@ -1444,14 +1489,6 @@ streamList:
             COUT << "Stream definition ... " << ENDL;
             COUT << "New list item ... " << ENDL;
         }
-    |   streamList COMMA blockDef   {
-            ListNode *list = new ListNode(NULL, currentFile, yyloc.first_line, yyloc.first_column);
-            list->stealMembers($1);
-            ListNode *oldList = $1;
-            delete oldList;
-            list->addChild(std::shared_ptr<AST>($3));
-            $$ = list;
-        }
     |   streamList streamDef        {
             ListNode *list = new ListNode(NULL, currentFile, yyloc.first_line, yyloc.first_column);
             list->stealMembers($1);
@@ -1461,17 +1498,6 @@ streamList:
             $$ = list;
             COUT << "Stream definition ... " << ENDL;
             COUT << "New list item ... " << ENDL;
-        }
-    |   streamList blockDef         {
-            ListNode *list = new ListNode(NULL, currentFile, yyloc.first_line, yyloc.first_column);
-            list->stealMembers($1);
-            ListNode *oldList = $1;
-            delete oldList;
-            list->addChild(std::shared_ptr<AST>($2));
-            $$ = list;
-        }
-    |   streamList SEMICOLON        {
-            $$ = $1;
         }
     |   streamDef                   {
             $$ = new ListNode(std::shared_ptr<AST>($1), currentFile, yyloc.first_line, yyloc.first_column);
