@@ -253,3 +253,10 @@ TEST(CallableSyntaxTest, ReactionMainInputError) {
   }
   EXPECT_TRUE(foundError);
 }
+
+TEST(CallableSyntaxTest, AnonymousReactionInStream) {
+  ASTNode tree = AST::parseFile(TESTS_SOURCE_DIR "callable_syntax/anonymous_reaction.stride");
+  auto errors = AST::getParseErrors();
+  EXPECT_TRUE(errors.empty());
+  ASSERT_TRUE(tree != nullptr);
+}

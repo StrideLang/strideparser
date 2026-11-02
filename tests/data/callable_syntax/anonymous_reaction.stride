@@ -1,0 +1,13 @@
+module Counter {
+    ports: [
+        mainOutputPort OutputPort { entity: Output }
+    ]
+    entities: [
+        signal Output { default: 0 },
+        signal StopValue { default: 10 },
+        signal StartValue { default: 0 }
+    ]
+    streams: [
+        [Output, StopValue] >> Greater() >> reaction { StartValue >> Output; };
+    ]
+}

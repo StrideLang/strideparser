@@ -1215,7 +1215,7 @@ functionDef:
 //  ANONYMOUS DECLARATION DEFINITION
 // =================================
 anonymousDeclDef:
-        WORD '[' ']' blockType            {
+        wordToken '[' ']' blockType            {
             string word;
             word.append($1); /* string constructor leaks otherwise! */
             string uvar = "___Anonymous___" + std::to_string(anonymous_counter++);
@@ -1228,7 +1228,7 @@ anonymousDeclDef:
             free($1);
             SET_NODE_END($$);
         }
-    |   WORD blockType                    {
+    |   wordToken blockType                    {
             string word;
             word.append($1); /* string constructor leaks otherwise! */
             string uvar = "___Anonymous___" + std::to_string(anonymous_counter++);
@@ -1241,7 +1241,7 @@ anonymousDeclDef:
             free($1);
             SET_NODE_END($$);
         }
-    |   WORD '[' UVAR IN generatorRange ']' blockType {
+    |   wordToken '[' UVAR IN generatorRange ']' blockType {
             string word;
             word.append($1);
             string varName;
@@ -2108,7 +2108,7 @@ streamComp:
             COUT << "String: " << $1 << ENDL;
             free($1);
         }
-    |   WORD            {
+    |   wordToken            {
             string s;
             s.append($1);
             $$ = new KeywordNode(s, currentFile, yyloc.first_line, yyloc.first_column);
