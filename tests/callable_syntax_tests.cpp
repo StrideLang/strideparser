@@ -40,6 +40,7 @@
 #include "stride/parser/listnode.h"
 #include "stride/parser/memberaccessnode.h"
 #include "stride/parser/propertynode.h"
+#include "stride/parser/streamnode.h"
 #include "stride/parser/valuenode.h"
 #include "gtest/gtest.h"
 
