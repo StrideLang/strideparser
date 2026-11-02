@@ -144,7 +144,8 @@ NullStream nstream;
 %type <listNode> streamListDef
 %type <listNode> valueList
 %type <listNode> valueListDef
-%type <listNode> blockList
+%type <listNode> blockListBlock
+%type <listNode> blockListValue
 %type <listNode> streamList
 %type <listNode> listList
 %type <ast> valueExp
@@ -1418,8 +1419,22 @@ valueList:
 // =================================
 
 listDef:
-        '[' blockList COMMA ']' { $$ = $2; }
-    |   '[' blockList  ']'      { $$ = $2; }
+        '[' blockListBlock COMMA ']' { $$ = $2; }
+    |   '[' blockListBlock ']'       { $$ = $2; }
+    |   '[' blockListValue COMMA ']' { $$ = $2; }
+    |   '[' blockListValue ']'       { $$ = $2; }
+    |   '[' blockListBlock streamList COMMA ']' {
+            ListNode *list = $2;
+            list->stealMembers($3);
+            delete $3;
+            $$ = list;
+        }
+    |   '[' blockListBlock streamList ']' {
+            ListNode *list = $2;
+            list->stealMembers($3);
+            delete $3;
+            $$ = list;
+        }
     |   streamListDef           { $$ = $1; }
     |   '[' listList COMMA ']'  { $$ = $2; }
     |   '[' listList   ']'      { $$ = $2; }
@@ -1431,49 +1446,61 @@ streamListDef:
     |   '[' streamList ']'        { $$ = $2; currentAt = "";}
     ;
 
-blockList:
-        blockList COMMA blockDef    {
+blockListBlock:
+        blockListBlock COMMA blockDef {
             ListNode *list = new ListNode(NULL, currentFile, yyloc.first_line, yyloc.first_column);
             list->stealMembers($1);
-            ListNode *oldList = $1;
-            delete oldList;
+            delete $1;
             list->addChild(std::shared_ptr<AST>($3));
             $$ = list;
             COUT << "Block definition ... " << ENDL;
             COUT << "New list item ... " << ENDL;
         }
-    |   blockList COMMA streamDef   {
+    |   blockListBlock blockDef {
             ListNode *list = new ListNode(NULL, currentFile, yyloc.first_line, yyloc.first_column);
             list->stealMembers($1);
-            ListNode *oldList = $1;
-            delete oldList;
-            list->addChild(std::shared_ptr<AST>($3));
-            $$ = list;
-        }
-    |   blockList blockDef          {
-            ListNode *list = new ListNode(NULL, currentFile, yyloc.first_line, yyloc.first_column);
-            list->stealMembers($1);
-            ListNode *oldList = $1;
-            delete oldList;
+            delete $1;
             list->addChild(std::shared_ptr<AST>($2));
             $$ = list;
             COUT << "Block definition ... " << ENDL;
             COUT << "New list item ... " << ENDL;
         }
-    |   blockList streamDef         {
+    |   blockListValue COMMA blockDef {
             ListNode *list = new ListNode(NULL, currentFile, yyloc.first_line, yyloc.first_column);
             list->stealMembers($1);
-            ListNode *oldList = $1;
-            delete oldList;
-            list->addChild(std::shared_ptr<AST>($2));
+            delete $1;
+            list->addChild(std::shared_ptr<AST>($3));
             $$ = list;
+            COUT << "Block definition ... " << ENDL;
+            COUT << "New list item ... " << ENDL;
         }
-    |   blockList SEMICOLON         {
+    |   blockListBlock SEMICOLON {
             $$ = $1;
         }
-    |   blockDef                    {
+    |   blockDef {
             $$ = new ListNode(std::shared_ptr<AST>($1), currentFile, yyloc.first_line, yyloc.first_column);
             COUT << "Block definition ... " << ENDL;
+            COUT << "New list item ... " << ENDL;
+        }
+    ;
+
+blockListValue:
+        blockListBlock COMMA valueExp {
+            ListNode *list = new ListNode(NULL, currentFile, yyloc.first_line, yyloc.first_column);
+            list->stealMembers($1);
+            delete $1;
+            list->addChild(std::shared_ptr<AST>($3));
+            $$ = list;
+            COUT << "Value expression in block list ... " << ENDL;
+            COUT << "New list item ... " << ENDL;
+        }
+    |   blockListValue COMMA valueExp {
+            ListNode *list = new ListNode(NULL, currentFile, yyloc.first_line, yyloc.first_column);
+            list->stealMembers($1);
+            delete $1;
+            list->addChild(std::shared_ptr<AST>($3));
+            $$ = list;
+            COUT << "Value expression in block list ... " << ENDL;
             COUT << "New list item ... " << ENDL;
         }
     ;
@@ -1482,8 +1509,7 @@ streamList:
         streamList COMMA streamDef  {
             ListNode *list = new ListNode(NULL, currentFile, yyloc.first_line, yyloc.first_column);
             list->stealMembers($1);
-            ListNode *oldList = $1;
-            delete oldList;
+            delete $1;
             list->addChild(std::shared_ptr<AST>($3));
             $$ = list;
             COUT << "Stream definition ... " << ENDL;
@@ -1492,12 +1518,14 @@ streamList:
     |   streamList streamDef        {
             ListNode *list = new ListNode(NULL, currentFile, yyloc.first_line, yyloc.first_column);
             list->stealMembers($1);
-            ListNode *oldList = $1;
-            delete oldList;
+            delete $1;
             list->addChild(std::shared_ptr<AST>($2));
             $$ = list;
             COUT << "Stream definition ... " << ENDL;
             COUT << "New list item ... " << ENDL;
+        }
+    |   streamList SEMICOLON        {
+            $$ = $1;
         }
     |   streamDef                   {
             $$ = new ListNode(std::shared_ptr<AST>($1), currentFile, yyloc.first_line, yyloc.first_column);
