@@ -25,11 +25,15 @@ set(PARSER_SRC
   src/platformnode.cpp
   src/memberaccessnode.cpp
   src/desugar.cpp
+  src/stridereader.cpp
+  src/stridedocument.cpp
 )
 
 set(PARSER_HEADERS
   include/stride/parser/ast.h
   include/stride/parser/desugar.h
+  include/stride/parser/stridereader.h
+  include/stride/parser/stridedocument.h
   include/stride/parser/streamnode.h
   include/stride/parser/valuenode.h
   include/stride/parser/arraynode.h

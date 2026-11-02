@@ -25,6 +25,7 @@ set(TEST_SOURCES main.cpp
   stream.cpp
   totext_test.cpp
   callable_syntax_tests.cpp
+  stride_data_tests.cpp
 )
 
 

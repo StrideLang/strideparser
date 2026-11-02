@@ -51,6 +51,8 @@
 #include "generatorrangenode.h"
 #include "scopenode.h"
 #include "streamnode.h"
+#include "stridereader.h"
+#include "stridedocument.h"
 #include "valuenode.h"
 
 #endif // STRIDEPARSER_H
