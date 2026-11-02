@@ -176,7 +176,8 @@ DeclarationNode *desugarCallable(
       portsList->addChild(portDecl);
 
       bool isAutoSized = (item->getCompilerProperty("_autoPortSize") != nullptr);
-      if (isAutoSized && item->getNodeType() == AST::Declaration) {
+      if (isAutoSized && (item->getNodeType() == AST::Declaration ||
+                          item->getNodeType() == AST::ArrayDeclaration)) {
         entitiesList->addChild(createAutoSizedEntityDecl(
             std::static_pointer_cast<DeclarationNode>(item), pName,
             item->getFilename(), item->getLine(), item->getColumn()));
@@ -230,7 +231,8 @@ DeclarationNode *desugarCallable(
       portsList->addChild(portDecl);
 
       bool isAutoSized = (entityDeclNode->getCompilerProperty("_autoPortSize") != nullptr);
-      if (isAutoSized && entityDeclNode->getNodeType() == AST::Declaration) {
+      if (isAutoSized && (entityDeclNode->getNodeType() == AST::Declaration ||
+                          entityDeclNode->getNodeType() == AST::ArrayDeclaration)) {
         entitiesList->addChild(createAutoSizedEntityDecl(
             std::static_pointer_cast<DeclarationNode>(entityDeclNode), pName,
             entityDeclNode->getFilename(), entityDeclNode->getLine(), entityDeclNode->getColumn()));
@@ -263,7 +265,8 @@ DeclarationNode *desugarCallable(
       portsList->addChild(portDecl);
 
       bool isAutoSized = (item->getCompilerProperty("_autoPortSize") != nullptr);
-      if (isAutoSized && item->getNodeType() == AST::Declaration) {
+      if (isAutoSized && (item->getNodeType() == AST::Declaration ||
+                          item->getNodeType() == AST::ArrayDeclaration)) {
         entitiesList->addChild(createAutoSizedEntityDecl(
             std::static_pointer_cast<DeclarationNode>(item), pName,
             item->getFilename(), item->getLine(), item->getColumn()));

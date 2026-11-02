@@ -31,9 +31,12 @@ module [AudioIn[2], SidechainIn]
             code: [
                 switch Converged { default: off }
                 signal Next { default: 0.0 }
+                signal Diff { default: 0.0 }
 
-                Guess - ((Guess * Guess - Target) / (2.0 * Guess)) >> Next >> Guess >> BestGain;
-                [Abs(Next - Guess), 0.0001] >> Less() >> Converged;
+                Guess - ((Guess * Guess - Target) / (2.0 * Guess)) >> Next;
+                Next - Guess >> Abs() >> Diff;
+                Next >> Guess >> BestGain;
+                [Diff, 0.0001] >> Less() >> Converged;
             ]
         }
 
