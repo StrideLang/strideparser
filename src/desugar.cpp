@@ -297,14 +297,14 @@ DeclarationNode *desugarCallable(
     result->addProperty(bodyPortsProp);
   }
 
-  // Add entities property if we have entities from header or code
-  if (!entitiesList->getChildren().empty()) {
+  // Add entities property if we have entities from header or code, or if code: was specified
+  if (bodyCodeProp || !entitiesList->getChildren().empty()) {
     result->addProperty(
         std::make_shared<PropertyNode>("entities", entitiesList, filename, line, column));
   }
 
-  // Add streams property if we have streams from code
-  if (!streamsList->getChildren().empty()) {
+  // Add streams property if we have streams from code, or if code: was specified
+  if (bodyCodeProp || !streamsList->getChildren().empty()) {
     result->addProperty(
         std::make_shared<PropertyNode>("streams", streamsList, filename, line, column));
   }

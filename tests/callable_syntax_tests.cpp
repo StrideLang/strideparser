@@ -315,3 +315,42 @@ TEST(CallableSyntaxTest, AnonymousReactionInStream) {
   EXPECT_TRUE(errors.empty());
   ASSERT_TRUE(tree != nullptr);
 }
+
+TEST(CallableSyntaxTest, AnonymousReactionWithCodeProperty) {
+  ASTNode tree = AST::parseFile(TESTS_SOURCE_DIR
+                                "callable_syntax/anonymous_reaction_code.stride");
+  auto errors = AST::getParseErrors();
+  EXPECT_TRUE(errors.empty());
+  ASSERT_TRUE(tree != nullptr);
+
+  auto moduleDecl =
+      std::static_pointer_cast<DeclarationNode>(tree->getChildren().at(0));
+  ASSERT_TRUE(moduleDecl != nullptr);
+
+  auto streamsProp = moduleDecl->getPropertyValue("streams");
+  ASSERT_TRUE(streamsProp != nullptr);
+  auto stream =
+      std::static_pointer_cast<StreamNode>(streamsProp->getChildren().at(0));
+  ASSERT_TRUE(stream != nullptr);
+
+  auto right = stream->getRight();
+  ASSERT_TRUE(right != nullptr);
+  while (right->getNodeType() == AST::Stream) {
+    right = std::static_pointer_cast<StreamNode>(right)->getRight();
+  }
+  ASSERT_EQ(right->getNodeType(), AST::Declaration);
+  auto rxDecl = std::static_pointer_cast<DeclarationNode>(right);
+  EXPECT_EQ(rxDecl->getEntityType(), "reaction");
+  EXPECT_TRUE(rxDecl->getCompilerProperty("anonymous") != nullptr);
+
+  auto entitiesProp = rxDecl->getPropertyValue("entities");
+  ASSERT_TRUE(entitiesProp != nullptr);
+  ASSERT_EQ(entitiesProp->getChildren().size(), 1);
+  auto entityChild =
+      std::static_pointer_cast<DeclarationNode>(entitiesProp->getChildren().at(0));
+  EXPECT_EQ(entityChild->getName(), "Temp");
+
+  auto streamsChild = rxDecl->getPropertyValue("streams");
+  ASSERT_TRUE(streamsChild != nullptr);
+  ASSERT_EQ(streamsChild->getChildren().size(), 1);
+}

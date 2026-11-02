@@ -461,21 +461,20 @@ blockDef:
              SET_NODE_END($$);
          }
     |   WORD UVAR '[' UVAR IN generatorRange ']' blockType {
-            string word;
-            word.append($1);
-            string name;
-            name.append($2);
-            string varName;
-            varName.append($4);
-            auto decl = new DeclarationNode(name, word, std::shared_ptr<AST>($8), currentFile, yyloc.first_line, yyloc.first_column);
+            string word($1);
+            free($1);
+            string name($2);
+            free($2);
+            string varName($4);
+            free($4);
+            auto decl = desugarCallable(word, name, nullptr, nullptr, nullptr,
+                                        std::shared_ptr<AST>($8),
+                                        currentFile, yyloc.first_line, yyloc.first_column);
             decl->setCompilerProperty("_isGenerator", std::make_shared<ValueNode>(true, currentFile, yyloc.first_line, yyloc.first_column));
             decl->setCompilerProperty("_generatorVar", std::make_shared<ValueNode>(varName, currentFile, yyloc.first_line, yyloc.first_column));
             decl->setCompilerProperty("_generatorRange", std::shared_ptr<AST>($6));
             $$ = decl;
-            COUT << "Generator Block: " << $1 << " " << $2 << "[" << $4 << " in ...]" << ENDL;
-            free($1);
-            free($2);
-            free($4);
+            COUT << "Generator Block: " << word << " " << name << "[" << varName << " in ...]" << ENDL;
             SET_NODE_END($$);
         }
     |   anonymousDeclDef     {
@@ -1155,33 +1154,33 @@ anonymousDeclDef:
             SET_NODE_END($$);
         }
     |   WORD blockType                    {
-            string word;
-            word.append($1); /* string constructor leaks otherwise! */
+            string word($1);
+            free($1);
             string uvar = "___Anonymous___" + std::to_string(anonymous_counter++);
 
-            auto decl = new DeclarationNode(uvar, word, std::shared_ptr<AST>($2),
-                                            currentFile, yyloc.first_line, yyloc.first_column);
-            decl->setCompilerProperty("anonymous", std::make_shared<ValueNode>(true, __FILE__, __LINE__));
+            auto decl = desugarCallable(word, uvar, nullptr, nullptr, nullptr,
+                                        std::shared_ptr<AST>($2),
+                                        currentFile, yyloc.first_line, yyloc.first_column);
+            decl->setCompilerProperty("anonymous", std::make_shared<ValueNode>(true, currentFile, yyloc.first_line, yyloc.first_column));
             $$ = decl;
-            COUT << "Block: " << $1 << ", Labelled: " << uvar << ENDL;
-            free($1);
+            COUT << "Block: " << word << ", Labelled: " << uvar << ENDL;
             SET_NODE_END($$);
         }
     |   WORD '[' UVAR IN generatorRange ']' blockType {
-            string word;
-            word.append($1);
-            string varName;
-            varName.append($3);
+            string word($1);
+            free($1);
+            string varName($3);
+            free($3);
             string uvar = "___Anonymous___" + std::to_string(anonymous_counter++);
-            auto decl = new DeclarationNode(uvar, word, std::shared_ptr<AST>($7), currentFile, yyloc.first_line, yyloc.first_column);
+            auto decl = desugarCallable(word, uvar, nullptr, nullptr, nullptr,
+                                        std::shared_ptr<AST>($7),
+                                        currentFile, yyloc.first_line, yyloc.first_column);
             decl->setCompilerProperty("anonymous", std::make_shared<ValueNode>(true, currentFile, yyloc.first_line, yyloc.first_column));
             decl->setCompilerProperty("_isGenerator", std::make_shared<ValueNode>(true, currentFile, yyloc.first_line, yyloc.first_column));
             decl->setCompilerProperty("_generatorVar", std::make_shared<ValueNode>(varName, currentFile, yyloc.first_line, yyloc.first_column));
             decl->setCompilerProperty("_generatorRange", std::shared_ptr<AST>($5));
             $$ = decl;
-            COUT << "Anonymous Generator Block: " << $1 << "[" << $3 << " in ...], Labelled: " << uvar << ENDL;
-            free($1);
-            free($3);
+            COUT << "Anonymous Generator Block: " << word << "[" << varName << " in ...], Labelled: " << uvar << ENDL;
             SET_NODE_END($$);
         }
     ;
