@@ -1,0 +1,7 @@
+use DesktopAudio version 1.0
+
+customFilter In >> MyFilter(gain: signal Gain { default: 1.0 }) >> Out {
+    code: [
+        In * Gain >> Out;
+    ]
+}

@@ -240,18 +240,26 @@ TEST(CallableSyntaxTest, ExclusivityCodeAndEntitiesError) {
   EXPECT_TRUE(foundError);
 }
 
-TEST(CallableSyntaxTest, ReactionMainInputError) {
+TEST(CallableSyntaxTest, GenericCallableSyntaxParsing) {
   ASTNode tree = AST::parseFile(TESTS_SOURCE_DIR "callable_syntax/error_reaction_main_input.stride");
   auto errors = AST::getParseErrors();
-  bool foundError = false;
-  for (const auto &err : errors) {
-    if (err.type == LangError::ReactionMainInput) {
-      foundError = true;
-      EXPECT_EQ(err.errorTokens.at(0), "reaction");
-      EXPECT_EQ(err.errorTokens.at(1), "BadReaction");
-    }
-  }
-  EXPECT_TRUE(foundError);
+  EXPECT_TRUE(errors.empty());
+  ASSERT_TRUE(tree != nullptr);
+}
+
+TEST(CallableSyntaxTest, ArbitraryCallableType) {
+  ASTNode tree = AST::parseFile(TESTS_SOURCE_DIR "callable_syntax/arbitrary_callable.stride");
+  auto errors = AST::getParseErrors();
+  EXPECT_TRUE(errors.empty());
+  ASSERT_TRUE(tree != nullptr);
+
+  auto decl = std::static_pointer_cast<DeclarationNode>(tree->getChildren().at(1));
+  ASSERT_TRUE(decl != nullptr);
+  EXPECT_EQ(decl->getName(), "MyFilter");
+  EXPECT_EQ(decl->getEntityType(), "customFilter");
+  EXPECT_TRUE(decl->getProperty("ports") != nullptr);
+  EXPECT_TRUE(decl->getProperty("entities") != nullptr);
+  EXPECT_TRUE(decl->getProperty("streams") != nullptr);
 }
 
 TEST(CallableSyntaxTest, AnonymousReactionInStream) {

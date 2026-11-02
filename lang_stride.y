@@ -173,9 +173,6 @@ NullStream nstream;
 %token  <sval>  BIN
 %token  <sval>  UVAR
 %token  <sval>  WORD
-%token  <sval>  MODULE
-%token  <sval>  REACTION
-%token  <sval>  LOOP
 %token  <sval>  CODE
 %token  <sval>  STRING
 %token  <sval>  ERROR
@@ -415,15 +412,12 @@ blockDef:
             free($4);
             SET_NODE_END($$);
         }
-    |   WORD UVAR blockType                    {
-            string word;
-            word.append($1); /* string constructor leaks otherwise! */
-            string uvar;
-            uvar.append($2); /* string constructor leaks otherwise! */
-            $$ = new DeclarationNode(uvar, word, std::shared_ptr<AST>($3), currentFile, yyloc.first_line, yyloc.first_column);
-            COUT << "Block: " << $1 << ", Labelled: " << $2 << ENDL;
+    |   wordToken UVAR blockType                    {
+            string word($1);
+            string uvar($2);
             free($1);
             free($2);
+            $$ = desugarCallable(word, uvar, nullptr, nullptr, nullptr, std::shared_ptr<AST>($3), currentFile, yyloc.first_line, yyloc.first_column);
             SET_NODE_END($$);
         }
         // Test
@@ -511,125 +505,49 @@ blockType:
 // =================================
 
 callableDef:
-    // Module forms:
-        MODULE portGroup STREAM UVAR '(' propertyPortListOpt ')' STREAM portGroup blockType {
+    // With input stream (portGroup >> UVAR):
+        wordToken portGroup STREAM UVAR '(' propertyPortListOpt ')' STREAM portGroup blockType {
             string type($1); free($1);
             string name($4); free($4);
             $$ = desugarCallable(type, name, std::shared_ptr<AST>($2), std::shared_ptr<AST>($6), std::shared_ptr<AST>($9), std::shared_ptr<AST>($10), currentFile, yyloc.first_line, yyloc.first_column);
             SET_NODE_END($$);
         }
-    |   MODULE portGroup STREAM UVAR '(' propertyPortListOpt ')' blockType {
+    |   wordToken portGroup STREAM UVAR '(' propertyPortListOpt ')' blockType {
             string type($1); free($1);
             string name($4); free($4);
             $$ = desugarCallable(type, name, std::shared_ptr<AST>($2), std::shared_ptr<AST>($6), nullptr, std::shared_ptr<AST>($8), currentFile, yyloc.first_line, yyloc.first_column);
             SET_NODE_END($$);
         }
-    |   MODULE portGroup STREAM UVAR STREAM portGroup blockType {
+    |   wordToken portGroup STREAM UVAR STREAM portGroup blockType {
             string type($1); free($1);
             string name($4); free($4);
             $$ = desugarCallable(type, name, std::shared_ptr<AST>($2), nullptr, std::shared_ptr<AST>($6), std::shared_ptr<AST>($7), currentFile, yyloc.first_line, yyloc.first_column);
             SET_NODE_END($$);
         }
-    |   MODULE UVAR '(' propertyPortListOpt ')' STREAM portGroup blockType {
+    |   wordToken portGroup STREAM UVAR blockType {
             string type($1); free($1);
-            string name($2); free($2);
-            $$ = desugarCallable(type, name, nullptr, std::shared_ptr<AST>($4), std::shared_ptr<AST>($7), std::shared_ptr<AST>($8), currentFile, yyloc.first_line, yyloc.first_column);
-            SET_NODE_END($$);
-        }
-    |   MODULE UVAR '(' propertyPortListOpt ')' blockType {
-            string type($1); free($1);
-            string name($2); free($2);
-            $$ = desugarCallable(type, name, nullptr, std::shared_ptr<AST>($4), nullptr, std::shared_ptr<AST>($6), currentFile, yyloc.first_line, yyloc.first_column);
-            SET_NODE_END($$);
-        }
-    |   MODULE UVAR blockType {
-            string type($1); free($1);
-            string name($2); free($2);
-            $$ = desugarCallable(type, name, nullptr, nullptr, nullptr, std::shared_ptr<AST>($3), currentFile, yyloc.first_line, yyloc.first_column);
+            string name($4); free($4);
+            $$ = desugarCallable(type, name, std::shared_ptr<AST>($2), nullptr, nullptr, std::shared_ptr<AST>($5), currentFile, yyloc.first_line, yyloc.first_column);
             SET_NODE_END($$);
         }
 
-    // Loop forms:
-    |   LOOP portGroup STREAM UVAR '(' propertyPortListOpt ')' STREAM portGroup blockType {
-            string type($1); free($1);
-            string name($4); free($4);
-            $$ = desugarCallable(type, name, std::shared_ptr<AST>($2), std::shared_ptr<AST>($6), std::shared_ptr<AST>($9), std::shared_ptr<AST>($10), currentFile, yyloc.first_line, yyloc.first_column);
-            SET_NODE_END($$);
-        }
-    |   LOOP portGroup STREAM UVAR '(' propertyPortListOpt ')' blockType {
-            string type($1); free($1);
-            string name($4); free($4);
-            $$ = desugarCallable(type, name, std::shared_ptr<AST>($2), std::shared_ptr<AST>($6), nullptr, std::shared_ptr<AST>($8), currentFile, yyloc.first_line, yyloc.first_column);
-            SET_NODE_END($$);
-        }
-    |   LOOP portGroup STREAM UVAR STREAM portGroup blockType {
-            string type($1); free($1);
-            string name($4); free($4);
-            $$ = desugarCallable(type, name, std::shared_ptr<AST>($2), nullptr, std::shared_ptr<AST>($6), std::shared_ptr<AST>($7), currentFile, yyloc.first_line, yyloc.first_column);
-            SET_NODE_END($$);
-        }
-    |   LOOP UVAR '(' propertyPortListOpt ')' STREAM portGroup blockType {
+    // Without input stream (UVAR followed by '(' or '>>'):
+    |   wordToken UVAR '(' propertyPortListOpt ')' STREAM portGroup blockType {
             string type($1); free($1);
             string name($2); free($2);
             $$ = desugarCallable(type, name, nullptr, std::shared_ptr<AST>($4), std::shared_ptr<AST>($7), std::shared_ptr<AST>($8), currentFile, yyloc.first_line, yyloc.first_column);
             SET_NODE_END($$);
         }
-    |   LOOP UVAR '(' propertyPortListOpt ')' blockType {
+    |   wordToken UVAR '(' propertyPortListOpt ')' blockType {
             string type($1); free($1);
             string name($2); free($2);
             $$ = desugarCallable(type, name, nullptr, std::shared_ptr<AST>($4), nullptr, std::shared_ptr<AST>($6), currentFile, yyloc.first_line, yyloc.first_column);
             SET_NODE_END($$);
         }
-    |   LOOP UVAR blockType {
+    |   wordToken UVAR STREAM portGroup blockType {
             string type($1); free($1);
             string name($2); free($2);
-            $$ = desugarCallable(type, name, nullptr, nullptr, nullptr, std::shared_ptr<AST>($3), currentFile, yyloc.first_line, yyloc.first_column);
-            SET_NODE_END($$);
-        }
-
-    // Reaction forms:
-    |   REACTION UVAR '(' propertyPortListOpt ')' STREAM portGroup blockType {
-            string type($1); free($1);
-            string name($2); free($2);
-            $$ = desugarCallable(type, name, nullptr, std::shared_ptr<AST>($4), std::shared_ptr<AST>($7), std::shared_ptr<AST>($8), currentFile, yyloc.first_line, yyloc.first_column);
-            SET_NODE_END($$);
-        }
-    |   REACTION UVAR '(' propertyPortListOpt ')' blockType {
-            string type($1); free($1);
-            string name($2); free($2);
-            $$ = desugarCallable(type, name, nullptr, std::shared_ptr<AST>($4), nullptr, std::shared_ptr<AST>($6), currentFile, yyloc.first_line, yyloc.first_column);
-            SET_NODE_END($$);
-        }
-    |   REACTION UVAR blockType {
-            string type($1); free($1);
-            string name($2); free($2);
-            $$ = desugarCallable(type, name, nullptr, nullptr, nullptr, std::shared_ptr<AST>($3), currentFile, yyloc.first_line, yyloc.first_column);
-            SET_NODE_END($$);
-        }
-    |   REACTION portGroup STREAM UVAR '(' propertyPortListOpt ')' STREAM portGroup blockType {
-            string type($1); free($1);
-            string name($4); free($4);
-            LangError err;
-            err.type = LangError::ReactionMainInput;
-            err.errorTokens = {type, name, "mainInputPort"};
-            err.filename = currentFile;
-            err.lineNumber = yyloc.first_line;
-            err.columnNumber = yyloc.first_column;
-            parseErrors.push_back(err);
-            $$ = desugarCallable(type, name, std::shared_ptr<AST>($2), std::shared_ptr<AST>($6), std::shared_ptr<AST>($9), std::shared_ptr<AST>($10), currentFile, yyloc.first_line, yyloc.first_column);
-            SET_NODE_END($$);
-        }
-    |   REACTION portGroup STREAM UVAR '(' propertyPortListOpt ')' blockType {
-            string type($1); free($1);
-            string name($4); free($4);
-            LangError err;
-            err.type = LangError::ReactionMainInput;
-            err.errorTokens = {type, name, "mainInputPort"};
-            err.filename = currentFile;
-            err.lineNumber = yyloc.first_line;
-            err.columnNumber = yyloc.first_column;
-            parseErrors.push_back(err);
-            $$ = desugarCallable(type, name, std::shared_ptr<AST>($2), std::shared_ptr<AST>($6), nullptr, std::shared_ptr<AST>($8), currentFile, yyloc.first_line, yyloc.first_column);
+            $$ = desugarCallable(type, name, nullptr, nullptr, std::shared_ptr<AST>($4), std::shared_ptr<AST>($5), currentFile, yyloc.first_line, yyloc.first_column);
             SET_NODE_END($$);
         }
     ;
@@ -811,15 +729,6 @@ codeItem:
 
 wordToken:
         WORD {
-            $$ = $1;
-        }
-    |   MODULE {
-            $$ = $1;
-        }
-    |   REACTION {
-            $$ = $1;
-        }
-    |   LOOP {
             $$ = $1;
         }
     |   CODE {

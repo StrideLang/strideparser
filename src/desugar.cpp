@@ -95,7 +95,7 @@ DeclarationNode *desugarCallable(
   std::shared_ptr<PropertyNode> bodyCodeProp = nullptr;
   std::shared_ptr<PropertyNode> conflictingEntityOrStreamProp = nullptr;
 
-  std::vector<std::shared_ptr<PropertyNode>> passthroughProperties;
+  std::vector<ASTNode> passthroughChildren;
 
   if (bodyProperties) {
     for (const auto &child : bodyProperties->getChildren()) {
@@ -110,10 +110,12 @@ DeclarationNode *desugarCallable(
           if (!conflictingEntityOrStreamProp) {
             conflictingEntityOrStreamProp = prop;
           }
-          passthroughProperties.push_back(prop);
+          passthroughChildren.push_back(prop);
         } else {
-          passthroughProperties.push_back(prop);
+          passthroughChildren.push_back(prop);
         }
+      } else if (child) {
+        passthroughChildren.push_back(child);
       }
     }
   }
@@ -292,9 +294,13 @@ DeclarationNode *desugarCallable(
         std::make_shared<PropertyNode>("streams", streamsList, filename, line, column));
   }
 
-  // Add remaining passthrough properties (e.g. until:, maxIterations:, domain:, rate:)
-  for (const auto &prop : passthroughProperties) {
-    result->addProperty(prop);
+  // Add remaining passthrough properties and children
+  for (const auto &child : passthroughChildren) {
+    if (child->getNodeType() == AST::Property) {
+      result->addProperty(std::static_pointer_cast<PropertyNode>(child));
+    } else {
+      result->addChild(child);
+    }
   }
 
   return result;
