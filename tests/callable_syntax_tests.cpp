@@ -32,7 +32,6 @@
     Authors: Andres Cabrera and Joseph Tilbian
 */
 
-#include "gtest/gtest.h"
 #include "stride/parser/arraynode.h"
 #include "stride/parser/ast.h"
 #include "stride/parser/declarationnode.h"
@@ -42,30 +41,39 @@
 #include "stride/parser/memberaccessnode.h"
 #include "stride/parser/propertynode.h"
 #include "stride/parser/valuenode.h"
+#include "gtest/gtest.h"
 
 using namespace strd;
 
 TEST(CallableSyntaxTest, PropertyAliasing) {
-  auto decl = std::make_shared<DeclarationNode>("Test", "module", nullptr, __FILE__, __LINE__);
+  auto decl = std::make_shared<DeclarationNode>("Test", "module", nullptr,
+                                                __FILE__, __LINE__);
   auto entitiesList = std::make_shared<ListNode>(__FILE__, __LINE__);
-  auto sigDecl = std::make_shared<DeclarationNode>("Sig", "signal", nullptr, __FILE__, __LINE__);
+  auto sigDecl = std::make_shared<DeclarationNode>("Sig", "signal", nullptr,
+                                                   __FILE__, __LINE__);
   entitiesList->addChild(sigDecl);
 
-  decl->addProperty(std::make_shared<PropertyNode>("entities", entitiesList, __FILE__, __LINE__));
+  decl->addProperty(std::make_shared<PropertyNode>("entities", entitiesList,
+                                                   __FILE__, __LINE__));
   EXPECT_NE(decl->getPropertyValue("entities"), nullptr);
   EXPECT_NE(decl->getPropertyValue("blocks"), nullptr);
-  EXPECT_EQ(decl->getPropertyValue("blocks"), decl->getPropertyValue("entities"));
+  EXPECT_EQ(decl->getPropertyValue("blocks"),
+            decl->getPropertyValue("entities"));
 
-  auto portDecl = std::make_shared<DeclarationNode>("InPort", "mainInputPort", nullptr, __FILE__, __LINE__);
+  auto portDecl = std::make_shared<DeclarationNode>(
+      "InPort", "mainInputPort", nullptr, __FILE__, __LINE__);
   auto entityNode = std::make_shared<EntityNode>("Sig", __FILE__, __LINE__);
-  portDecl->addProperty(std::make_shared<PropertyNode>("entity", entityNode, __FILE__, __LINE__));
+  portDecl->addProperty(
+      std::make_shared<PropertyNode>("entity", entityNode, __FILE__, __LINE__));
   EXPECT_NE(portDecl->getPropertyValue("entity"), nullptr);
   EXPECT_NE(portDecl->getPropertyValue("block"), nullptr);
-  EXPECT_EQ(portDecl->getPropertyValue("block"), portDecl->getPropertyValue("entity"));
+  EXPECT_EQ(portDecl->getPropertyValue("block"),
+            portDecl->getPropertyValue("entity"));
 }
 
 TEST(CallableSyntaxTest, CompactModuleDesugaring) {
-  ASTNode tree = AST::parseFile(TESTS_SOURCE_DIR "callable_syntax/compact_module.stride");
+  ASTNode tree =
+      AST::parseFile(TESTS_SOURCE_DIR "callable_syntax/compact_module.stride");
   ASSERT_NE(tree, nullptr);
   ASSERT_EQ(AST::getParseErrors().size(), 0);
 
@@ -82,18 +90,21 @@ TEST(CallableSyntaxTest, CompactModuleDesugaring) {
   ASSERT_NE(portsNode, nullptr);
   ASSERT_EQ(portsNode->getChildren().size(), 3);
 
-  auto inPort = std::static_pointer_cast<DeclarationNode>(portsNode->getChildren().at(0));
+  auto inPort =
+      std::static_pointer_cast<DeclarationNode>(portsNode->getChildren().at(0));
   EXPECT_EQ(inPort->getEntityType(), "mainInputPort");
   EXPECT_EQ(inPort->getName(), "InputPort");
   EXPECT_NE(inPort->getPropertyValue("entity"), nullptr);
 
-  auto propPort = std::static_pointer_cast<DeclarationNode>(portsNode->getChildren().at(1));
+  auto propPort =
+      std::static_pointer_cast<DeclarationNode>(portsNode->getChildren().at(1));
   EXPECT_EQ(propPort->getEntityType(), "propertyInputPort");
   EXPECT_EQ(propPort->getName(), "GainPort");
   EXPECT_NE(propPort->getPropertyValue("name"), nullptr);
   EXPECT_NE(propPort->getPropertyValue("entity"), nullptr);
 
-  auto outPort = std::static_pointer_cast<DeclarationNode>(portsNode->getChildren().at(2));
+  auto outPort =
+      std::static_pointer_cast<DeclarationNode>(portsNode->getChildren().at(2));
   EXPECT_EQ(outPort->getEntityType(), "mainOutputPort");
   EXPECT_EQ(outPort->getName(), "OutputPort");
   EXPECT_NE(outPort->getPropertyValue("entity"), nullptr);
@@ -111,11 +122,13 @@ TEST(CallableSyntaxTest, CompactModuleDesugaring) {
 }
 
 TEST(CallableSyntaxTest, CompactArraysAutoSizing) {
-  ASTNode tree = AST::parseFile(TESTS_SOURCE_DIR "callable_syntax/compact_arrays.stride");
+  ASTNode tree =
+      AST::parseFile(TESTS_SOURCE_DIR "callable_syntax/compact_arrays.stride");
   ASSERT_NE(tree, nullptr);
   ASSERT_EQ(AST::getParseErrors().size(), 0);
 
-  auto modDecl = std::static_pointer_cast<DeclarationNode>(tree->getChildren().at(1));
+  auto modDecl =
+      std::static_pointer_cast<DeclarationNode>(tree->getChildren().at(1));
   EXPECT_EQ(modDecl->getName(), "SizedArrayMod");
 
   auto entitiesNode = modDecl->getPropertyValue("entities");
@@ -123,7 +136,8 @@ TEST(CallableSyntaxTest, CompactArraysAutoSizing) {
   ASSERT_GE(entitiesNode->getChildren().size(), 1);
 
   // Frame should be an ArrayDeclaration auto-sized to FramePort.size
-  auto frameDecl = std::static_pointer_cast<DeclarationNode>(entitiesNode->getChildren().at(0));
+  auto frameDecl = std::static_pointer_cast<DeclarationNode>(
+      entitiesNode->getChildren().at(0));
   EXPECT_EQ(frameDecl->getNodeType(), AST::ArrayDeclaration);
   EXPECT_EQ(frameDecl->getName(), "Frame");
   auto arrayNode = frameDecl->getArrayIndex();
@@ -132,17 +146,20 @@ TEST(CallableSyntaxTest, CompactArraysAutoSizing) {
   ASSERT_NE(idxList, nullptr);
   ASSERT_EQ(idxList->getChildren().size(), 1);
   EXPECT_EQ(idxList->getChildren().at(0)->getNodeType(), AST::MemberAccess);
-  auto memberAccess = std::static_pointer_cast<MemberAccessNode>(idxList->getChildren().at(0));
+  auto memberAccess =
+      std::static_pointer_cast<MemberAccessNode>(idxList->getChildren().at(0));
   EXPECT_EQ(memberAccess->getEntity(), "FramePort");
   EXPECT_EQ(memberAccess->getPropertyName(), "size");
 }
 
 TEST(CallableSyntaxTest, CompactBundlePorts) {
-  ASTNode tree = AST::parseFile(TESTS_SOURCE_DIR "callable_syntax/compact_bundle.stride");
+  ASTNode tree =
+      AST::parseFile(TESTS_SOURCE_DIR "callable_syntax/compact_bundle.stride");
   ASSERT_NE(tree, nullptr);
   ASSERT_EQ(AST::getParseErrors().size(), 0);
 
-  auto modDecl = std::static_pointer_cast<DeclarationNode>(tree->getChildren().at(1));
+  auto modDecl =
+      std::static_pointer_cast<DeclarationNode>(tree->getChildren().at(1));
   EXPECT_EQ(modDecl->getName(), "MultiPortMod");
 
   auto portsNode = modDecl->getPropertyValue("ports");
@@ -150,34 +167,56 @@ TEST(CallableSyntaxTest, CompactBundlePorts) {
   // 2 inputs + 2 outputs = 4 ports
   ASSERT_EQ(portsNode->getChildren().size(), 4);
 
-  EXPECT_EQ(std::static_pointer_cast<DeclarationNode>(portsNode->getChildren().at(0))->getName(), "AudioInPort");
-  EXPECT_EQ(std::static_pointer_cast<DeclarationNode>(portsNode->getChildren().at(1))->getName(), "SidechainInPort");
-  EXPECT_EQ(std::static_pointer_cast<DeclarationNode>(portsNode->getChildren().at(2))->getName(), "AudioOutPort");
-  EXPECT_EQ(std::static_pointer_cast<DeclarationNode>(portsNode->getChildren().at(3))->getName(), "GainReductionPort");
+  EXPECT_EQ(
+      std::static_pointer_cast<DeclarationNode>(portsNode->getChildren().at(0))
+          ->getName(),
+      "AudioInPort");
+  EXPECT_EQ(
+      std::static_pointer_cast<DeclarationNode>(portsNode->getChildren().at(1))
+          ->getName(),
+      "SidechainInPort");
+  EXPECT_EQ(
+      std::static_pointer_cast<DeclarationNode>(portsNode->getChildren().at(2))
+          ->getName(),
+      "AudioOutPort");
+  EXPECT_EQ(
+      std::static_pointer_cast<DeclarationNode>(portsNode->getChildren().at(3))
+          ->getName(),
+      "GainReductionPort");
 }
 
 TEST(CallableSyntaxTest, CompactReaction) {
-  ASTNode tree = AST::parseFile(TESTS_SOURCE_DIR "callable_syntax/compact_reaction.stride");
+  ASTNode tree = AST::parseFile(TESTS_SOURCE_DIR
+                                "callable_syntax/compact_reaction.stride");
   ASSERT_NE(tree, nullptr);
   ASSERT_EQ(AST::getParseErrors().size(), 0);
 
-  auto rxDecl = std::static_pointer_cast<DeclarationNode>(tree->getChildren().at(1));
+  auto rxDecl =
+      std::static_pointer_cast<DeclarationNode>(tree->getChildren().at(1));
   EXPECT_EQ(rxDecl->getEntityType(), "reaction");
   EXPECT_EQ(rxDecl->getName(), "ComputeEnvelope");
 
   auto portsNode = rxDecl->getPropertyValue("ports");
   ASSERT_NE(portsNode, nullptr);
   ASSERT_EQ(portsNode->getChildren().size(), 2);
-  EXPECT_EQ(std::static_pointer_cast<DeclarationNode>(portsNode->getChildren().at(0))->getEntityType(), "propertyInputPort");
-  EXPECT_EQ(std::static_pointer_cast<DeclarationNode>(portsNode->getChildren().at(1))->getEntityType(), "mainOutputPort");
+  EXPECT_EQ(
+      std::static_pointer_cast<DeclarationNode>(portsNode->getChildren().at(0))
+          ->getEntityType(),
+      "propertyInputPort");
+  EXPECT_EQ(
+      std::static_pointer_cast<DeclarationNode>(portsNode->getChildren().at(1))
+          ->getEntityType(),
+      "mainOutputPort");
 }
 
 TEST(CallableSyntaxTest, CompactLoop) {
-  ASTNode tree = AST::parseFile(TESTS_SOURCE_DIR "callable_syntax/compact_loop.stride");
+  ASTNode tree =
+      AST::parseFile(TESTS_SOURCE_DIR "callable_syntax/compact_loop.stride");
   ASSERT_NE(tree, nullptr);
   ASSERT_EQ(AST::getParseErrors().size(), 0);
 
-  auto loopDecl = std::static_pointer_cast<DeclarationNode>(tree->getChildren().at(1));
+  auto loopDecl =
+      std::static_pointer_cast<DeclarationNode>(tree->getChildren().at(1));
   EXPECT_EQ(loopDecl->getEntityType(), "loop");
   EXPECT_EQ(loopDecl->getName(), "SolveMakeup");
 
@@ -190,11 +229,13 @@ TEST(CallableSyntaxTest, CompactLoop) {
 }
 
 TEST(CallableSyntaxTest, ComplexCompressor) {
-  ASTNode tree = AST::parseFile(TESTS_SOURCE_DIR "callable_syntax/complex_compressor.stride");
+  ASTNode tree = AST::parseFile(TESTS_SOURCE_DIR
+                                "callable_syntax/complex_compressor.stride");
   ASSERT_NE(tree, nullptr);
   ASSERT_EQ(AST::getParseErrors().size(), 0);
 
-  auto compDecl = std::static_pointer_cast<DeclarationNode>(tree->getChildren().at(1));
+  auto compDecl =
+      std::static_pointer_cast<DeclarationNode>(tree->getChildren().at(1));
   EXPECT_EQ(compDecl->getEntityType(), "module");
   EXPECT_EQ(compDecl->getName(), "SpectralCompressor");
 
@@ -213,7 +254,8 @@ TEST(CallableSyntaxTest, ComplexCompressor) {
 }
 
 TEST(CallableSyntaxTest, ExclusivityHeaderAndPortsError) {
-  ASTNode tree = AST::parseFile(TESTS_SOURCE_DIR "callable_syntax/error_header_and_ports.stride");
+  ASTNode tree = AST::parseFile(
+      TESTS_SOURCE_DIR "callable_syntax/error_header_and_ports.stride");
   auto errors = AST::getParseErrors();
   bool foundError = false;
   for (const auto &err : errors) {
@@ -227,7 +269,8 @@ TEST(CallableSyntaxTest, ExclusivityHeaderAndPortsError) {
 }
 
 TEST(CallableSyntaxTest, ExclusivityCodeAndEntitiesError) {
-  ASTNode tree = AST::parseFile(TESTS_SOURCE_DIR "callable_syntax/error_code_and_entities.stride");
+  ASTNode tree = AST::parseFile(
+      TESTS_SOURCE_DIR "callable_syntax/error_code_and_entities.stride");
   auto errors = AST::getParseErrors();
   bool foundError = false;
   for (const auto &err : errors) {
@@ -241,29 +284,33 @@ TEST(CallableSyntaxTest, ExclusivityCodeAndEntitiesError) {
 }
 
 TEST(CallableSyntaxTest, GenericCallableSyntaxParsing) {
-  ASTNode tree = AST::parseFile(TESTS_SOURCE_DIR "callable_syntax/error_reaction_main_input.stride");
+  ASTNode tree = AST::parseFile(
+      TESTS_SOURCE_DIR "callable_syntax/error_reaction_main_input.stride");
   auto errors = AST::getParseErrors();
   EXPECT_TRUE(errors.empty());
   ASSERT_TRUE(tree != nullptr);
 }
 
 TEST(CallableSyntaxTest, ArbitraryCallableType) {
-  ASTNode tree = AST::parseFile(TESTS_SOURCE_DIR "callable_syntax/arbitrary_callable.stride");
+  ASTNode tree = AST::parseFile(TESTS_SOURCE_DIR
+                                "callable_syntax/arbitrary_callable.stride");
   auto errors = AST::getParseErrors();
   EXPECT_TRUE(errors.empty());
   ASSERT_TRUE(tree != nullptr);
 
-  auto decl = std::static_pointer_cast<DeclarationNode>(tree->getChildren().at(1));
+  auto decl =
+      std::static_pointer_cast<DeclarationNode>(tree->getChildren().at(1));
   ASSERT_TRUE(decl != nullptr);
   EXPECT_EQ(decl->getName(), "MyFilter");
   EXPECT_EQ(decl->getEntityType(), "customFilter");
-  EXPECT_TRUE(decl->getProperty("ports") != nullptr);
-  EXPECT_TRUE(decl->getProperty("entities") != nullptr);
-  EXPECT_TRUE(decl->getProperty("streams") != nullptr);
+  EXPECT_TRUE(decl->getPropertyValue("ports") != nullptr);
+  EXPECT_TRUE(decl->getPropertyValue("entities") != nullptr);
+  EXPECT_TRUE(decl->getPropertyValue("streams") != nullptr);
 }
 
 TEST(CallableSyntaxTest, AnonymousReactionInStream) {
-  ASTNode tree = AST::parseFile(TESTS_SOURCE_DIR "callable_syntax/anonymous_reaction.stride");
+  ASTNode tree = AST::parseFile(TESTS_SOURCE_DIR
+                                "callable_syntax/anonymous_reaction.stride");
   auto errors = AST::getParseErrors();
   EXPECT_TRUE(errors.empty());
   ASSERT_TRUE(tree != nullptr);

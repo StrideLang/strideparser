@@ -155,6 +155,7 @@ NullStream nstream;
 %type <ast> generatorRange
 %type <declarationNode> callableDef
 %type <declarationNode> portItem
+%type <ast> propertyPortValue
 %type <listNode> portGroup
 %type <listNode> portItemList
 %type <propertyNode> propertyPort
@@ -524,7 +525,7 @@ callableDef:
             SET_NODE_END($$);
         }
 
-    // Without input stream (UVAR followed by '(' or '>>'):
+    // Without input stream (UVAR followed by '('):
     |   WORD UVAR '(' propertyPortListOpt ')' STREAM portGroup blockType {
             string type($1); free($1);
             string name($2); free($2);
@@ -535,12 +536,6 @@ callableDef:
             string type($1); free($1);
             string name($2); free($2);
             $$ = desugarCallable(type, name, nullptr, std::shared_ptr<AST>($4), nullptr, std::shared_ptr<AST>($6), currentFile, yyloc.first_line, yyloc.first_column);
-            SET_NODE_END($$);
-        }
-    |   WORD UVAR STREAM portGroup blockType {
-            string type($1); free($1);
-            string name($2); free($2);
-            $$ = desugarCallable(type, name, nullptr, nullptr, std::shared_ptr<AST>($4), std::shared_ptr<AST>($5), currentFile, yyloc.first_line, yyloc.first_column);
             SET_NODE_END($$);
         }
     ;
@@ -642,10 +637,37 @@ portItem:
     ;
 
 propertyPort:
-        WORD COLON portItem {
+        WORD COLON propertyPortValue {
             string s($1);
             free($1);
             $$ = new PropertyNode(s, std::shared_ptr<AST>($3), currentFile, yyloc.first_line, yyloc.first_column);
+            SET_NODE_END($$);
+        }
+    ;
+
+propertyPortValue:
+        portItem {
+            $$ = $1;
+        }
+    |   INT {
+            $$ = new ValueNode($1, currentFile, yyloc.first_line, yyloc.first_column);
+            SET_NODE_END($$);
+        }
+    |   REAL {
+            $$ = new ValueNode($1, currentFile, yyloc.first_line, yyloc.first_column);
+            SET_NODE_END($$);
+        }
+    |   STRING {
+            $$ = new ValueNode(string($1), currentFile, yyloc.first_line, yyloc.first_column);
+            free($1);
+            SET_NODE_END($$);
+        }
+    |   '-' INT %prec UMINUS {
+            $$ = new ValueNode(-$2, currentFile, yyloc.first_line, yyloc.first_column);
+            SET_NODE_END($$);
+        }
+    |   '-' REAL %prec UMINUS {
+            $$ = new ValueNode(-$2, currentFile, yyloc.first_line, yyloc.first_column);
             SET_NODE_END($$);
         }
     ;
@@ -1346,7 +1368,6 @@ listDef:
     |   streamListDef           { $$ = $1; }
     |   '[' listList COMMA ']'  { $$ = $2; }
     |   '[' listList   ']'      { $$ = $2; }
-    |   '[' ']'                 { $$ = new ListNode(NULL, currentFile, yyloc.first_line, yyloc.first_column); }
     ;
 
 

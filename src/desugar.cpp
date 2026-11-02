@@ -200,7 +200,19 @@ DeclarationNode *desugarCallable(
           entityDeclNode->getNodeType() == AST::ArrayDeclaration) {
         eName = std::static_pointer_cast<DeclarationNode>(entityDeclNode)->getName();
       } else {
-        continue;
+        std::string capName = propName;
+        if (!capName.empty() && capName[0] >= 'a' && capName[0] <= 'z') {
+          capName[0] = static_cast<char>(capName[0] - 'a' + 'A');
+        }
+        eName = capName;
+        auto defaultProp = std::make_shared<PropertyNode>(
+            "default", entityDeclNode, propItem->getFilename().c_str(),
+            propItem->getLine(), propItem->getColumn());
+        auto props = std::make_shared<AST>();
+        props->addChild(defaultProp);
+        entityDeclNode = std::make_shared<DeclarationNode>(
+            eName, "signal", props, propItem->getFilename().c_str(),
+            propItem->getLine(), propItem->getColumn());
       }
       std::string pName = synthesizePortName(eName);
 
