@@ -183,3 +183,40 @@ By implementing state tracking in a `StrideHandler`, data can be parsed directly
 | **Booleans** | `on`, `off`, `true`, `false` | Stride switches and standard booleans |
 | **Lists** | `[ 1, 2, 3 ]` or `[ "a", "b", ]` | Trailing commas supported |
 | **Comments** | `# This is a comment` | Ignored by scanner |
+
+---
+
+## 5. Standalone Header-Only Usage (Zero Dependencies)
+
+Both `StrideReader` and `StrideDocument` are implemented as **100% standalone, header-only C++17 libraries**. They are completely decoupled from the rest of `strideparser`:
+
+- **No AST / Semantic dependencies**: No `ASTNode`, `SymbolTable`, `CodeAnalysis`, `Scope`, or `LangError`.
+- **No Lexer / Token dependencies**: `StrideReader` has its own lightweight internal single-pass tokenizer directly operating on `std::string_view`.
+- **No Third-Party or LLVM dependencies**: Only standard C++17 library headers (`<string_view>`, `<charconv>`, `<vector>`, `<cstdint>`, `<fstream>`).
+- **No Linking Required**: Class methods are defined inline, eliminating the need to compile or link `strideparser.lib` or any `.cpp` files.
+
+### 5.1 Drop-In Options for External Projects
+
+You can use them in any C++ project in either of two ways:
+
+#### Option A: Umbrella Header (`stride_data.h`)
+Copy `include/stride/parser/stride_data.h` into your project. Include it anywhere:
+```cpp
+#include "stride/parser/stride_data.h"
+// Or simply #include "stride_data.h" if placed in your project's include root
+
+int main() {
+    strd::StrideDocument doc;
+    doc.parse("gameConfig Config { maxPlayers: 8 }");
+    std::cout << doc.root()["maxPlayers"].asInt() << "\n";
+}
+```
+
+#### Option B: Individual Component Headers
+Copy `stridereader.h` and/or `stridedocument.h` into your include directory:
+```cpp
+#include "stridereader.h"    // If you only need zero-allocation streaming SAX
+#include "stridedocument.h"  // If you need the DOM tree and queries
+```
+
+Both headers use standard include guards and flexible `#if __has_include` checks, so they can be included across multiple translation units in large codebases without ODR violations or duplicate symbol errors.

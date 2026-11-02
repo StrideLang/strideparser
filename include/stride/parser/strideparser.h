@@ -53,6 +53,7 @@
 #include "streamnode.h"
 #include "stridereader.h"
 #include "stridedocument.h"
+#include "stride_data.h"
 #include "valuenode.h"
 
 #endif // STRIDEPARSER_H

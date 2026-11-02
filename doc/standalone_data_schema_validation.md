@@ -159,6 +159,9 @@ To evaluate Stride's viability as a high-performance data serialization format, 
 2. 🟢 **`StrideDocument (DOM)`**: Contiguous, zero-copy Document Object Model with $O(1)$ random access.
 3. 🟢 **`strideparser (AST)`**: Full compiler frontend generating polymorphic semantic ASTs for LLVM JIT compilation.
 
+> [!TIP]
+> **Standalone & Header-Only**: Both `StrideReader` and `StrideDocument` are implemented as **100% standalone, header-only C++17 libraries** with zero external dependencies. They can be dropped into any project without compiling or linking the `strideparser` library, available either as individual headers ([`stridereader.h`](file:///c:/Users/Andres/source/repos/boardgame/libgame/external/strideparser/include/stride/parser/stridereader.h), [`stridedocument.h`](file:///c:/Users/Andres/source/repos/boardgame/libgame/external/strideparser/include/stride/parser/stridedocument.h)) or via the unified umbrella header [`stride_data.h`](file:///c:/Users/Andres/source/repos/boardgame/libgame/external/strideparser/include/stride/parser/stride_data.h). See [`doc/stride_document_and_reader.md`](file:///c:/Users/Andres/source/repos/boardgame/libgame/external/strideparser/doc/stride_document_and_reader.md) for API guides and examples.
+
 ### 4.1 Benchmark Environment & Tested Library Versions
 - **Platform**: Windows 11 (x86_64, MSVC 2022)
 - **Compiler Flags**: `/O2 /Oi /Ot /GL` (Release)
