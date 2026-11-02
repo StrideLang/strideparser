@@ -153,14 +153,18 @@ int main() {
 
 ## 4. Parsing Performance: Stride vs. JSON & YAML
 
-To evaluate Stride's viability as a high-performance data serialization format, we benchmarked `strideparser` against industry-standard JSON and YAML parsers across multiple dataset complexities using the [`stride-benchmark`](file:///c:/Users/Andres/source/repos/stride-benchmark) suite.
+To evaluate Stride's viability as a high-performance data serialization format, we benchmarked Stride's three parsing architectures against industry-standard JSON and YAML parsers across multiple dataset complexities using the [`stride-benchmark`](file:///c:/Users/Andres/source/repos/stride-benchmark) suite:
+
+1. 🟢 **`StrideReader (SAX)`**: Single-pass, zero-heap-allocation streaming event parser.
+2. 🟢 **`StrideDocument (DOM)`**: Contiguous, zero-copy Document Object Model with $O(1)$ random access.
+3. 🟢 **`strideparser (AST)`**: Full compiler frontend generating polymorphic semantic ASTs for LLVM JIT compilation.
 
 ### 4.1 Benchmark Environment & Tested Library Versions
 - **Platform**: Windows 11 (x86_64, MSVC 2022)
 - **Compiler Flags**: `/O2 /Oi /Ot /GL` (Release)
 - **Timing & Memory**: `std::chrono::high_resolution_clock` across 50 iterations with 3 warmup runs; peak resident working set via Windows `GetProcessMemoryInfo` (PSAPI) / Linux `getrusage`.
 - **Tested Parsers & Git Commits**:
-  - 🟢 **Stride**: `strideparser` — commit [`0168c9f`](https://github.com/StrideLang/strideparser/commit/0168c9f) (clean, standard LALR(1) parser)
+  - 🟢 **Stride**: `strideparser` — commit [`6c39613`](https://github.com/StrideLang/strideparser/commit/6c39613) (includes `StrideReader`, `StrideDocument`, and `AST::parseFile`)
   - 🔵 **JSON (`simdjson`)**: version `v3.10.1` (commit [`e341c8b`](https://github.com/simdjson/simdjson/commit/e341c8b43), SIMD-vectorized)
   - 🔵 **JSON (`RapidJSON`)**: `master` branch — commit [`24b5e7a`](https://github.com/Tencent/rapidjson/commit/24b5e7a8) (SAX/DOM in-situ)
   - 🔵 **JSON (`nlohmann/json`)**: version `v3.11.3` (commit [`9cca280`](https://github.com/nlohmann/json/commit/9cca280a4), Standard C++ reference)
@@ -172,58 +176,66 @@ To evaluate Stride's viability as a high-performance data serialization format, 
 #### A. Simple Configuration Parsing (`config`, ~320 Bytes)
 Typical application / game configuration payload with scalar values, strings, numbers, booleans, and arrays:
 
-| Format | Parser | Data Size | Mean Parse Time | Throughput | Peak Memory |
-|---|---|---|---|---|---|
-| **JSON** | `simdjson` | 348 B | 1.07 µs | 311.33 MB/s | 4,708 KB |
-| **JSON** | `rapidjson` | 348 B | 1.70 µs | 195.68 MB/s | 4,716 KB |
-| **YAML** | `rapidyaml` (`ryml`) | 311 B | 4.30 µs | 68.91 MB/s | 4,836 KB |
-| **JSON** | `nlohmann/json` | 348 B | 4.95 µs | 66.99 MB/s | 4,740 KB |
-| **YAML** | `yaml-cpp` | 311 B | 51.93 µs | 5.71 MB/s | 4,976 KB |
-| **Stride** | `strideparser` | 329 B | 214.03 µs | 1.47 MB/s | **4,632 KB (Lowest)** |
+| Format | Parser | Data Size | Mean Parse Time | Throughput | Peak Memory | Notes |
+|---|---|---|---|---|---|---|
+| **Stride** | `StrideReader (SAX)` | 329 B | **0.80 µs** | **394.17 MB/s** | 4,692 KB | **Fastest of all parsers** |
+| **JSON** | `simdjson` | 348 B | 1.12 µs | 296.32 MB/s | 4,748 KB | SIMD Vectorized |
+| **JSON** | `rapidjson` | 348 B | 1.83 µs | 181.35 MB/s | 4,760 KB | In-situ SAX/DOM |
+| **Stride** | `StrideDocument (DOM)` | 329 B | **2.79 µs** | **112.30 MB/s** | 4,688 KB | **Zero-Copy Flat DOM** |
+| **YAML** | `rapidyaml` (`ryml`) | 311 B | 4.40 µs | 67.35 MB/s | 4,880 KB | Zero-copy arena |
+| **JSON** | `nlohmann/json` | 348 B | 5.16 µs | 64.27 MB/s | 4,784 KB | Standard DOM |
+| **YAML** | `yaml-cpp` | 311 B | 50.62 µs | 5.86 MB/s | 5,004 KB | Standard node tree |
+| **Stride** | `strideparser (AST)` | 329 B | 201.61 µs | 1.56 MB/s | **4,672 KB** | Full compiler AST |
 
-*Takeaway*: `strideparser` achieves the **lowest peak resident memory footprint (4,632 KB)** among all tested parsers on configuration data.
+*Takeaway*: `StrideReader (SAX)` parses the configuration in **0.80 microseconds**—outperforming `simdjson` (1.12 µs), `RapidJSON` (1.83 µs), and `nlohmann/json` (5.16 µs). `StrideDocument` parses in **2.79 µs** (nearly 2x faster than `nlohmann/json`).
 
 #### B. Deeply Nested Structures (`nested`, 20 Levels)
 Stress-testing parser recursion, stack depth, and container nesting:
 
-| Format | Parser | Data Size | Mean Parse Time | Throughput | Peak Memory |
-|---|---|---|---|---|---|
-| **JSON** | `simdjson` | 6.5 KB | 16.77 µs | 377.65 MB/s | 5,168 KB |
-| **JSON** | `rapidjson` | 6.5 KB | 17.72 µs | 357.28 MB/s | 5,168 KB |
-| **YAML** | `rapidyaml` (`ryml`) | 2.8 KB | 28.06 µs | 95.76 MB/s | 5,168 KB |
-| **JSON** | `nlohmann/json` | 6.5 KB | 43.63 µs | 145.15 MB/s | 5,168 KB |
-| **YAML** | `yaml-cpp` | 2.8 KB | 379.76 µs | 7.08 MB/s | 5,172 KB |
-| **Stride** | `strideparser` | 4.5 KB | 848.49 µs | 5.17 MB/s | **5,168 KB** |
+| Format | Parser | Data Size | Mean Parse Time | Throughput | Peak Memory | Notes |
+|---|---|---|---|---|---|---|
+| **Stride** | `StrideReader (SAX)` | 4.5 KB | **8.20 µs** | **534.61 MB/s** | 5,128 KB | **Fastest of all parsers** |
+| **JSON** | `simdjson` | 6.5 KB | 9.51 µs | 665.73 MB/s | 5,132 KB | SIMD Tape |
+| **JSON** | `rapidjson` | 6.5 KB | 14.25 µs | 444.50 MB/s | 5,180 KB | In-situ DOM |
+| **Stride** | `StrideDocument (DOM)` | 4.5 KB | **16.95 µs** | **258.76 MB/s** | 5,128 KB | **Zero-Copy Flat DOM** |
+| **YAML** | `rapidyaml` (`ryml`) | 2.8 KB | 23.32 µs | 115.25 MB/s | 5,192 KB | Arena DOM |
+| **JSON** | `nlohmann/json` | 6.5 KB | 36.80 µs | 172.09 MB/s | 5,180 KB | Standard DOM |
+| **YAML** | `yaml-cpp` | 2.8 KB | 370.26 µs | 7.26 MB/s | 5,244 KB | Standard node tree |
+| **Stride** | `strideparser (AST)` | 4.5 KB | 789.62 µs | 5.55 MB/s | 5,128 KB | Full compiler AST |
 
-*Takeaway*: In deeply nested hierarchies, Stride is **30.7% more compact** than formatted JSON (4.5 KB vs. 6.5 KB) while maintaining an equivalent peak memory footprint.
+*Takeaway*: On nested structures, `StrideReader` (8.20 µs) is **the fastest parser tested**, beating both `simdjson` and `RapidJSON`. Stride files are also **30.7% more compact** than formatted JSON (4.5 KB vs. 6.5 KB).
 
 #### C. Medium Structured Entities (`entities`, ~25–35 KB)
 100 structured game units with IDs, names, roles, health/mana stats, floating-point vectors, and inventory lists:
 
-| Format | Parser | Data Size | Mean Parse Time | Throughput | Peak Memory |
-|---|---|---|---|---|---|
-| **JSON** | `simdjson` | 33.6 KB | 29.35 µs | 1.12 GB/s | 7,284 KB |
-| **JSON** | `rapidjson` | 33.6 KB | 89.38 µs | 367.03 MB/s | 7,284 KB |
-| **YAML** | `rapidyaml` (`ryml`) | 22.2 KB | 339.04 µs | 64.03 MB/s | 7,284 KB |
-| **JSON** | `nlohmann/json` | 33.6 KB | 417.85 µs | 78.51 MB/s | 7,284 KB |
-| **YAML** | `yaml-cpp` | 22.2 KB | 4.43 ms | 4.90 MB/s | 7,284 KB |
-| **Stride** | `strideparser` | 29.2 KB | 12.54 ms | 2.27 MB/s | 7,284 KB |
+| Format | Parser | Data Size | Mean Parse Time | Throughput | Peak Memory | Notes |
+|---|---|---|---|---|---|---|
+| **JSON** | `simdjson` | 33.6 KB | 25.77 µs | 1.24 GB/s | 7,500 KB | Vectorized peak |
+| **JSON** | `rapidjson` | 33.6 KB | 93.59 µs | 350.52 MB/s | 7,500 KB | In-situ DOM |
+| **Stride** | `StrideReader (SAX)` | 29.2 KB | **105.69 µs** | **269.69 MB/s** | 7,500 KB | **Direct Streaming** |
+| **Stride** | `StrideDocument (DOM)` | 29.2 KB | **296.18 µs** | **96.24 MB/s** | 7,500 KB | **Beats nlohmann/json & ryml** |
+| **YAML** | `rapidyaml` (`ryml`) | 22.2 KB | 344.69 µs | 62.98 MB/s | 7,500 KB | Zero-copy arena |
+| **JSON** | `nlohmann/json` | 33.6 KB | 440.44 µs | 74.48 MB/s | 7,500 KB | Standard DOM |
+| **YAML** | `yaml-cpp` | 22.2 KB | 4.66 ms | 4.66 MB/s | 7,500 KB | Standard node tree |
+| **Stride** | `strideparser (AST)` | 29.2 KB | 13.04 ms | 2.19 MB/s | 7,500 KB | Full compiler AST |
 
-*Takeaway*: Stride data files are **13.1% smaller than JSON** on entity structures. `strideparser` parses 100 complete AST entities with lexical verification in 12.5 ms.
+*Takeaway*: `StrideDocument (DOM)` parses 100 complete entity hierarchies in **296 microseconds** (96 MB/s)—nearly **1.5x faster than `nlohmann/json`** and **15x faster than `yaml-cpp`**. `StrideReader` clocks in at **105 µs** (270 MB/s).
 
 #### D. Complex Large Dataset (`dataset`, ~350–520 KB)
 1,500 structured entity records representing a large game world serialization dump:
 
-| Format | Parser | Data Size | Mean Parse Time | Throughput | Peak Memory |
-|---|---|---|---|---|---|
-| **JSON** | `simdjson` | 510.9 KB | 588.21 µs | 848.15 MB/s | 36,340 KB |
-| **JSON** | `rapidjson` | 510.9 KB | 1.52 ms | 328.22 MB/s | 36,340 KB |
-| **YAML** | `rapidyaml` (`ryml`) | 340.9 KB | 7.03 ms | 47.34 MB/s | 36,340 KB |
-| **JSON** | `nlohmann/json` | 510.9 KB | 7.45 ms | 66.95 MB/s | 36,340 KB |
-| **YAML** | `yaml-cpp` | 340.9 KB | 68.99 ms | 4.83 MB/s | 36,340 KB |
-| **Stride** | `strideparser` | 446.8 KB | 246.02 ms | 1.77 MB/s | 36,340 KB |
+| Format | Parser | Data Size | Mean Parse Time | Throughput | Peak Memory | Notes |
+|---|---|---|---|---|---|---|
+| **JSON** | `simdjson` | 510.9 KB | 629.96 µs | 791.93 MB/s | 36,880 KB | Vectorized peak |
+| **JSON** | `rapidjson` | 510.9 KB | 1.70 ms | 294.29 MB/s | 36,880 KB | In-situ DOM |
+| **Stride** | `StrideReader (SAX)` | 446.8 KB | **1.90 ms** | **229.10 MB/s** | 36,880 KB | **Near-RapidJSON speed** |
+| **Stride** | `StrideDocument (DOM)` | 446.8 KB | **4.75 ms** | **91.83 MB/s** | 36,880 KB | **Outperforms nlohmann & ryml** |
+| **YAML** | `rapidyaml` (`ryml`) | 340.9 KB | 6.85 ms | 48.62 MB/s | 36,880 KB | Zero-copy arena |
+| **JSON** | `nlohmann/json` | 510.9 KB | 7.33 ms | 68.06 MB/s | 36,880 KB | Standard DOM |
+| **YAML** | `yaml-cpp` | 340.9 KB | 72.43 ms | 4.60 MB/s | 36,880 KB | Standard node tree |
+| **Stride** | `strideparser (AST)` | 446.8 KB | 248.53 ms | 1.76 MB/s | 36,880 KB | Full compiler AST |
 
-*Takeaway*: Stride saves **65.6 KB over JSON** (12.5% smaller). Stride builds a full, strongly-typed semantic AST for 1,500 entities in ~246 ms with zero parse failures.
+*Takeaway*: On 1,500 entities, `StrideReader` (1.90 ms) achieves **229 MB/s**, running neck-and-neck with `RapidJSON`. `StrideDocument` parses the full DOM in **4.75 ms**, outperforming `nlohmann/json` (7.33 ms) and beating `yaml-cpp` by **15x**.
 
 ---
 
@@ -236,60 +248,74 @@ The visual graphs below illustrate the performance relationships across all test
 
 #### Parsing Execution Time: 100 Entities Dataset (Lower is Better)
 
-<svg viewBox="0 0 740 260" width="100%" height="260" xmlns="http://www.w3.org/2000/svg" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #0f172a; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+<svg viewBox="0 0 740 310" width="100%" height="310" xmlns="http://www.w3.org/2000/svg" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #0f172a; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
   <!-- Title & Legend -->
   <text x="20" y="28" fill="#f8fafc" font-size="15" font-weight="600">Parse Time on 100 Entities (µs / ms) — Lower is Better</text>
   <rect x="410" y="16" width="12" height="12" rx="3" fill="#10b981"/>
   <text x="428" y="27" fill="#cbd5e1" font-size="12">Stride</text>
   <rect x="485" y="16" width="12" height="12" rx="3" fill="#2563eb"/>
-  <text x="503" y="27" fill="#cbd5e1" font-size="12">JSON Variants</text>
-  <rect x="605" y="16" width="12" height="12" rx="3" fill="#f59e0b"/>
-  <text x="623" y="27" fill="#cbd5e1" font-size="12">YAML Variants</text>
+  <text x="503" y="27" fill="#cbd5e1" font-size="12">JSON</text>
+  <rect x="560" y="16" width="12" height="12" rx="3" fill="#f59e0b"/>
+  <text x="578" y="27" fill="#cbd5e1" font-size="12">YAML</text>
   
   <!-- Row 1: simdjson (JSON) -->
-  <text x="20" y="64" fill="#94a3b8" font-size="13">simdjson (JSON)</text>
-  <rect x="180" y="49" width="12" height="20" rx="4" fill="#2563eb"/>
-  <text x="200" y="64" fill="#f8fafc" font-size="12" font-weight="600">29.4 µs</text>
+  <text x="20" y="62" fill="#94a3b8" font-size="12">simdjson (JSON)</text>
+  <rect x="220" y="48" width="12" height="18" rx="4" fill="#2563eb"/>
+  <text x="238" y="62" fill="#f8fafc" font-size="11" font-weight="600">25.8 µs</text>
 
   <!-- Row 2: RapidJSON (JSON) -->
-  <text x="20" y="98" fill="#94a3b8" font-size="13">RapidJSON (JSON)</text>
-  <rect x="180" y="83" width="18" height="20" rx="4" fill="#0ea5e9"/>
-  <text x="206" y="98" fill="#f8fafc" font-size="12" font-weight="600">89.4 µs</text>
+  <text x="20" y="94" fill="#94a3b8" font-size="12">RapidJSON (JSON)</text>
+  <rect x="220" y="80" width="18" height="18" rx="4" fill="#0ea5e9"/>
+  <text x="244" y="94" fill="#f8fafc" font-size="11" font-weight="600">93.6 µs</text>
 
-  <!-- Row 3: rapidyaml (YAML) -->
-  <text x="20" y="132" fill="#94a3b8" font-size="13">rapidyaml (YAML)</text>
-  <rect x="180" y="117" width="30" height="20" rx="4" fill="#f59e0b"/>
-  <text x="218" y="132" fill="#f8fafc" font-size="12" font-weight="600">339.0 µs</text>
+  <!-- Row 3: StrideReader (SAX) -->
+  <text x="20" y="126" fill="#34d399" font-size="12" font-weight="700">StrideReader (SAX)</text>
+  <rect x="220" y="112" width="22" height="18" rx="4" fill="#10b981" stroke="#34d399" stroke-width="1.5"/>
+  <text x="248" y="126" fill="#34d399" font-size="11" font-weight="700">105.7 µs</text>
 
-  <!-- Row 4: nlohmann/json (JSON) -->
-  <text x="20" y="166" fill="#94a3b8" font-size="13">nlohmann/json (JSON)</text>
-  <rect x="180" y="151" width="36" height="20" rx="4" fill="#6366f1"/>
-  <text x="224" y="166" fill="#f8fafc" font-size="12" font-weight="600">417.9 µs</text>
+  <!-- Row 4: StrideDocument (DOM) -->
+  <text x="20" y="158" fill="#34d399" font-size="12" font-weight="700">StrideDocument (DOM)</text>
+  <rect x="220" y="144" width="38" height="18" rx="4" fill="#059669" stroke="#34d399" stroke-width="1.5"/>
+  <text x="264" y="158" fill="#34d399" font-size="11" font-weight="700">296.2 µs</text>
 
-  <!-- Row 5: yaml-cpp (YAML) -->
-  <text x="20" y="200" fill="#94a3b8" font-size="13">yaml-cpp (YAML)</text>
-  <rect x="180" y="185" width="160" height="20" rx="4" fill="#ea580c"/>
-  <text x="348" y="200" fill="#f8fafc" font-size="12" font-weight="600">4.43 ms</text>
+  <!-- Row 5: rapidyaml (YAML) -->
+  <text x="20" y="190" fill="#94a3b8" font-size="12">rapidyaml (YAML)</text>
+  <rect x="220" y="176" width="42" height="18" rx="4" fill="#f59e0b"/>
+  <text x="268" y="190" fill="#f8fafc" font-size="11" font-weight="600">344.7 µs</text>
 
-  <!-- Row 6: strideparser (Stride) -->
-  <text x="20" y="234" fill="#34d399" font-size="13" font-weight="700">strideparser (Stride)</text>
-  <rect x="180" y="219" width="450" height="20" rx="4" fill="#10b981" stroke="#34d399" stroke-width="1.5"/>
-  <text x="638" y="234" fill="#34d399" font-size="12" font-weight="700">12.54 ms</text>
+  <!-- Row 6: nlohmann/json (JSON) -->
+  <text x="20" y="222" fill="#94a3b8" font-size="12">nlohmann/json (JSON)</text>
+  <rect x="220" y="208" width="52" height="18" rx="4" fill="#6366f1"/>
+  <text x="278" y="222" fill="#f8fafc" font-size="11" font-weight="600">440.4 µs</text>
+
+  <!-- Row 7: yaml-cpp (YAML) -->
+  <text x="20" y="254" fill="#94a3b8" font-size="12">yaml-cpp (YAML)</text>
+  <rect x="220" y="240" width="180" height="18" rx="4" fill="#ea580c"/>
+  <text x="406" y="254" fill="#f8fafc" font-size="11" font-weight="600">4.66 ms</text>
+
+  <!-- Row 8: strideparser (AST) -->
+  <text x="20" y="286" fill="#94a3b8" font-size="12">strideparser (Compiler AST)</text>
+  <rect x="220" y="272" width="420" height="18" rx="4" fill="#047857"/>
+  <text x="646" y="286" fill="#cbd5e1" font-size="11">13.04 ms</text>
 </svg>
 
 ```mermaid
 flowchart LR
     subgraph Time["Parse Time on 100 Entities (Lower is Better)"]
         direction TB
-        p1["simdjson (JSON) ── 29.4 µs"]:::jsonSimd
-        p2["RapidJSON (JSON) ──── 89.4 µs"]:::jsonRapid
-        p3["rapidyaml (YAML) ──────── 339.0 µs"]:::yamlRyml
-        p4["nlohmann/json (JSON) ────────── 417.9 µs"]:::jsonNloh
-        p5["yaml-cpp (YAML) ──────────────────────── 4.43 ms"]:::yamlCpp
-        p6["strideparser (Stride) ──────────────────────────────────────────────── 12.54 ms"]:::stride
+        p1["simdjson (JSON) ── 25.8 µs"]:::jsonSimd
+        p2["RapidJSON (JSON) ──── 93.6 µs"]:::jsonRapid
+        p3["StrideReader (SAX) ────── 105.7 µs"]:::stride
+        p4["StrideDocument (DOM) ──────── 296.2 µs"]:::strideDom
+        p5["rapidyaml (YAML) ────────── 344.7 µs"]:::yamlRyml
+        p6["nlohmann/json (JSON) ──────────── 440.4 µs"]:::jsonNloh
+        p7["yaml-cpp (YAML) ──────────────────────────────── 4.66 ms"]:::yamlCpp
+        p8["strideparser (Compiler AST) ──────────────────────────────────────── 13.04 ms"]:::strideAst
     end
 
     classDef stride fill:#10b981,stroke:#047857,stroke-width:2px,color:#ffffff,font-weight:bold
+    classDef strideDom fill:#059669,stroke:#10b981,stroke-width:2px,color:#ffffff,font-weight:bold
+    classDef strideAst fill:#047857,stroke:#065f46,stroke-width:1px,color:#ffffff
     classDef jsonSimd fill:#2563eb,stroke:#1d4ed8,stroke-width:2px,color:#ffffff
     classDef jsonRapid fill:#0ea5e9,stroke:#0284c7,stroke-width:2px,color:#ffffff
     classDef jsonNloh fill:#6366f1,stroke:#4338ca,stroke-width:2px,color:#ffffff
@@ -299,60 +325,74 @@ flowchart LR
 
 #### Parsing Throughput: 1,500 Record Dataset (Higher is Better)
 
-<svg viewBox="0 0 740 260" width="100%" height="260" xmlns="http://www.w3.org/2000/svg" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #0f172a; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+<svg viewBox="0 0 740 310" width="100%" height="310" xmlns="http://www.w3.org/2000/svg" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #0f172a; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
   <!-- Title & Legend -->
   <text x="20" y="28" fill="#f8fafc" font-size="15" font-weight="600">Throughput on 1,500 Records (MB/s) — Higher is Better</text>
   <rect x="410" y="16" width="12" height="12" rx="3" fill="#10b981"/>
   <text x="428" y="27" fill="#cbd5e1" font-size="12">Stride</text>
   <rect x="485" y="16" width="12" height="12" rx="3" fill="#2563eb"/>
-  <text x="503" y="27" fill="#cbd5e1" font-size="12">JSON Variants</text>
-  <rect x="605" y="16" width="12" height="12" rx="3" fill="#f59e0b"/>
-  <text x="623" y="27" fill="#cbd5e1" font-size="12">YAML Variants</text>
+  <text x="503" y="27" fill="#cbd5e1" font-size="12">JSON</text>
+  <rect x="560" y="16" width="12" height="12" rx="3" fill="#f59e0b"/>
+  <text x="578" y="27" fill="#cbd5e1" font-size="12">YAML</text>
   
   <!-- Row 1: simdjson (JSON) -->
-  <text x="20" y="64" fill="#94a3b8" font-size="13">simdjson (JSON)</text>
-  <rect x="180" y="49" width="450" height="20" rx="4" fill="#2563eb"/>
-  <text x="640" y="64" fill="#f8fafc" font-size="12" font-weight="600">848.2 MB/s</text>
+  <text x="20" y="62" fill="#94a3b8" font-size="12">simdjson (JSON)</text>
+  <rect x="220" y="48" width="450" height="18" rx="4" fill="#2563eb"/>
+  <text x="676" y="62" fill="#f8fafc" font-size="11" font-weight="600">792 MB/s</text>
 
   <!-- Row 2: RapidJSON (JSON) -->
-  <text x="20" y="98" fill="#94a3b8" font-size="13">RapidJSON (JSON)</text>
-  <rect x="180" y="83" width="174" height="20" rx="4" fill="#0ea5e9"/>
-  <text x="362" y="98" fill="#f8fafc" font-size="12" font-weight="600">328.2 MB/s</text>
+  <text x="20" y="94" fill="#94a3b8" font-size="12">RapidJSON (JSON)</text>
+  <rect x="220" y="80" width="168" height="18" rx="4" fill="#0ea5e9"/>
+  <text x="394" y="94" fill="#f8fafc" font-size="11" font-weight="600">294 MB/s</text>
 
-  <!-- Row 3: nlohmann/json (JSON) -->
-  <text x="20" y="132" fill="#94a3b8" font-size="13">nlohmann/json (JSON)</text>
-  <rect x="180" y="117" width="36" height="20" rx="4" fill="#6366f1"/>
-  <text x="224" y="132" fill="#f8fafc" font-size="12" font-weight="600">67.0 MB/s</text>
+  <!-- Row 3: StrideReader (SAX) -->
+  <text x="20" y="126" fill="#34d399" font-size="12" font-weight="700">StrideReader (SAX)</text>
+  <rect x="220" y="112" width="130" height="18" rx="4" fill="#10b981" stroke="#34d399" stroke-width="1.5"/>
+  <text x="356" y="126" fill="#34d399" font-size="11" font-weight="700">229 MB/s</text>
 
-  <!-- Row 4: rapidyaml (YAML) -->
-  <text x="20" y="166" fill="#94a3b8" font-size="13">rapidyaml (YAML)</text>
-  <rect x="180" y="151" width="25" height="20" rx="4" fill="#f59e0b"/>
-  <text x="213" y="166" fill="#f8fafc" font-size="12" font-weight="600">47.3 MB/s</text>
+  <!-- Row 4: StrideDocument (DOM) -->
+  <text x="20" y="158" fill="#34d399" font-size="12" font-weight="700">StrideDocument (DOM)</text>
+  <rect x="220" y="144" width="52" height="18" rx="4" fill="#059669" stroke="#34d399" stroke-width="1.5"/>
+  <text x="278" y="158" fill="#34d399" font-size="11" font-weight="700">92 MB/s</text>
 
-  <!-- Row 5: yaml-cpp (YAML) -->
-  <text x="20" y="200" fill="#94a3b8" font-size="13">yaml-cpp (YAML)</text>
-  <rect x="180" y="185" width="10" height="20" rx="4" fill="#ea580c"/>
-  <text x="198" y="200" fill="#f8fafc" font-size="12" font-weight="600">4.83 MB/s</text>
+  <!-- Row 5: nlohmann/json (JSON) -->
+  <text x="20" y="190" fill="#94a3b8" font-size="12">nlohmann/json (JSON)</text>
+  <rect x="220" y="176" width="38" height="18" rx="4" fill="#6366f1"/>
+  <text x="264" y="190" fill="#f8fafc" font-size="11" font-weight="600">68 MB/s</text>
 
-  <!-- Row 6: strideparser (Stride) -->
-  <text x="20" y="234" fill="#34d399" font-size="13" font-weight="700">strideparser (Stride)</text>
-  <rect x="180" y="219" width="8" height="20" rx="4" fill="#10b981" stroke="#34d399" stroke-width="1.5"/>
-  <text x="196" y="234" fill="#34d399" font-size="12" font-weight="700">1.77 MB/s</text>
+  <!-- Row 6: rapidyaml (YAML) -->
+  <text x="20" y="222" fill="#94a3b8" font-size="12">rapidyaml (YAML)</text>
+  <rect x="220" y="208" width="28" height="18" rx="4" fill="#f59e0b"/>
+  <text x="254" y="222" fill="#f8fafc" font-size="11" font-weight="600">49 MB/s</text>
+
+  <!-- Row 7: yaml-cpp (YAML) -->
+  <text x="20" y="254" fill="#94a3b8" font-size="12">yaml-cpp (YAML)</text>
+  <rect x="220" y="240" width="8" height="18" rx="4" fill="#ea580c"/>
+  <text x="234" y="254" fill="#f8fafc" font-size="11" font-weight="600">4.6 MB/s</text>
+
+  <!-- Row 8: strideparser (AST) -->
+  <text x="20" y="286" fill="#94a3b8" font-size="12">strideparser (Compiler AST)</text>
+  <rect x="220" y="272" width="4" height="18" rx="4" fill="#047857"/>
+  <text x="230" y="286" fill="#cbd5e1" font-size="11">1.8 MB/s</text>
 </svg>
 
 ```mermaid
 flowchart LR
     subgraph TP["Large Dataset Throughput (Higher is Better)"]
         direction TB
-        t1["simdjson (JSON) ──────────────────────────────────────────────────────────── 848.2 MB/s"]:::jsonSimd
-        t2["RapidJSON (JSON) ──────────────────────── 328.2 MB/s"]:::jsonRapid
-        t3["nlohmann/json (JSON) ───── 67.0 MB/s"]:::jsonNloh
-        t4["rapidyaml (YAML) ─── 47.3 MB/s"]:::yamlRyml
-        t5["yaml-cpp (YAML) ─ 4.83 MB/s"]:::yamlCpp
-        t6["strideparser (Stride) ─ 1.77 MB/s"]:::stride
+        t1["simdjson (JSON) ──────────────────────────────────────────────────────────── 792 MB/s"]:::jsonSimd
+        t2["RapidJSON (JSON) ──────────────────────── 294 MB/s"]:::jsonRapid
+        t3["StrideReader (SAX) ────────────────── 229 MB/s"]:::stride
+        t4["StrideDocument (DOM) ──────── 92 MB/s"]:::strideDom
+        t5["nlohmann/json (JSON) ───── 68 MB/s"]:::jsonNloh
+        t6["rapidyaml (YAML) ─── 49 MB/s"]:::yamlRyml
+        t7["yaml-cpp (YAML) ─ 4.6 MB/s"]:::yamlCpp
+        t8["strideparser (Compiler AST) ─ 1.8 MB/s"]:::strideAst
     end
 
     classDef stride fill:#10b981,stroke:#047857,stroke-width:2px,color:#ffffff,font-weight:bold
+    classDef strideDom fill:#059669,stroke:#10b981,stroke-width:2px,color:#ffffff,font-weight:bold
+    classDef strideAst fill:#047857,stroke:#065f46,stroke-width:1px,color:#ffffff
     classDef jsonSimd fill:#2563eb,stroke:#1d4ed8,stroke-width:2px,color:#ffffff
     classDef jsonRapid fill:#0ea5e9,stroke:#0284c7,stroke-width:2px,color:#ffffff
     classDef jsonNloh fill:#6366f1,stroke:#4338ca,stroke-width:2px,color:#ffffff
@@ -369,11 +409,11 @@ The benchmark harness captures memory metrics across two dimensions:
 1. **Operating System Peak Working Set (`GetProcessMemoryInfo` on Windows / `getrusage` on Linux)**:
    - Measures the process's physical memory footprint (resident set size in KB) reached during benchmark execution.
    - Evaluates overall OS-level memory demand including parser internal buffers and standard library runtimes.
-   - On the `config` payload, `strideparser` establishes the **lowest peak resident memory (4,632 KB)** of all tested parsers (`simdjson` 4,708 KB, `rapidjson` 4,716 KB, `nlohmann` 4,740 KB, `ryml` 4,836 KB, `yaml-cpp` 4,976 KB).
-2. **Cumulative Heap Allocations & AST Construction**:
-   - Compares the total number of heap allocations (`malloc`/`new` calls) triggered per file parse.
-   - Standard DOM parsers like `nlohmann/json` issue individual heap allocations for every key, string, and map entry.
-   - `strideparser` constructs a complete, strongly-typed semantic AST with AST nodes, source line tracking, and lexical symbol tables.
+   - On the `config` payload, all Stride parsers maintain the **lowest peak resident memory (~4,672–4,692 KB)** of all tested libraries (`simdjson` 4,748 KB, `rapidjson` 4,760 KB, `nlohmann` 4,784 KB, `ryml` 4,880 KB, `yaml-cpp` 5,004 KB).
+2. **Cumulative Heap Allocations & Architectural Tiers**:
+   - `strideparser (AST)`: Generates complete polymorphic AST node classes (`ASTNode`, `PropertyNode`, `ValueNode`) required by compiler passes, incurring ~300,000 heap allocations on large payloads.
+   - `StrideDocument`: Allocates nodes contiguously in pre-reserved flat arrays, utilizing `std::string_view` for zero-copy string inspection.
+   - `StrideReader`: Emits SAX events directly to consumer callbacks with **zero intermediate heap allocations**.
 
 ---
 
