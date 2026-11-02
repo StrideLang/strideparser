@@ -160,12 +160,6 @@ NullStream nstream;
 %type <propertyNode> propertyPort
 %type <listNode> propertyPortList
 %type <listNode> propertyPortListOpt
-%type <listNode> codeItemList
-%type <listNode> codeItemListOpt
-%type <ast> codeItem
-%type <sval> wordToken
-
-
 /* declare tokens */
 %token  <ival>  INT
 %token  <fval>  REAL
@@ -173,7 +167,6 @@ NullStream nstream;
 %token  <sval>  BIN
 %token  <sval>  UVAR
 %token  <sval>  WORD
-%token  <sval>  CODE
 %token  <sval>  STRING
 %token  <sval>  ERROR
 
@@ -412,7 +405,7 @@ blockDef:
             free($4);
             SET_NODE_END($$);
         }
-    |   wordToken UVAR blockType                    {
+    |   WORD UVAR blockType                    {
             string word($1);
             string uvar($2);
             free($1);
@@ -506,25 +499,25 @@ blockType:
 
 callableDef:
     // With input stream (portGroup >> UVAR):
-        wordToken portGroup STREAM UVAR '(' propertyPortListOpt ')' STREAM portGroup blockType {
+        WORD portGroup STREAM UVAR '(' propertyPortListOpt ')' STREAM portGroup blockType {
             string type($1); free($1);
             string name($4); free($4);
             $$ = desugarCallable(type, name, std::shared_ptr<AST>($2), std::shared_ptr<AST>($6), std::shared_ptr<AST>($9), std::shared_ptr<AST>($10), currentFile, yyloc.first_line, yyloc.first_column);
             SET_NODE_END($$);
         }
-    |   wordToken portGroup STREAM UVAR '(' propertyPortListOpt ')' blockType {
+    |   WORD portGroup STREAM UVAR '(' propertyPortListOpt ')' blockType {
             string type($1); free($1);
             string name($4); free($4);
             $$ = desugarCallable(type, name, std::shared_ptr<AST>($2), std::shared_ptr<AST>($6), nullptr, std::shared_ptr<AST>($8), currentFile, yyloc.first_line, yyloc.first_column);
             SET_NODE_END($$);
         }
-    |   wordToken portGroup STREAM UVAR STREAM portGroup blockType {
+    |   WORD portGroup STREAM UVAR STREAM portGroup blockType {
             string type($1); free($1);
             string name($4); free($4);
             $$ = desugarCallable(type, name, std::shared_ptr<AST>($2), nullptr, std::shared_ptr<AST>($6), std::shared_ptr<AST>($7), currentFile, yyloc.first_line, yyloc.first_column);
             SET_NODE_END($$);
         }
-    |   wordToken portGroup STREAM UVAR blockType {
+    |   WORD portGroup STREAM UVAR blockType {
             string type($1); free($1);
             string name($4); free($4);
             $$ = desugarCallable(type, name, std::shared_ptr<AST>($2), nullptr, nullptr, std::shared_ptr<AST>($5), currentFile, yyloc.first_line, yyloc.first_column);
@@ -532,19 +525,19 @@ callableDef:
         }
 
     // Without input stream (UVAR followed by '(' or '>>'):
-    |   wordToken UVAR '(' propertyPortListOpt ')' STREAM portGroup blockType {
+    |   WORD UVAR '(' propertyPortListOpt ')' STREAM portGroup blockType {
             string type($1); free($1);
             string name($2); free($2);
             $$ = desugarCallable(type, name, nullptr, std::shared_ptr<AST>($4), std::shared_ptr<AST>($7), std::shared_ptr<AST>($8), currentFile, yyloc.first_line, yyloc.first_column);
             SET_NODE_END($$);
         }
-    |   wordToken UVAR '(' propertyPortListOpt ')' blockType {
+    |   WORD UVAR '(' propertyPortListOpt ')' blockType {
             string type($1); free($1);
             string name($2); free($2);
             $$ = desugarCallable(type, name, nullptr, std::shared_ptr<AST>($4), nullptr, std::shared_ptr<AST>($6), currentFile, yyloc.first_line, yyloc.first_column);
             SET_NODE_END($$);
         }
-    |   wordToken UVAR STREAM portGroup blockType {
+    |   WORD UVAR STREAM portGroup blockType {
             string type($1); free($1);
             string name($2); free($2);
             $$ = desugarCallable(type, name, nullptr, nullptr, std::shared_ptr<AST>($4), std::shared_ptr<AST>($5), currentFile, yyloc.first_line, yyloc.first_column);
@@ -649,7 +642,7 @@ portItem:
     ;
 
 propertyPort:
-        wordToken COLON portItem {
+        WORD COLON portItem {
             string s($1);
             free($1);
             $$ = new PropertyNode(s, std::shared_ptr<AST>($3), currentFile, yyloc.first_line, yyloc.first_column);
@@ -678,60 +671,6 @@ propertyPortListOpt:
             $$ = $1;
         }
     |   propertyPortList COMMA {
-            $$ = $1;
-        }
-    ;
-
-codeItemListOpt:
-        /* epsilon */ {
-            $$ = new ListNode(currentFile, yyloc.first_line, yyloc.first_column);
-        }
-    |   codeItemList {
-            $$ = $1;
-        }
-    ;
-
-codeItemList:
-        codeItemList codeItem {
-            ListNode *list = $1;
-            if ($2) {
-                list->addChild(std::shared_ptr<AST>($2));
-            }
-            $$ = list;
-        }
-    |   codeItemList COMMA codeItem {
-            ListNode *list = $1;
-            if ($3) {
-                list->addChild(std::shared_ptr<AST>($3));
-            }
-            $$ = list;
-        }
-    |   codeItem {
-            ListNode *list = new ListNode(currentFile, yyloc.first_line, yyloc.first_column);
-            if ($1) {
-                list->addChild(std::shared_ptr<AST>($1));
-            }
-            $$ = list;
-        }
-    ;
-
-codeItem:
-        blockDef {
-            $$ = $1;
-        }
-    |   streamDef {
-            $$ = $1;
-        }
-    |   SEMICOLON {
-            $$ = NULL;
-        }
-    ;
-
-wordToken:
-        WORD {
-            $$ = $1;
-        }
-    |   CODE {
             $$ = $1;
         }
     ;
@@ -1124,7 +1063,7 @@ functionDef:
 //  ANONYMOUS DECLARATION DEFINITION
 // =================================
 anonymousDeclDef:
-        wordToken '[' ']' blockType            {
+        WORD '[' ']' blockType            {
             string word;
             word.append($1); /* string constructor leaks otherwise! */
             string uvar = "___Anonymous___" + std::to_string(anonymous_counter++);
@@ -1137,7 +1076,7 @@ anonymousDeclDef:
             free($1);
             SET_NODE_END($$);
         }
-    |   wordToken blockType                    {
+    |   WORD blockType                    {
             string word;
             word.append($1); /* string constructor leaks otherwise! */
             string uvar = "___Anonymous___" + std::to_string(anonymous_counter++);
@@ -1150,7 +1089,7 @@ anonymousDeclDef:
             free($1);
             SET_NODE_END($$);
         }
-    |   wordToken '[' UVAR IN generatorRange ']' blockType {
+    |   WORD '[' UVAR IN generatorRange ']' blockType {
             string word;
             word.append($1);
             string varName;
@@ -1205,7 +1144,7 @@ properties:
     ;
 
 property:
-        wordToken COLON propertyType {
+        WORD COLON propertyType {
             string s;
             s.append($1); /* string constructor leaks otherwise! */
             $$ = new PropertyNode(s, std::shared_ptr<AST>($3), currentFile, yyloc.first_line, yyloc.first_column);
@@ -1214,17 +1153,12 @@ property:
             currentAt.clear();
             SET_NODE_END($$);
         }
-    |   wordToken COLON STREAMRATE   {
+    |   WORD COLON STREAMRATE   {
             string s;
             s.append($1); /* string constructor leaks otherwise! */
             PropertyNode * node = new PropertyNode(s, std::make_shared<ValueNode>((string) "streamRate", __FILE__, __LINE__), currentFile, yyloc.first_line, yyloc.first_column);
             $$ = node;
             COUT << "Property: " << $1 << ENDL << "New property ... " << ENDL;
-            free($1);
-            SET_NODE_END($$);
-        }
-    |   CODE COLON '[' codeItemListOpt ']' {
-            $$ = new PropertyNode("code", std::shared_ptr<AST>($4), currentFile, yyloc.first_line, yyloc.first_column);
             free($1);
             SET_NODE_END($$);
         }
@@ -1266,7 +1200,7 @@ propertyType:
 // =================================
 
 portPropertyDef:
-        UVAR DOT wordToken   {
+        UVAR DOT WORD   {
             string s;
             s.append($1); /* string constructor leaks otherwise! */
             string p;
@@ -1279,7 +1213,7 @@ portPropertyDef:
     ;
 
 portPropertyDef:
-        DOT wordToken   {
+        DOT WORD   {
             string s; // empty entity name for "this"
             string p;
             p.append($2); /* string constructor leaks otherwise! */
@@ -1409,9 +1343,10 @@ valueList:
 listDef:
         '[' blockList COMMA ']' { $$ = $2; }
     |   '[' blockList  ']'      { $$ = $2; }
-    |   streamListDef           { }
+    |   streamListDef           { $$ = $1; }
     |   '[' listList COMMA ']'  { $$ = $2; }
     |   '[' listList   ']'      { $$ = $2; }
+    |   '[' ']'                 { $$ = new ListNode(NULL, currentFile, yyloc.first_line, yyloc.first_column); }
     ;
 
 
@@ -1430,6 +1365,14 @@ blockList:
             $$ = list;
             COUT << "Block definition ... " << ENDL;
             COUT << "New list item ... " << ENDL;
+        }
+    |   blockList COMMA streamDef   {
+            ListNode *list = new ListNode(NULL, currentFile, yyloc.first_line, yyloc.first_column);
+            list->stealMembers($1);
+            ListNode *oldList = $1;
+            delete oldList;
+            list->addChild(std::shared_ptr<AST>($3));
+            $$ = list;
         }
     |   blockList COMMA valueExp    {
             ListNode *list = new ListNode(NULL, currentFile, yyloc.first_line, yyloc.first_column);
@@ -1451,6 +1394,17 @@ blockList:
             COUT << "Block definition ... " << ENDL;
             COUT << "New list item ... " << ENDL;
         }
+    |   blockList streamDef         {
+            ListNode *list = new ListNode(NULL, currentFile, yyloc.first_line, yyloc.first_column);
+            list->stealMembers($1);
+            ListNode *oldList = $1;
+            delete oldList;
+            list->addChild(std::shared_ptr<AST>($2));
+            $$ = list;
+        }
+    |   blockList SEMICOLON         {
+            $$ = $1;
+        }
     |   blockDef                    {
             $$ = new ListNode(std::shared_ptr<AST>($1), currentFile, yyloc.first_line, yyloc.first_column);
             COUT << "Block definition ... " << ENDL;
@@ -1469,6 +1423,14 @@ streamList:
             COUT << "Stream definition ... " << ENDL;
             COUT << "New list item ... " << ENDL;
         }
+    |   streamList COMMA blockDef   {
+            ListNode *list = new ListNode(NULL, currentFile, yyloc.first_line, yyloc.first_column);
+            list->stealMembers($1);
+            ListNode *oldList = $1;
+            delete oldList;
+            list->addChild(std::shared_ptr<AST>($3));
+            $$ = list;
+        }
     |   streamList streamDef        {
             ListNode *list = new ListNode(NULL, currentFile, yyloc.first_line, yyloc.first_column);
             list->stealMembers($1);
@@ -1478,6 +1440,17 @@ streamList:
             $$ = list;
             COUT << "Stream definition ... " << ENDL;
             COUT << "New list item ... " << ENDL;
+        }
+    |   streamList blockDef         {
+            ListNode *list = new ListNode(NULL, currentFile, yyloc.first_line, yyloc.first_column);
+            list->stealMembers($1);
+            ListNode *oldList = $1;
+            delete oldList;
+            list->addChild(std::shared_ptr<AST>($2));
+            $$ = list;
+        }
+    |   streamList SEMICOLON        {
+            $$ = $1;
         }
     |   streamDef                   {
             $$ = new ListNode(std::shared_ptr<AST>($1), currentFile, yyloc.first_line, yyloc.first_column);
@@ -2017,7 +1990,7 @@ streamComp:
             COUT << "String: " << $1 << ENDL;
             free($1);
         }
-    |   wordToken            {
+    |   WORD            {
             string s;
             s.append($1);
             $$ = new KeywordNode(s, currentFile, yyloc.first_line, yyloc.first_column);
