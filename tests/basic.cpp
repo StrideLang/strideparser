@@ -37,7 +37,7 @@ TEST(Basic, ModuleDomains) {
     // Both the input and output blocks should be autodeclared to belong to the
     // output domain
     ListNode *blockList =
-        static_cast<ListNode *>(block->getPropertyValue("blocks").get());
+        static_cast<ListNode *>(block->getPropertyValue("entities").get());
     EXPECT_TRUE(blockList->getNodeType() == AST::List);
     DeclarationNode *internalBlock =
         ASTQuery::findDeclarationByName(
@@ -110,7 +110,7 @@ void ParserTest::testModules() {
         std::static_pointer_cast<DeclarationNode>(tree->getChildren().at(1));
     EXPECT_TRUE(moduleNode->getName() == "SizeTest");
     ListNode *blockList =
-        static_cast<ListNode *>(moduleNode->getPropertyValue("blocks").get());
+        static_cast<ListNode *>(moduleNode->getPropertyValue("entities").get());
     EXPECT_TRUE(blockList->getNodeType() == AST::List);
     for (size_t i = 0; i < blockList->getChildren().size(); i++) {
         AST *member = blockList->getChildren().at(i).get();
@@ -125,7 +125,7 @@ void ParserTest::testModules() {
         std::static_pointer_cast<DeclarationNode>(tree->getChildren().at(2));
     EXPECT_TRUE(moduleNode->getName() == "BlocksTest");
     blockList =
-        static_cast<ListNode *>(moduleNode->getPropertyValue("blocks").get());
+        static_cast<ListNode *>(moduleNode->getPropertyValue("entities").get());
     EXPECT_TRUE(blockList->getNodeType() == AST::List);
     QStringList blockNames;
     blockNames << "Test";
@@ -583,7 +583,7 @@ TEST(Basic, TrailingCommasInLists) {
   EXPECT_TRUE(portsList != nullptr);
   EXPECT_EQ(portsList->size(), 2);
   auto blocksList = std::static_pointer_cast<ListNode>(
-      moduleDecl->getPropertyValue("blocks"));
+      moduleDecl->getPropertyValue("entities"));
   EXPECT_TRUE(blocksList != nullptr);
   EXPECT_EQ(blocksList->size(), 2);
   auto streamsList = std::static_pointer_cast<ListNode>(

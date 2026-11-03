@@ -4,14 +4,14 @@ module SimpleTest {
     ports: [
         mainInputPort InputPort {
             name: 'input'
-            block: Input
+            entity: Input
         },
         mainOutputPort OutputPort {
             name: 'output'
-            block: Output
+            entity: Output
         }
     ]
-    blocks: [
+    entities: [
     ]
     streams: [
         Input >> Output;

@@ -16,13 +16,13 @@ signal MySignal[4, ] {
 module TestModule {
     ports: [
         mainInputPort {
-            block: In
+            entity: In
         },
         mainOutputPort {
-            block: Out
+            entity: Out
         },
     ]
-    blocks: [
+    entities: [
         signal In { type: Int },
         signal Out { type: Int },
     ]

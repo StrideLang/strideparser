@@ -123,8 +123,8 @@ NullStream nstream;
 %type <systemNode> languagePlatform
 %type <importNode> importDef
 %type <packageNode> packageDef
-%type <declarationNode> blockDef
-%type <ast> blockType
+%type <declarationNode> entityDef
+%type <ast> entityType
 %type <ast> properties
 %type <propertyNode> property
 %type <ast> propertyType
@@ -144,8 +144,8 @@ NullStream nstream;
 %type <listNode> streamListDef
 %type <listNode> valueList
 %type <listNode> valueListDef
-%type <listNode> blockListBlock
-%type <listNode> blockListValue
+%type <listNode> entityListBlock
+%type <listNode> entityListValue
 %type <listNode> streamList
 %type <listNode> listList
 %type <ast> valueExp
@@ -223,7 +223,7 @@ start:
             tree_head->addChild(std::shared_ptr<ImportNode>($1));
             COUT << "Import Definition Resolved!" << ENDL;
         }
-    |   blockDef    {
+    |   entityDef    {
             tree_head->addChild(std::shared_ptr<DeclarationNode>($1));
             COUT << "Block Resolved!" << ENDL;
         }
@@ -357,9 +357,9 @@ importDef:
 //  BLOCK DEFINITION
 // =================================
 
-blockDef:
+entityDef:
 
-        WORD UVAR AT INT blockType               {
+        WORD UVAR AT INT entityType               {
             string word;
             word.append($1); /* string constructor leaks otherwise! */
             string uvar;
@@ -374,7 +374,7 @@ blockDef:
             SET_NODE_END($$);
         }
     |
-        WORD UVAR AT UVAR blockType               {
+        WORD UVAR AT UVAR entityType               {
             string word;
             word.append($1); /* string constructor leaks otherwise! */
             string uvar;
@@ -392,7 +392,7 @@ blockDef:
             SET_NODE_END($$);
         }
     |
-        WORD UVAR AT WORD blockType               {
+        WORD UVAR AT WORD entityType               {
             string word;
             word.append($1); /* string constructor leaks otherwise! */
             string uvar;
@@ -409,7 +409,7 @@ blockDef:
             free($4);
             SET_NODE_END($$);
         }
-    |   WORD UVAR blockType                    {
+    |   WORD UVAR entityType                    {
             string word($1);
             string uvar($2);
             free($1);
@@ -418,7 +418,7 @@ blockDef:
             SET_NODE_END($$);
         }
         // Test
-    |   WORD UVAR '[' ']' blockType    {
+    |   WORD UVAR '[' ']' entityType    {
             string name;
             name.append($2); /* string constructor leaks otherwise! */
             std::shared_ptr<ListNode> list = std::make_shared<ListNode>(currentFile, yyloc.first_line, yyloc.first_column);
@@ -432,7 +432,7 @@ blockDef:
             free($1);
             SET_NODE_END($$);
          }
-    |   WORD UVAR '[' indexExp ']' blockType    {
+    |   WORD UVAR '[' indexExp ']' entityType    {
             string name;
             name.append($2); /* string constructor leaks otherwise! */
             std::shared_ptr<ListNode> list = std::make_shared<ListNode>(std::shared_ptr<AST>($4), currentFile, yyloc.first_line, yyloc.first_column);
@@ -446,7 +446,7 @@ blockDef:
             free($1);
             SET_NODE_END($$);
          }
-    |   WORD UVAR '[' indexExp COMMA ']' blockType    {
+    |   WORD UVAR '[' indexExp COMMA ']' entityType    {
             string name;
             name.append($2); /* string constructor leaks otherwise! */
             std::shared_ptr<ListNode> list = std::make_shared<ListNode>(std::shared_ptr<AST>($4), currentFile, yyloc.first_line, yyloc.first_column);
@@ -460,7 +460,7 @@ blockDef:
             free($1);
              SET_NODE_END($$);
          }
-    |   WORD UVAR '[' UVAR IN generatorRange ']' blockType {
+    |   WORD UVAR '[' UVAR IN generatorRange ']' entityType {
             string word($1);
             free($1);
             string name($2);
@@ -486,7 +486,7 @@ blockDef:
     }
     ;
 
-blockType:
+entityType:
         '{' '}'             {
             $$ = NULL;
             COUT << "Default values assigned!" << ENDL;
@@ -502,25 +502,25 @@ blockType:
 
 callableDef:
     // With input stream (inputPortGroup >> UVAR):
-        WORD inputPortGroup STREAM UVAR '(' propertyPortListOpt ')' STREAM portGroup blockType {
+        WORD inputPortGroup STREAM UVAR '(' propertyPortListOpt ')' STREAM portGroup entityType {
             string type($1); free($1);
             string name($4); free($4);
             $$ = desugarCallable(type, name, std::shared_ptr<AST>($2), std::shared_ptr<AST>($6), std::shared_ptr<AST>($9), std::shared_ptr<AST>($10), currentFile, yyloc.first_line, yyloc.first_column);
             SET_NODE_END($$);
         }
-    |   WORD inputPortGroup STREAM UVAR '(' propertyPortListOpt ')' blockType {
+    |   WORD inputPortGroup STREAM UVAR '(' propertyPortListOpt ')' entityType {
             string type($1); free($1);
             string name($4); free($4);
             $$ = desugarCallable(type, name, std::shared_ptr<AST>($2), std::shared_ptr<AST>($6), nullptr, std::shared_ptr<AST>($8), currentFile, yyloc.first_line, yyloc.first_column);
             SET_NODE_END($$);
         }
-    |   WORD inputPortGroup STREAM UVAR STREAM portGroup blockType {
+    |   WORD inputPortGroup STREAM UVAR STREAM portGroup entityType {
             string type($1); free($1);
             string name($4); free($4);
             $$ = desugarCallable(type, name, std::shared_ptr<AST>($2), nullptr, std::shared_ptr<AST>($6), std::shared_ptr<AST>($7), currentFile, yyloc.first_line, yyloc.first_column);
             SET_NODE_END($$);
         }
-    |   WORD inputPortGroup STREAM UVAR blockType {
+    |   WORD inputPortGroup STREAM UVAR entityType {
             string type($1); free($1);
             string name($4); free($4);
             $$ = desugarCallable(type, name, std::shared_ptr<AST>($2), nullptr, nullptr, std::shared_ptr<AST>($5), currentFile, yyloc.first_line, yyloc.first_column);
@@ -528,13 +528,13 @@ callableDef:
         }
 
     // Without input stream (UVAR followed by '('):
-    |   WORD UVAR '(' propertyPortListOpt ')' STREAM portGroup blockType {
+    |   WORD UVAR '(' propertyPortListOpt ')' STREAM portGroup entityType {
             string type($1); free($1);
             string name($2); free($2);
             $$ = desugarCallable(type, name, nullptr, std::shared_ptr<AST>($4), std::shared_ptr<AST>($7), std::shared_ptr<AST>($8), currentFile, yyloc.first_line, yyloc.first_column);
             SET_NODE_END($$);
         }
-    |   WORD UVAR '(' propertyPortListOpt ')' blockType {
+    |   WORD UVAR '(' propertyPortListOpt ')' entityType {
             string type($1); free($1);
             string name($2); free($2);
             $$ = desugarCallable(type, name, nullptr, std::shared_ptr<AST>($4), nullptr, std::shared_ptr<AST>($6), currentFile, yyloc.first_line, yyloc.first_column);
@@ -659,7 +659,7 @@ portItem:
             $$ = new DeclarationNode(arr, "signal", propsList, currentFile, yyloc.first_line, yyloc.first_column);
             SET_NODE_END($$);
         }
-    |   WORD UVAR blockType {
+    |   WORD UVAR entityType {
             string kind($1);
             string name($2);
             free($1);
@@ -667,7 +667,7 @@ portItem:
             $$ = new DeclarationNode(name, kind, std::shared_ptr<AST>($3), currentFile, yyloc.first_line, yyloc.first_column);
             SET_NODE_END($$);
         }
-    |   WORD UVAR '[' ']' blockType {
+    |   WORD UVAR '[' ']' entityType {
             string kind($1);
             string name($2);
             free($1);
@@ -679,7 +679,7 @@ portItem:
             $$ = decl;
             SET_NODE_END($$);
         }
-    |   WORD UVAR '[' indexExp ']' blockType {
+    |   WORD UVAR '[' indexExp ']' entityType {
             string kind($1);
             string name($2);
             free($1);
@@ -1140,7 +1140,7 @@ functionDef:
 //  ANONYMOUS DECLARATION DEFINITION
 // =================================
 anonymousDeclDef:
-        WORD '[' ']' blockType            {
+        WORD '[' ']' entityType            {
             string word;
             word.append($1); /* string constructor leaks otherwise! */
             string uvar = "___Anonymous___" + std::to_string(anonymous_counter++);
@@ -1153,7 +1153,7 @@ anonymousDeclDef:
             free($1);
             SET_NODE_END($$);
         }
-    |   WORD blockType                    {
+    |   WORD entityType                    {
             string word($1);
             free($1);
             string uvar = "___Anonymous___" + std::to_string(anonymous_counter++);
@@ -1166,7 +1166,7 @@ anonymousDeclDef:
             COUT << "Block: " << word << ", Labelled: " << uvar << ENDL;
             SET_NODE_END($$);
         }
-    |   WORD '[' UVAR IN generatorRange ']' blockType {
+    |   WORD '[' UVAR IN generatorRange ']' entityType {
             string word($1);
             free($1);
             string varName($3);
@@ -1250,7 +1250,7 @@ propertyType:
             $$ = $1;
             COUT << "Value expression as property value!" << ENDL;
         }
-    |   blockType           {
+    |   entityType           {
             $$ = new DeclarationNode("", "" , std::shared_ptr<AST>($1), currentFile, yyloc.first_line, yyloc.first_column);
             COUT << "Block as property value!" << ENDL;
             SET_NODE_END($$);
@@ -1266,7 +1266,7 @@ propertyType:
             $$ = $1;
             COUT << "Stream as property value!" << ENDL;
         }
-    |   blockDef           {
+    |   entityDef           {
           $$ = $1;
           COUT << "Declaration as property value!" << ENDL;
         }
@@ -1354,7 +1354,7 @@ valueList:
             COUT << "Value list definition ..." << ENDL;
             COUT << "New list item ... " << ENDL;
         }
-    |   valueList COMMA blockDef {
+    |   valueList COMMA entityDef {
             ListNode *list = new ListNode(NULL, currentFile, yyloc.first_line, yyloc.first_column);
             list->stealMembers($1);
             ListNode *oldList = $1;
@@ -1418,17 +1418,17 @@ valueList:
 // =================================
 
 listDef:
-        '[' blockListBlock COMMA ']' { $$ = $2; }
-    |   '[' blockListBlock ']'       { $$ = $2; }
-    |   '[' blockListValue COMMA ']' { $$ = $2; }
-    |   '[' blockListValue ']'       { $$ = $2; }
-    |   '[' blockListBlock streamList COMMA ']' {
+        '[' entityListBlock COMMA ']' { $$ = $2; }
+    |   '[' entityListBlock ']'       { $$ = $2; }
+    |   '[' entityListValue COMMA ']' { $$ = $2; }
+    |   '[' entityListValue ']'       { $$ = $2; }
+    |   '[' entityListBlock streamList COMMA ']' {
             ListNode *list = $2;
             list->stealMembers($3);
             delete $3;
             $$ = list;
         }
-    |   '[' blockListBlock streamList ']' {
+    |   '[' entityListBlock streamList ']' {
             ListNode *list = $2;
             list->stealMembers($3);
             delete $3;
@@ -1445,8 +1445,8 @@ streamListDef:
     |   '[' streamList ']'        { $$ = $2; currentAt = "";}
     ;
 
-blockListBlock:
-        blockListBlock COMMA blockDef {
+entityListBlock:
+        entityListBlock COMMA entityDef {
             ListNode *list = new ListNode(NULL, currentFile, yyloc.first_line, yyloc.first_column);
             list->stealMembers($1);
             delete $1;
@@ -1455,7 +1455,7 @@ blockListBlock:
             COUT << "Block definition ... " << ENDL;
             COUT << "New list item ... " << ENDL;
         }
-    |   blockListBlock blockDef {
+    |   entityListBlock entityDef {
             ListNode *list = new ListNode(NULL, currentFile, yyloc.first_line, yyloc.first_column);
             list->stealMembers($1);
             delete $1;
@@ -1464,7 +1464,7 @@ blockListBlock:
             COUT << "Block definition ... " << ENDL;
             COUT << "New list item ... " << ENDL;
         }
-    |   blockListValue COMMA blockDef {
+    |   entityListValue COMMA entityDef {
             ListNode *list = new ListNode(NULL, currentFile, yyloc.first_line, yyloc.first_column);
             list->stealMembers($1);
             delete $1;
@@ -1473,18 +1473,18 @@ blockListBlock:
             COUT << "Block definition ... " << ENDL;
             COUT << "New list item ... " << ENDL;
         }
-    |   blockListBlock SEMICOLON {
+    |   entityListBlock SEMICOLON {
             $$ = $1;
         }
-    |   blockDef {
+    |   entityDef {
             $$ = new ListNode(std::shared_ptr<AST>($1), currentFile, yyloc.first_line, yyloc.first_column);
             COUT << "Block definition ... " << ENDL;
             COUT << "New list item ... " << ENDL;
         }
     ;
 
-blockListValue:
-        blockListBlock COMMA valueExp {
+entityListValue:
+        entityListBlock COMMA valueExp {
             ListNode *list = new ListNode(NULL, currentFile, yyloc.first_line, yyloc.first_column);
             list->stealMembers($1);
             delete $1;
@@ -1493,7 +1493,7 @@ blockListValue:
             COUT << "Value expression in block list ... " << ENDL;
             COUT << "New list item ... " << ENDL;
         }
-    |   blockListValue COMMA valueExp {
+    |   entityListValue COMMA valueExp {
             ListNode *list = new ListNode(NULL, currentFile, yyloc.first_line, yyloc.first_column);
             list->stealMembers($1);
             delete $1;

@@ -4,14 +4,14 @@ use DesktopAudio version 1.0
 module TestModule {
     ports: [
         mainOutputPort OutputPort {
-            block: Output
+            entity: Output
         }
         mainInputPort InputPort {
-            block: Input
+            entity: Input
             domain: OutputPort.domain
         }
     ]
-    blocks: [
+    entities: [
     ]
     streams: [
         Input >> Output;
@@ -29,10 +29,10 @@ OuterInput >> TestModule() >> TestModule() >> OuterOutput;
 module TestGenerator {
 	ports: [
 		mainOutputPort OutputPort {
-			block: Output
+			entity: Output
 		}
 	]
-	blocks: [
+	entities: [
 		signal Value { domain: OutputPort.domain}
 	]
 	streams: [
@@ -44,13 +44,13 @@ module TestGenerator {
 module Test {
 	ports: [
 		mainOutputPort OutputPort {
-			block: Output
+			entity: Output
 		}
 		mainInputPort InputPort {
-			block: Input
+			entity: Input
 		}
 	]
-	blocks: [
+	entities: [
 		signal Input[2] {}
 		signal Output {}
 	]

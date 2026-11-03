@@ -4,16 +4,16 @@ module SizeTest {
     ports:          [
         mainInputPort InputPort {
             name:       'input'
-            block:      Input
+            entity:      Input
             meta:       "The module's primary input port."
         },
         mainOutputPort OutputPort {
             name:       'output'
-            block:      Output
+            entity:      Output
             meta:       "The module's primary output port."
         }
     ]
-    blocks:         [
+    entities:         [
         signal Input [InputPort.size] {},
         signal Output [OutputPort.size] {}
         constant InputPortSize { value: 3}
@@ -29,16 +29,16 @@ module BlocksTest {
     ports:          [
         mainInputPort InputPort {
             name:       'input'
-            block:      Input
+            entity:      Input
             meta:       "The module's primary input port."
         },
         mainOutputPort OutputPort {
             name:       'output'
-            block:      Output
+            entity:      Output
             meta:       "The module's primary output port."
     }
 ]
-    blocks: [
+    entities: [
         signal Test {
         }
 ]
@@ -60,10 +60,10 @@ module DuplicatePortName {
     ports: [
         mainInputPort InputPort {
             name:       'input'
-            block:      Input
+            entity:      Input
         }
     ]
-    blocks: [
+    entities: [
         signal Test {
             domain: none
         }

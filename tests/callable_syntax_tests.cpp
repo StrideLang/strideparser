@@ -57,9 +57,7 @@ TEST(CallableSyntaxTest, PropertyAliasing) {
   decl->addProperty(std::make_shared<PropertyNode>("entities", entitiesList,
                                                    __FILE__, __LINE__));
   EXPECT_NE(decl->getPropertyValue("entities"), nullptr);
-  EXPECT_NE(decl->getPropertyValue("blocks"), nullptr);
-  EXPECT_EQ(decl->getPropertyValue("blocks"),
-            decl->getPropertyValue("entities"));
+  EXPECT_EQ(decl->getPropertyValue("blocks"), nullptr);
 
   auto portDecl = std::make_shared<DeclarationNode>(
       "InPort", "mainInputPort", nullptr, __FILE__, __LINE__);
@@ -67,9 +65,7 @@ TEST(CallableSyntaxTest, PropertyAliasing) {
   portDecl->addProperty(
       std::make_shared<PropertyNode>("entity", entityNode, __FILE__, __LINE__));
   EXPECT_NE(portDecl->getPropertyValue("entity"), nullptr);
-  EXPECT_NE(portDecl->getPropertyValue("block"), nullptr);
-  EXPECT_EQ(portDecl->getPropertyValue("block"),
-            portDecl->getPropertyValue("entity"));
+  EXPECT_EQ(portDecl->getPropertyValue("block"), nullptr);
 }
 
 TEST(CallableSyntaxTest, CompactModuleDesugaring) {

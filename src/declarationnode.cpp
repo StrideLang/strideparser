@@ -135,7 +135,7 @@ void DeclarationNode::setChildren(const std::vector<ASTNode> &newChildren) {
 
 bool DeclarationNode::addProperty(std::shared_ptr<PropertyNode> newProperty) {
   if (getPropertyValue(newProperty->getName())) {
-    return false; // Property or its alias already exists
+    return false; // Property already exists
   }
   addChild(newProperty);
   m_properties.push_back(newProperty);
@@ -148,24 +148,7 @@ ASTNode DeclarationNode::getPropertyValue(std::string propertyName) {
       return m_properties.at(i)->getValue();
     }
   }
-  // Property aliasing for standardized entities/entity vs legacy blocks/block
-  std::string alias;
-  if (propertyName == "blocks") {
-    alias = "entities";
-  } else if (propertyName == "entities") {
-    alias = "blocks";
-  } else if (propertyName == "block") {
-    alias = "entity";
-  } else if (propertyName == "entity") {
-    alias = "block";
-  }
-  if (!alias.empty()) {
-    for (unsigned int i = 0; i < m_properties.size(); i++) {
-      if (m_properties.at(i)->getName() == alias) {
-        return m_properties.at(i)->getValue();
-      }
-    }
-  }
+
   return nullptr;
 }
 
@@ -189,27 +172,7 @@ bool DeclarationNode::replacePropertyValue(std::string propertyName,
       break;
     }
   }
-  if (!replaced) {
-    std::string alias;
-    if (propertyName == "blocks") {
-      alias = "entities";
-    } else if (propertyName == "entities") {
-      alias = "blocks";
-    } else if (propertyName == "block") {
-      alias = "entity";
-    } else if (propertyName == "entity") {
-      alias = "block";
-    }
-    if (!alias.empty()) {
-      for (unsigned int i = 0; i < m_properties.size(); i++) {
-        if (m_properties.at(i)->getName() == alias) {
-          m_properties.at(i)->replaceValue(newValue);
-          replaced = true;
-          break;
-        }
-      }
-    }
-  }
+
   return replaced;
 }
 
