@@ -34,7 +34,7 @@ struct StrideProperty;
  */
 class StrideValue {
 public:
-    StrideValue() = default;
+    StrideValue() noexcept : m_doc(nullptr), m_index(0) {}
     StrideValue(const StrideDocument* doc, uint32_t index);
 
     // Type queries
