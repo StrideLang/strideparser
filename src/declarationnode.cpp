@@ -134,10 +134,8 @@ void DeclarationNode::setChildren(const std::vector<ASTNode> &newChildren) {
 }
 
 bool DeclarationNode::addProperty(std::shared_ptr<PropertyNode> newProperty) {
-  for (const auto &prop : m_properties) {
-    if (prop->getName() == newProperty->getName()) {
-      return false; // Property is not replaced
-    }
+  if (getPropertyValue(newProperty->getName())) {
+    return false; // Property or its alias already exists
   }
   addChild(newProperty);
   m_properties.push_back(newProperty);
