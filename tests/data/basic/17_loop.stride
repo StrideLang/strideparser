@@ -3,10 +3,10 @@ use DesktopAudio version 1.0
 loop LoopIn {
     ports: [
         mainInputPort InputPort {
-            block: Input
+            entity: Input
         }
     ]
-    blocks: [
+    entities: [
         switch CounterReset {default: on}
     ]
     streams: [
@@ -18,10 +18,10 @@ loop LoopIn {
 loop LoopOut {
     ports: [
         mainOutputPort OutputPort {
-            block: Output
+            entity: Output
         }
     ]
-    blocks: [
+    entities: [
         switch CounterReset {default: on}
     ]
     streams: [
@@ -33,13 +33,13 @@ loop LoopOut {
 loop LoopInOut {
     ports: [
         mainOutputPort OutputPort {
-            block: Output
+            entity: Output
         }
         mainInputPort InputPort {
-            block: Input
+            entity: Input
         }
     ]
-    blocks: [
+    entities: [
         switch CounterReset {default: on}
     ]
     streams: [
@@ -51,20 +51,20 @@ loop LoopInOut {
 module ContainsLoop {
     ports: [
         mainOutputPort OutputPort {
-            block: Output
+            entity: Output
         }
         mainInputPort InputPort {
-            block: Input
+            entity: Input
         }
     ]
-    blocks: [
+    entities: [
         loop InModule {
-            blocks: [
+            entities: [
                 switch CounterReset {default: on}
             ]
             ports: [
                 mainOutputPort OutputPort {
-                    block: Output
+                    entity: Output
                 }
             ]
             streams: [
@@ -73,13 +73,13 @@ module ContainsLoop {
             terminateWhen: CounterReset
         }
         loop InModuleInput {
-            blocks: [
+            entities: [
                 switch CounterReset {default: on}
                 signal Internal {}
             ]
             ports: [
                 mainInputPort InputPort {
-                    block: Input
+                    entity: Input
                 }
             ]
             streams: [

@@ -106,7 +106,7 @@ DeclarationNode *desugarCallable(
           bodyPortsProp = prop;
         } else if (pName == "code") {
           bodyCodeProp = prop;
-        } else if (pName == "entities" || pName == "blocks" || pName == "streams") {
+        } else if (pName == "entities" || pName == "streams") {
           if (!conflictingEntityOrStreamProp) {
             conflictingEntityOrStreamProp = prop;
           }
@@ -131,7 +131,7 @@ DeclarationNode *desugarCallable(
     parseErrors.push_back(err);
   }
 
-  // Mutual-exclusivity validation 2: code: vs. entities:/blocks:/streams:
+  // Mutual-exclusivity validation 2: code: vs. entities:/streams:
   if (bodyCodeProp && conflictingEntityOrStreamProp) {
     LangError err;
     err.type = LangError::CodeWithEntitiesOrStreams;

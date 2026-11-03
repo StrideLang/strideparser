@@ -4,19 +4,19 @@ module SimpleTest {
     ports: [
         mainInputPort InputPort {
             name: 'input'
-            block: Input
+            entity: Input
         },
         mainOutputPort OutputPort {
             name: 'output'
-            block: Output
+            entity: Output
         }
         propertyInputPort PropertyPort {
             name: 'property'
-            block: Property
+            entity: Property
             default: 0.0
         }
     ]
-    blocks: [
+    entities: [
         signal Input[OutputPort.size] {}
         signal Output[OutputPort.size] {}
     ]

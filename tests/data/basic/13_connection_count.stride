@@ -14,7 +14,7 @@ module Test {
     ports: [
         mainOutputPort OutputPort {}
     ]
-    blocks: [
+    entities: [
     signal Sig1 {}
     signal Sig2 {}
     signal Sig3 {}
