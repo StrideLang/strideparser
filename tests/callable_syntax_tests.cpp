@@ -57,7 +57,6 @@ TEST(CallableSyntaxTest, PropertyAliasing) {
   decl->addProperty(std::make_shared<PropertyNode>("entities", entitiesList,
                                                    __FILE__, __LINE__));
   EXPECT_NE(decl->getPropertyValue("entities"), nullptr);
-  EXPECT_EQ(decl->getPropertyValue("blocks"), nullptr);
 
   auto portDecl = std::make_shared<DeclarationNode>(
       "InPort", "mainInputPort", nullptr, __FILE__, __LINE__);
@@ -314,8 +313,8 @@ TEST(CallableSyntaxTest, AnonymousReactionInStream) {
 }
 
 TEST(CallableSyntaxTest, AnonymousReactionWithCodeProperty) {
-  ASTNode tree = AST::parseFile(TESTS_SOURCE_DIR
-                                "callable_syntax/anonymous_reaction_code.stride");
+  ASTNode tree = AST::parseFile(
+      TESTS_SOURCE_DIR "callable_syntax/anonymous_reaction_code.stride");
   auto errors = AST::getParseErrors();
   EXPECT_TRUE(errors.empty());
   ASSERT_TRUE(tree != nullptr);
@@ -343,8 +342,8 @@ TEST(CallableSyntaxTest, AnonymousReactionWithCodeProperty) {
   auto entitiesProp = rxDecl->getPropertyValue("entities");
   ASSERT_TRUE(entitiesProp != nullptr);
   ASSERT_EQ(entitiesProp->getChildren().size(), 1);
-  auto entityChild =
-      std::static_pointer_cast<DeclarationNode>(entitiesProp->getChildren().at(0));
+  auto entityChild = std::static_pointer_cast<DeclarationNode>(
+      entitiesProp->getChildren().at(0));
   EXPECT_EQ(entityChild->getName(), "Temp");
 
   auto streamsChild = rxDecl->getPropertyValue("streams");

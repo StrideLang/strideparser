@@ -225,7 +225,7 @@ start:
         }
     |   entityDef    {
             tree_head->addChild(std::shared_ptr<DeclarationNode>($1));
-            COUT << "Block Resolved!" << ENDL;
+            COUT << "Entity Resolved!" << ENDL;
         }
     |   streamDef   {
             tree_head->addChild(std::shared_ptr<StreamNode>($1));
@@ -354,7 +354,7 @@ importDef:
     ;
 
 // =================================
-//  BLOCK DEFINITION
+//  Entity DEFINITION
 // =================================
 
 entityDef:
@@ -368,7 +368,7 @@ entityDef:
             DeclarationNode *decl = new DeclarationNode(uvar, word, std::shared_ptr<AST>($5), currentFile, yyloc.first_line, yyloc.first_column);
             decl->setCompilerProperty("_at", std::make_shared<ValueNode>($4, currentFile, yyloc.first_line, yyloc.first_column));
             $$ = decl;
-            COUT << "Block: " << $1 << ", Labelled: " << $2 << ENDL;
+            COUT << "Entity: " << $1 << ", Labelled: " << $2 << ENDL;
             free($1);
             free($2);
             SET_NODE_END($$);
@@ -385,7 +385,7 @@ entityDef:
             DeclarationNode *decl = new DeclarationNode(uvar, word, std::shared_ptr<AST>($5), currentFile, yyloc.first_line, yyloc.first_column);
             decl->setCompilerProperty("_at", std::make_shared<ValueNode>(uvar2, currentFile, yyloc.first_line, yyloc.first_column));
             $$ = decl;
-            COUT << "Block: " << $1 << ", Labelled: " << $2 << ENDL;
+            COUT << "Entity: " << $1 << ", Labelled: " << $2 << ENDL;
             free($1);
             free($2);
             free($4);
@@ -403,7 +403,7 @@ entityDef:
             DeclarationNode *decl = new DeclarationNode(uvar, word, std::shared_ptr<AST>($5), currentFile, yyloc.first_line, yyloc.first_column);
             decl->setCompilerProperty("_at", std::make_shared<ValueNode>(word2, currentFile, yyloc.first_line, yyloc.first_column));
             $$ = decl;
-            COUT << "Block: " << $1 << ", Labelled: " << $2 << ENDL;
+            COUT << "Entity: " << $1 << ", Labelled: " << $2 << ENDL;
             free($1);
             free($2);
             free($4);
@@ -474,7 +474,7 @@ entityDef:
             decl->setCompilerProperty("_generatorVar", std::make_shared<ValueNode>(varName, currentFile, yyloc.first_line, yyloc.first_column));
             decl->setCompilerProperty("_generatorRange", std::shared_ptr<AST>($6));
             $$ = decl;
-            COUT << "Generator Block: " << word << " " << name << "[" << varName << " in ...]" << ENDL;
+            COUT << "Generator Entity: " << word << " " << name << "[" << varName << " in ...]" << ENDL;
             SET_NODE_END($$);
         }
     |   anonymousDeclDef     {
@@ -1149,7 +1149,7 @@ anonymousDeclDef:
             auto decl = new DeclarationNode(array, word, std::shared_ptr<AST>($4), currentFile, yyloc.first_line, yyloc.first_column);
             decl->setCompilerProperty("anonymous", std::make_shared<ValueNode>(true, __FILE__, __LINE__));
             $$ = decl;
-            COUT << "Unsized Anonymous Array Block: " << $1 << ", Labelled: " << uvar << ENDL;
+            COUT << "Unsized Anonymous Array Entity: " << $1 << ", Labelled: " << uvar << ENDL;
             free($1);
             SET_NODE_END($$);
         }
@@ -1163,7 +1163,7 @@ anonymousDeclDef:
                                         currentFile, yyloc.first_line, yyloc.first_column);
             decl->setCompilerProperty("anonymous", std::make_shared<ValueNode>(true, currentFile, yyloc.first_line, yyloc.first_column));
             $$ = decl;
-            COUT << "Block: " << word << ", Labelled: " << uvar << ENDL;
+            COUT << "Entity: " << word << ", Labelled: " << uvar << ENDL;
             SET_NODE_END($$);
         }
     |   WORD '[' UVAR IN generatorRange ']' entityType {
@@ -1180,7 +1180,7 @@ anonymousDeclDef:
             decl->setCompilerProperty("_generatorVar", std::make_shared<ValueNode>(varName, currentFile, yyloc.first_line, yyloc.first_column));
             decl->setCompilerProperty("_generatorRange", std::shared_ptr<AST>($5));
             $$ = decl;
-            COUT << "Anonymous Generator Block: " << word << "[" << varName << " in ...], Labelled: " << uvar << ENDL;
+            COUT << "Anonymous Generator Entity: " << word << "[" << varName << " in ...], Labelled: " << uvar << ENDL;
             SET_NODE_END($$);
         }
     ;
@@ -1252,7 +1252,7 @@ propertyType:
         }
     |   entityType           {
             $$ = new DeclarationNode("", "" , std::shared_ptr<AST>($1), currentFile, yyloc.first_line, yyloc.first_column);
-            COUT << "Block as property value!" << ENDL;
+            COUT << "Entity as property value!" << ENDL;
             SET_NODE_END($$);
         }
     |   listDef             {
@@ -1361,7 +1361,7 @@ valueList:
             delete oldList;
             list->addChild(std::shared_ptr<AST>($3));
             $$ = list;
-            COUT << "Block definition in value list ..." << ENDL;
+            COUT << "Entity definition in value list ..." << ENDL;
             COUT << "New list item ... " << ENDL;
         }
     |   valueList COMMA valueExp DOTDOT valueExp {
@@ -1452,7 +1452,7 @@ entityListBlock:
             delete $1;
             list->addChild(std::shared_ptr<AST>($3));
             $$ = list;
-            COUT << "Block definition ... " << ENDL;
+            COUT << "Entity definition ... " << ENDL;
             COUT << "New list item ... " << ENDL;
         }
     |   entityListBlock entityDef {
@@ -1461,7 +1461,7 @@ entityListBlock:
             delete $1;
             list->addChild(std::shared_ptr<AST>($2));
             $$ = list;
-            COUT << "Block definition ... " << ENDL;
+            COUT << " definition ... " << ENDL;
             COUT << "New list item ... " << ENDL;
         }
     |   entityListValue COMMA entityDef {
@@ -1470,7 +1470,7 @@ entityListBlock:
             delete $1;
             list->addChild(std::shared_ptr<AST>($3));
             $$ = list;
-            COUT << "Block definition ... " << ENDL;
+            COUT << " definition ... " << ENDL;
             COUT << "New list item ... " << ENDL;
         }
     |   entityListBlock SEMICOLON {
@@ -1478,7 +1478,7 @@ entityListBlock:
         }
     |   entityDef {
             $$ = new ListNode(std::shared_ptr<AST>($1), currentFile, yyloc.first_line, yyloc.first_column);
-            COUT << "Block definition ... " << ENDL;
+            COUT << " definition ... " << ENDL;
             COUT << "New list item ... " << ENDL;
         }
     ;
@@ -1490,7 +1490,7 @@ entityListValue:
             delete $1;
             list->addChild(std::shared_ptr<AST>($3));
             $$ = list;
-            COUT << "Value expression in block list ... " << ENDL;
+            COUT << "Value expression in  list ... " << ENDL;
             COUT << "New list item ... " << ENDL;
         }
     |   entityListValue COMMA valueExp {
@@ -1499,7 +1499,7 @@ entityListValue:
             delete $1;
             list->addChild(std::shared_ptr<AST>($3));
             $$ = list;
-            COUT << "Value expression in block list ... " << ENDL;
+            COUT << "Value expression in  list ... " << ENDL;
             COUT << "New list item ... " << ENDL;
         }
     ;
