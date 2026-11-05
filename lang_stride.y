@@ -4,6 +4,8 @@
 #include <cstdio>   // For fopen
 #include <cerrno>   // For error codes
 #include <cstring>  // For strerror
+#include <cctype>   // For isxdigit
+#include <cstdint>  // For INT64_MAX
 
 #include "stride/parser/ast.h"
 
@@ -51,6 +53,12 @@ AST *parse(const char *filename);
 const char * currentFile;
 
 std::vector<LangError> getErrors();
+
+namespace strd { class ValueNode; }
+// Node for a numeric literal with a type suffix, e.g. 255u8 or 0.5f32
+strd::ValueNode *makeSuffixedLiteral(char *text, int line, int column);
+// -value, keeping the literal's suffix
+strd::ValueNode *negateLiteral(strd::ValueNode *value, int line, int column);
 
 // Uncomment for verbose parsing
 //#define STRIDE_DEBUG_PARSER
@@ -169,6 +177,7 @@ NullStream nstream;
 %token  <fval>  REAL
 %token  <sval>  HEX
 %token  <sval>  BIN
+%token  <sval>  NUMLIT
 %token  <sval>  UVAR
 %token  <sval>  WORD
 %token  <sval>  STRING
@@ -717,12 +726,21 @@ propertyPortValue:
             free($1);
             SET_NODE_END($$);
         }
+    |   NUMLIT {
+            $$ = makeSuffixedLiteral($1, yyloc.first_line, yyloc.first_column);
+            SET_NODE_END($$);
+        }
     |   '-' INT %prec UMINUS {
             $$ = new ValueNode(-$2, currentFile, yyloc.first_line, yyloc.first_column);
             SET_NODE_END($$);
         }
     |   '-' REAL %prec UMINUS {
             $$ = new ValueNode(-$2, currentFile, yyloc.first_line, yyloc.first_column);
+            SET_NODE_END($$);
+        }
+    |   '-' NUMLIT %prec UMINUS {
+            ValueNode *value = makeSuffixedLiteral($2, yyloc.first_line, yyloc.first_column);
+            $$ = negateLiteral(value, yyloc.first_line, yyloc.first_column);
             SET_NODE_END($$);
         }
     ;
@@ -1664,9 +1682,7 @@ indexExp:
         }
     |   '-' indexExp %prec UMINUS       {
             if ($2->getNodeType() == AST::Int) {
-                int64_t val = -static_cast<ValueNode *>($2)->getIntValue();
-                delete $2;
-                $$ = new ValueNode(val, currentFile, yyloc.first_line, yyloc.first_column);
+                $$ = negateLiteral(static_cast<ValueNode *>($2), yyloc.first_line, yyloc.first_column);
             } else {
                 $$ = new ExpressionNode(ExpressionNode::UnaryMinus, std::shared_ptr<AST>($2), currentFile, yyloc.first_line, yyloc.first_column);
             }
@@ -1852,14 +1868,8 @@ valueExp:
             COUT << "Enclosure ..." << ENDL;
         }
     |   '-' valueExp %prec UMINUS       {
-            if ($2->getNodeType() == AST::Int) {
-                int64_t val = -static_cast<ValueNode *>($2)->getIntValue();
-                delete $2;
-                $$ = new ValueNode(val, currentFile, yyloc.first_line, yyloc.first_column);
-            } else if ($2->getNodeType() == AST::Real) {
-                double val = -static_cast<ValueNode *>($2)->getRealValue();
-                delete $2;
-                $$ = new ValueNode(val, currentFile, yyloc.first_line, yyloc.first_column);
+            if ($2->getNodeType() == AST::Int || $2->getNodeType() == AST::Real) {
+                $$ = negateLiteral(static_cast<ValueNode *>($2), yyloc.first_line, yyloc.first_column);
             } else {
                 $$ = new ExpressionNode(ExpressionNode::UnaryMinus, std::shared_ptr<AST>($2), currentFile, yyloc.first_line, yyloc.first_column);
             }
@@ -1899,6 +1909,11 @@ indexComp:
             $$ = new ValueNode($1, currentFile, yyloc.first_line, yyloc.first_column);
             SET_NODE_END($$);
             COUT << "Index/Size Integer: " << $1 << ENDL;
+        }
+    |   NUMLIT          {
+            $$ = makeSuffixedLiteral($1, yyloc.first_line, yyloc.first_column);
+            SET_NODE_END($$);
+            COUT << "Index/Size Literal" << ENDL;
         }
     |   HEX             {
             char * p;
@@ -2025,6 +2040,11 @@ streamComp:
             $$ = new ValueNode($1, currentFile, yyloc.first_line, yyloc.first_column);
             SET_NODE_END($$);
             COUT << "Real: " << $1 << ENDL;
+        }
+    |   NUMLIT          {
+            $$ = makeSuffixedLiteral($1, yyloc.first_line, yyloc.first_column);
+            SET_NODE_END($$);
+            COUT << "Literal" << ENDL;
         }
     |   HEX             {
             char * p;
@@ -2207,6 +2227,121 @@ static void propagateFilenames(AST *node, const std::string &relFilename, const 
     }
 }
 
+static void addLiteralError(const std::string &literal, const std::string &reason,
+                            int line, int column) {
+    LangError newError;
+    newError.type = LangError::InvalidLiteral;
+    newError.errorTokens = {literal, reason};
+    newError.filename = string(currentFile);
+    newError.lineNumber = line;
+    newError.columnNumber = column;
+    parseErrors.push_back(newError);
+}
+
+ValueNode *makeSuffixedLiteral(char *text, int line, int column) {
+    std::string literal(text);
+    free(text);
+    // Hex and binary digits run up to the suffix. Decimal digits (with the
+    // fraction and exponent) run up to the first i, u or f.
+    size_t start = 0;
+    int base = 10;
+    if (literal.size() > 2 && literal[0] == '0' &&
+        (literal[1] == 'x' || literal[1] == 'X' || literal[1] == 'b' || literal[1] == 'B')) {
+        base = (literal[1] == 'x' || literal[1] == 'X') ? 16 : 2;
+        start = 2;
+    }
+    size_t suffixStart = start;
+    while (suffixStart < literal.size()) {
+        char c = literal[suffixStart];
+        bool digit = base == 16 ? isxdigit((unsigned char) c) != 0
+                   : base == 2  ? (c == '0' || c == '1')
+                                : (c != 'i' && c != 'u' && c != 'f');
+        if (!digit && c != '_') {
+            break;
+        }
+        suffixStart++;
+    }
+    std::string digits;
+    for (size_t i = start; i < suffixStart; i++) {
+        if (literal[i] != '_') {
+            digits += literal[i];
+        }
+    }
+    std::string suffix = literal.substr(suffixStart);
+    std::string type = ValueNode::literalSuffixType(suffix);
+
+    ValueNode *node;
+    if (suffix[0] == 'f') {
+        node = new ValueNode(strtod(digits.c_str(), nullptr), currentFile, line, column);
+    } else {
+        errno = 0;
+        uint64_t value = strtoull(digits.c_str(), nullptr, base);
+        if (errno == ERANGE) {
+            addLiteralError(literal, "The value does not fit in 64 bits.", line, column);
+        } else if (suffix[0] == 'i' && value > uint64_t(INT64_MAX)) {
+            addLiteralError(literal, "The value does not fit in " + type + ".", line, column);
+        }
+        node = new ValueNode(static_cast<int64_t>(value), currentFile, line, column);
+    }
+    node->setLiteralSuffix(suffix);
+    return node;
+}
+
+ValueNode *negateLiteral(ValueNode *value, int line, int column) {
+    ValueNode *negated;
+    if (value->getNodeType() == AST::Real) {
+        negated = new ValueNode(-value->getRealValue(), currentFile, line, column);
+    } else if (value->hasUnsignedSuffix() && value->getIntValue() != 0) {
+        addLiteralError("-" + value->toText(0, 2, false),
+                        "Unsigned literals can't be negative.", line, column);
+        // Left positive so checkLiteralRanges() doesn't report it again
+        return value;
+    } else {
+        negated = new ValueNode(
+            static_cast<int64_t>(0 - static_cast<uint64_t>(value->getIntValue())),
+            currentFile, line, column);
+    }
+    negated->setLiteralSuffix(value->getLiteralSuffix());
+    delete value;
+    return negated;
+}
+
+// Literals with a fixed width suffix must fit their type. Checked once the
+// tree is complete, so that -128i8 is checked after it is negated. UInt and
+// Size have the size the framework gives them and are checked by the
+// compiler.
+static void checkLiteralRanges(const ASTNode &node) {
+    if (!node) {
+        return;
+    }
+    if (node->getNodeType() == AST::Int) {
+        auto value = std::static_pointer_cast<ValueNode>(node);
+        const std::string &suffix = value->getLiteralSuffix();
+        if (suffix.size() > 1 && suffix != "usize" && suffix != "u64" && suffix != "i64") {
+            int bits = atoi(suffix.c_str() + 1);
+            int64_t intValue = value->getIntValue();
+            bool fits;
+            if (suffix[0] == 'u') {
+                fits = static_cast<uint64_t>(intValue) <= (uint64_t(1) << bits) - 1;
+            } else {
+                fits = intValue >= -(int64_t(1) << (bits - 1)) &&
+                       intValue <= (int64_t(1) << (bits - 1)) - 1;
+            }
+            if (!fits) {
+                LangError newError;
+                newError.type = LangError::InvalidLiteral;
+                newError.errorTokens = {value->toText(0, 2, false),
+                                        "The value does not fit in " + value->getLiteralType() + "."};
+                node->copyLocationTo(newError);
+                parseErrors.push_back(newError);
+            }
+        }
+    }
+    for (const auto &child : node->getChildren()) {
+        checkLiteralRanges(child);
+    }
+}
+
 AST *parse(const char *filename, const char*sourceFilename){
     FILE * file;
     AST *ast = NULL;
@@ -2247,6 +2382,9 @@ AST *parse(const char *filename, const char*sourceFilename){
     yycolumn = 1;
     yyparse();
     fclose(file);
+    for (const auto &child : tree_head->getChildren()) {
+        checkLiteralRanges(child);
+    }
 
     if (parseErrors.size() > 0) {
         COUT << ENDL << "Number of Errors: " << parseErrors.size() << ENDL;

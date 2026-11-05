@@ -34,6 +34,7 @@
 
 #include <cassert>
 #include <iomanip>
+#include <map>
 #include <sstream>
 
 #include "stride/parser/listnode.h"
@@ -116,6 +117,9 @@ std::string ValueNode::toString() const {
     s << std::setprecision(16) << std::get<double>(m_value);
     return s.str();
   } else if (getNodeType() == AST::Int) {
+    if (hasUnsignedSuffix()) {
+      return std::to_string(static_cast<uint64_t>(std::get<int64_t>(m_value)));
+    }
     return std::to_string(std::get<int64_t>(m_value));
   } else if (getNodeType() == AST::String) {
     return std::get<std::string>(m_value);
@@ -134,15 +138,41 @@ bool ValueNode::getSwitchValue() const {
   return std::get<bool>(m_value);
 }
 
+const std::string &ValueNode::getLiteralSuffix() const {
+  return m_literalSuffix;
+}
+
+void ValueNode::setLiteralSuffix(const std::string &suffix) {
+  m_literalSuffix = suffix;
+}
+
+std::string ValueNode::getLiteralType() const {
+  return literalSuffixType(m_literalSuffix);
+}
+
+bool ValueNode::hasUnsignedSuffix() const {
+  return !m_literalSuffix.empty() && m_literalSuffix[0] == 'u';
+}
+
+std::string ValueNode::literalSuffixType(const std::string &suffix) {
+  static const std::map<std::string, std::string> types = {
+      {"i8", "Int8"},     {"i16", "Int16"},     {"i32", "Int32"},
+      {"i64", "Int64"},   {"u8", "UInt8"},      {"u16", "UInt16"},
+      {"u32", "UInt32"},  {"u64", "UInt64"},    {"f32", "Float32"},
+      {"f64", "Float64"}, {"u", "UInt"},        {"usize", "Size"}};
+  auto it = types.find(suffix);
+  return it != types.end() ? it->second : std::string();
+}
+
 std::string ValueNode::toText(int indentOffset, int indentSize,
                               bool newLine) const {
   (void)indentOffset;
   (void)indentSize;
   std::string outText;
   if (getNodeType() == AST::Int) {
-    outText += std::to_string(std::get<int64_t>(m_value));
+    outText += toString() + m_literalSuffix;
   } else if (getNodeType() == AST::Real) {
-    outText += std::to_string(std::get<double>(m_value));
+    outText += std::to_string(std::get<double>(m_value)) + m_literalSuffix;
   } else if (getNodeType() == AST::String) {
     outText += "\"" + std::get<std::string>(m_value) + "\"";
   } else if (getNodeType() == AST::Switch) {
@@ -175,6 +205,7 @@ ASTNode ValueNode::deepCopy() {
     return nullptr;
   }
   copyLocationTo(newNode);
+  newNode->m_literalSuffix = m_literalSuffix;
   if (this->m_CompilerProperties) {
     newNode->m_CompilerProperties = std::static_pointer_cast<ListNode>(
         this->m_CompilerProperties->deepCopy());

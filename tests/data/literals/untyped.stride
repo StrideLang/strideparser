@@ -1,0 +1,6 @@
+42 >> A;
+1_000 >> B;
+1e3 >> C;
+# f is a hex digit, so this is not a Float32 literal
+0x1f32 >> D;
+0xFF_FF >> E;

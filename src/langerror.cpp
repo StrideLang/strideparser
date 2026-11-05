@@ -106,6 +106,9 @@ std::string LangError::getErrorText() {
   case InvalidDataType:
     errorText += "Invalid Data Type '" + errorTokens[0] + "'. " + errorTokens[1];
     break;
+  case InvalidLiteral:
+    errorText += "Invalid literal '" + errorTokens[0] + "'. " + errorTokens[1];
+    break;
   case InconsistentList:
     errorText += "Inconsistent List Error";
     break;

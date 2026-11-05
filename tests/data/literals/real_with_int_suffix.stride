@@ -1,0 +1,2 @@
+# Integer suffixes do not apply to reals
+1.5i32 >> A;

@@ -65,6 +65,26 @@ public:
 
   bool getSwitchValue() const;
 
+  // The suffix a numeric literal was written with, e.g. "u8" in 255u8 or
+  // "f32" in 0.5f32. Empty for literals without one, which are untyped: they
+  // take the type of what they are used with, or Int or Real otherwise.
+  const std::string &getLiteralSuffix() const;
+  void setLiteralSuffix(const std::string &suffix);
+
+  // The data type named by the literal's suffix, e.g. "UInt8". Empty for
+  // untyped literals.
+  std::string getLiteralType() const;
+
+  // Whether the literal's suffix names an unsigned integer type. These
+  // literals keep the bits of the value, so values above the largest int64_t
+  // read back negative from getIntValue().
+  bool hasUnsignedSuffix() const;
+
+  // The data type a literal suffix names: i8..i64 and u8..u64 name the fixed
+  // integer types, f32 and f64 the float types, u names UInt and usize Size.
+  // Empty for an unknown suffix.
+  static std::string literalSuffixType(const std::string &suffix);
+
   virtual std::string toText(int indentOffset = 0, int indentSize = 2,
                              bool newLine = true) const override;
 
@@ -78,6 +98,7 @@ private:
   void setBoolValue(bool value);
   using ValueVariant = std::variant<int64_t, double, std::string, bool>;
   ValueVariant m_value;
+  std::string m_literalSuffix;
 
   ASTNode m_domain{nullptr};
 };

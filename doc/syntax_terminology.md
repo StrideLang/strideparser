@@ -62,6 +62,37 @@ Stride reserves lowercase keywords for control states and empty/null values:
   [Index in 0..5]
   ```
 
+### 2.3 Numeric Literals
+Integers are written in decimal (`44100`), hex (`0x1F`) or binary (`0b1010`). Reals have a fraction or an exponent (`0.5`, `.5`, `1e-3`, `2.5e6`). Digits can be grouped with `_` (`1_000_000`, `0xFFFF_FFFF`, `0b0000_1111`).
+
+A suffix gives a literal a data type:
+
+| Suffix | Data type | Example |
+|---|---|---|
+| `i8`, `i16`, `i32`, `i64` | `Int8`..`Int64` | `-128i8`, `9_600_000_000i64` |
+| `u8`, `u16`, `u32`, `u64` | `UInt8`..`UInt64` | `255u8`, `0xFFu8`, `0b0000_1111u8` |
+| `u` | `UInt` | `42u` |
+| `usize` | `Size` | `1024usize` |
+| `f32`, `f64` | `Float32`, `Float64` | `0.5f32`, `2f64`, `1e-3f32` |
+
+* Float suffixes only follow decimal digits. In `0x1f32` the `f` is a hex digit, so it is the integer `0x1F32`.
+* A literal must fit its type: `300u8`, `128i8` and `-1u8` are errors. `-128i8` is checked after it is negated.
+* A literal without a suffix is untyped. Used with a value of a numeric type, it takes that type if the type holds its value: in `Byte + 1`, where `Byte` is a `UInt8`, the `1` is a `UInt8`. A real literal only takes float types: in `Single * 0.5`, where `Single` is a `Float32`, the `0.5` is a `Float32`. When the type can't hold the literal (`Byte + 300`, `Count * 0.5` with an integer `Count`), the operands are promoted as usual.
+* With nothing to take a type from, an untyped integer is an `Int` and an untyped real a `Real`, whose sizes the framework decides.
+
+#### Arithmetic streamed to a wider type
+An expression streamed to a destination that holds every value of the expression's type is computed in the destination's type, so that it doesn't overflow or lose precision before it is stored:
+
+```stride
+Byte + 1 >> ByteOut;      # UInt8 arithmetic: 255 + 1 wraps to 0
+Byte + 1 >> IntOut;       # Int32 arithmetic: 256
+Byte * 2 >> IntOut;       # 510
+Single * 0.1 >> RealOut;  # computed as Float64
+Count / 4 >> RealOut;     # integer arithmetic to a float is done in Int64: 10 / 4 is 2
+```
+
+Integer arithmetic streamed to a float is computed in `Int64`, not in the float type, so integer division stays integer division. A destination that can't hold every value of the expression's type (narrower, or unsigned for a signed expression) doesn't change how the expression is computed; the result is converted, with a lossy conversion warning.
+
 ---
 
 ## 3. Declarations

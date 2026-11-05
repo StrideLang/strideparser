@@ -73,6 +73,7 @@ public:
     PrivatePort,
     HeaderPortsWithPortsProperty,
     CodeWithEntitiesOrStreams,
+    InvalidLiteral,
     None
   } ErrorType;
 
