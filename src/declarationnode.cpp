@@ -183,7 +183,11 @@ void DeclarationNode::removeProperty(ASTNode property) {
   }
   auto childlocation =
       std::find(m_children.begin(), m_children.end(), property);
-  m_children.erase(childlocation);
+  // Not every property is kept among the children; erasing end() would
+  // corrupt the vector
+  if (childlocation != m_children.end()) {
+    m_children.erase(childlocation);
+  }
 }
 
 ASTNode DeclarationNode::getDomain() {
