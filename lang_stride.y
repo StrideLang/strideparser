@@ -172,6 +172,17 @@ NullStream nstream;
 %type <propertyNode> propertyPort
 %type <listNode> propertyPortList
 %type <listNode> propertyPortListOpt
+%type <ast> featureCondition
+%type <ast> featureOrExp
+%type <ast> featureAndExp
+%type <ast> featureUnaryExp
+%type <ast> featureAtom
+%type <ast> withDef
+%type <declarationNode> forceDef
+%type <listNode> conditionalPropertyList
+%type <ast> propertyValueItem
+%type <listNode> startGroup
+%type <ast> startItem
 /* declare tokens */
 %token  <ival>  INT
 %token  <fval>  REAL
@@ -185,7 +196,7 @@ NullStream nstream;
 
 %token '[' ']' '{' '}'
 %token DOT COMMA COLON COLONCOLON SEMICOLON DOTDOT
-%token USE VERSION WITH IMPORT PACKAGE AS FOR IN NONE ON OFF
+%token USE VERSION WITH FORCE IMPORT PACKAGE AS FOR IN NONE ON OFF
 %token BITAND BITOR BITNOT AT
 %token STREAMRATE
 
@@ -240,9 +251,176 @@ start:
             tree_head->addChild(std::shared_ptr<StreamNode>($1));
             COUT << "Stream Definition Resolved!" << ENDL;
         }
+    |   withDef entityDef {
+            $2->setCompilerProperty("_feature_condition", std::shared_ptr<AST>($1));
+            tree_head->addChild(std::shared_ptr<DeclarationNode>($2));
+        }
+    |   withDef streamDef {
+            $2->setCompilerProperty("_feature_condition", std::shared_ptr<AST>($1));
+            tree_head->addChild(std::shared_ptr<StreamNode>($2));
+        }
+    |   withDef '{' startGroup '}' {
+            auto outerCond = std::shared_ptr<AST>($1);
+            if ($3) {
+                for (const auto &child : $3->getChildren()) {
+                    auto existingCond = child->getCompilerProperty("_feature_condition");
+                    if (existingCond) {
+                        auto combined = std::make_shared<ExpressionNode>(
+                            ExpressionNode::And, outerCond, existingCond,
+                            currentFile, child->getLine(), child->getColumn());
+                        child->setCompilerProperty("_feature_condition", combined);
+                    } else {
+                        child->setCompilerProperty("_feature_condition", outerCond);
+                    }
+                    tree_head->addChild(child);
+                }
+                delete $3;
+            }
+        }
+    |   forceDef {
+            tree_head->addChild(std::shared_ptr<DeclarationNode>($1));
+        }
     |   ERROR       {
             COUT << "Unrecognized Character: " << $1 << ENDL;
             yyerror($1);
+        }
+    ;
+
+
+// =================================
+//  FEATURE TOGGLE RULES
+// =================================
+
+startGroup:
+        startItem {
+            auto list = new ListNode(currentFile, yyloc.first_line, yyloc.first_column);
+            if ($1) {
+                if ($1->getNodeType() == AST::List) {
+                    for (const auto &c : $1->getChildren()) {
+                        list->addChild(c);
+                    }
+                } else {
+                    list->addChild(std::shared_ptr<AST>($1));
+                }
+            }
+            $$ = list;
+        }
+    |   startGroup startItem {
+            auto list = $1;
+            if ($2) {
+                if ($2->getNodeType() == AST::List) {
+                    for (const auto &c : $2->getChildren()) {
+                        list->addChild(c);
+                    }
+                } else {
+                    list->addChild(std::shared_ptr<AST>($2));
+                }
+            }
+            $$ = list;
+        }
+    ;
+
+startItem:
+        entityDef {
+            $$ = $1;
+        }
+    |   streamDef {
+            $$ = $1;
+        }
+    |   withDef entityDef {
+            $2->setCompilerProperty("_feature_condition", std::shared_ptr<AST>($1));
+            $$ = $2;
+        }
+    |   withDef streamDef {
+            $2->setCompilerProperty("_feature_condition", std::shared_ptr<AST>($1));
+            $$ = $2;
+        }
+    |   withDef '{' startGroup '}' {
+            auto outerCond = std::shared_ptr<AST>($1);
+            auto list = new ListNode(currentFile, yyloc.first_line, yyloc.first_column);
+            if ($3) {
+                for (const auto &child : $3->getChildren()) {
+                    auto existingCond = child->getCompilerProperty("_feature_condition");
+                    if (existingCond) {
+                        auto combined = std::make_shared<ExpressionNode>(
+                            ExpressionNode::And, outerCond, existingCond,
+                            currentFile, child->getLine(), child->getColumn());
+                        child->setCompilerProperty("_feature_condition", combined);
+                    } else {
+                        child->setCompilerProperty("_feature_condition", outerCond);
+                    }
+                    list->addChild(child);
+                }
+                delete $3;
+            }
+            $$ = list;
+        }
+    |   SEMICOLON {
+            $$ = nullptr;
+        }
+    ;
+
+withDef:
+        AT WITH '(' featureCondition ')' {
+            $$ = $4;
+        }
+    ;
+
+forceDef:
+        AT FORCE '(' featureCondition ')' {
+            auto decl = new DeclarationNode("", "_force", nullptr, currentFile, yyloc.first_line, yyloc.first_column);
+            decl->setCompilerProperty("_feature_condition", std::shared_ptr<AST>($4));
+            $$ = decl;
+            SET_NODE_END($$);
+        }
+    ;
+
+featureCondition:
+        featureOrExp {
+            $$ = $1;
+        }
+    ;
+
+featureOrExp:
+        featureAndExp {
+            $$ = $1;
+        }
+    |   featureOrExp OR featureAndExp {
+            $$ = new ExpressionNode(ExpressionNode::Or, std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), currentFile, yyloc.first_line, yyloc.first_column);
+        }
+    ;
+
+featureAndExp:
+        featureUnaryExp {
+            $$ = $1;
+        }
+    |   featureAndExp AND featureUnaryExp {
+            $$ = new ExpressionNode(ExpressionNode::And, std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), currentFile, yyloc.first_line, yyloc.first_column);
+        }
+    ;
+
+featureUnaryExp:
+        featureAtom {
+            $$ = $1;
+        }
+    |   NOT featureUnaryExp {
+            $$ = new ExpressionNode(ExpressionNode::LogicalNot, std::shared_ptr<AST>($2), currentFile, yyloc.first_line, yyloc.first_column);
+        }
+    ;
+
+featureAtom:
+        UVAR {
+            string s($1);
+            free($1);
+            $$ = new EntityNode(s, nullptr, currentFile, yyloc.first_line, yyloc.first_column);
+        }
+    |   scopeDef UVAR {
+            string s($2);
+            free($2);
+            $$ = new EntityNode(s, std::shared_ptr<AST>($1), currentFile, yyloc.first_line, yyloc.first_column);
+        }
+    |   '(' featureCondition ')' {
+            $$ = $2;
         }
     ;
 
@@ -566,7 +744,11 @@ inputPortGroup:
     ;
 
 inputPortItem:
-        UVAR {
+        withDef inputPortItem {
+            $2->setCompilerProperty("_feature_condition", std::shared_ptr<AST>($1));
+            $$ = $2;
+        }
+    |   UVAR {
             string name($1);
             free($1);
             auto defaultVal = std::make_shared<ValueNode>(0.0, currentFile, yyloc.first_line, yyloc.first_column);
@@ -632,7 +814,11 @@ portItemList:
     ;
 
 portItem:
-        UVAR {
+        withDef portItem {
+            $2->setCompilerProperty("_feature_condition", std::shared_ptr<AST>($1));
+            $$ = $2;
+        }
+    |   UVAR {
             string name($1);
             free($1);
             auto defaultVal = std::make_shared<ValueNode>(0.0, currentFile, yyloc.first_line, yyloc.first_column);
@@ -1236,6 +1422,18 @@ properties:
             $$ = temp;
             currentAt.clear();
         }
+    |   properties withDef streamDef {
+            $3->setCompilerProperty("_feature_condition", std::shared_ptr<AST>($2));
+            AST *props = $1;
+            props->addChild(std::shared_ptr<AST>($3));
+            $$ = props;
+        }
+    |   withDef streamDef {
+            $2->setCompilerProperty("_feature_condition", std::shared_ptr<AST>($1));
+            AST *temp = new AST();
+            temp->addChild(std::shared_ptr<AST>($2));
+            $$ = temp;
+        }
     ;
 
 property:
@@ -1288,7 +1486,52 @@ propertyType:
           $$ = $1;
           COUT << "Declaration as property value!" << ENDL;
         }
+    |   conditionalPropertyList {
+            $$ = $1;
+        }
     ;
+
+conditionalPropertyList:
+        withDef propertyValueItem withDef propertyValueItem {
+            auto list = new ListNode(currentFile, yyloc.first_line, yyloc.first_column);
+            auto item1 = std::shared_ptr<AST>($2);
+            item1->setCompilerProperty("_feature_condition", std::shared_ptr<AST>($1));
+            list->addChild(item1);
+            auto item2 = std::shared_ptr<AST>($4);
+            item2->setCompilerProperty("_feature_condition", std::shared_ptr<AST>($3));
+            list->addChild(item2);
+            list->setCompilerProperty("_is_conditional_property", std::make_shared<ValueNode>(true, currentFile, yyloc.first_line, yyloc.first_column));
+            $$ = list;
+        }
+    |   conditionalPropertyList withDef propertyValueItem {
+            auto list = $1;
+            auto item = std::shared_ptr<AST>($3);
+            item->setCompilerProperty("_feature_condition", std::shared_ptr<AST>($2));
+            list->addChild(item);
+            $$ = list;
+        }
+    ;
+
+propertyValueItem:
+        NONE {
+            $$ = new ValueNode(currentFile, yyloc.first_line, yyloc.first_column);
+        }
+    |   valueExp {
+            $$ = $1;
+        }
+    |   entityType {
+            $$ = new DeclarationNode("", "", std::shared_ptr<AST>($1), currentFile, yyloc.first_line, yyloc.first_column);
+            SET_NODE_END($$);
+        }
+    |   listDef {
+            $$ = $1;
+        }
+    |   valueListExp {
+            $$ = $1;
+        }
+    |   entityDef {
+            $$ = $1;
+        }
 
 // =================================
 //  PORT PROPERTY DEFINITION
@@ -1491,6 +1734,30 @@ entityListBlock:
             COUT << " definition ... " << ENDL;
             COUT << "New list item ... " << ENDL;
         }
+    |   entityListBlock COMMA withDef entityDef {
+            $4->setCompilerProperty("_feature_condition", std::shared_ptr<AST>($3));
+            ListNode *list = new ListNode(NULL, currentFile, yyloc.first_line, yyloc.first_column);
+            list->stealMembers($1);
+            delete $1;
+            list->addChild(std::shared_ptr<AST>($4));
+            $$ = list;
+        }
+    |   entityListBlock withDef entityDef {
+            $3->setCompilerProperty("_feature_condition", std::shared_ptr<AST>($2));
+            ListNode *list = new ListNode(NULL, currentFile, yyloc.first_line, yyloc.first_column);
+            list->stealMembers($1);
+            delete $1;
+            list->addChild(std::shared_ptr<AST>($3));
+            $$ = list;
+        }
+    |   entityListValue COMMA withDef entityDef {
+            $4->setCompilerProperty("_feature_condition", std::shared_ptr<AST>($3));
+            ListNode *list = new ListNode(NULL, currentFile, yyloc.first_line, yyloc.first_column);
+            list->stealMembers($1);
+            delete $1;
+            list->addChild(std::shared_ptr<AST>($4));
+            $$ = list;
+        }
     |   entityListBlock SEMICOLON {
             $$ = $1;
         }
@@ -1540,6 +1807,22 @@ streamList:
             $$ = list;
             COUT << "Stream definition ... " << ENDL;
             COUT << "New list item ... " << ENDL;
+        }
+    |   streamList COMMA withDef streamDef {
+            $4->setCompilerProperty("_feature_condition", std::shared_ptr<AST>($3));
+            ListNode *list = new ListNode(NULL, currentFile, yyloc.first_line, yyloc.first_column);
+            list->stealMembers($1);
+            delete $1;
+            list->addChild(std::shared_ptr<AST>($4));
+            $$ = list;
+        }
+    |   streamList withDef streamDef {
+            $3->setCompilerProperty("_feature_condition", std::shared_ptr<AST>($2));
+            ListNode *list = new ListNode(NULL, currentFile, yyloc.first_line, yyloc.first_column);
+            list->stealMembers($1);
+            delete $1;
+            list->addChild(std::shared_ptr<AST>($3));
+            $$ = list;
         }
     |   streamList SEMICOLON        {
             $$ = $1;

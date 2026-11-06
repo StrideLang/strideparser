@@ -74,6 +74,10 @@ public:
     HeaderPortsWithPortsProperty,
     CodeWithEntitiesOrStreams,
     InvalidLiteral,
+    UndeclaredFeature,
+    InvalidFeatureVariant,
+    NonExhaustiveProperty,
+    AmbiguousProperty,
     None
   } ErrorType;
 

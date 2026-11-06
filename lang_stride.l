@@ -66,6 +66,7 @@ FLOATSUFFIX f(32|64)
 "package"       { return PACKAGE; }
 "version"       { return VERSION; }
 "with"          { return WITH; }
+"force"         { return FORCE; }
 "import"        { return IMPORT; }
 "as"            { return AS; }
 "for"           { return FOR; }
