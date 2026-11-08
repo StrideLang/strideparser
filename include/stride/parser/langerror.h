@@ -78,6 +78,7 @@ public:
     InvalidFeatureVariant,
     NonExhaustiveProperty,
     AmbiguousProperty,
+    InheritedFinalType,
     None
   } ErrorType;
 

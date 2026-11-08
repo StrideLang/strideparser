@@ -180,6 +180,9 @@ std::string LangError::getErrorText() {
   case AmbiguousProperty:
     errorText += "Ambiguous conditional property value for '" + errorTokens[0] + "': multiple conditions matched";
     break;
+  case InheritedFinalType:
+    errorText += "Type '" + errorTokens[0] + "' is final and cannot be inherited from";
+    break;
   case None:
     errorText += "Unknown error";
     break;
