@@ -207,7 +207,7 @@ NullStream nstream;
      Name[](...), Name[] @x   the '(' or AT starts a functionDef, not a bundle
 */
 %nonassoc PREFER_SHIFT
-%nonassoc ON SEMICOLON AT
+%nonassoc ON SEMICOLON AT '[' '{'
 
 %left STREAM
 %nonassoc DOTDOT
@@ -361,15 +361,15 @@ startItem:
     ;
 
 withDef:
-        AT WITH '(' featureCondition ')' {
-            $$ = $4;
+        WITH '(' featureCondition ')' {
+            $$ = $3;
         }
     ;
 
 forceDef:
-        AT FORCE '(' featureCondition ')' {
+        FORCE '(' featureCondition ')' {
             auto decl = new DeclarationNode("", "_force", nullptr, currentFile, yyloc.first_line, yyloc.first_column);
-            decl->setCompilerProperty("_feature_condition", std::shared_ptr<AST>($4));
+            decl->setCompilerProperty("_feature_condition", std::shared_ptr<AST>($3));
             $$ = decl;
             SET_NODE_END($$);
         }
@@ -602,6 +602,14 @@ entityDef:
             free($1);
             free($2);
             $$ = desugarCallable(word, uvar, nullptr, nullptr, nullptr, std::shared_ptr<AST>($3), currentFile, yyloc.first_line, yyloc.first_column);
+            SET_NODE_END($$);
+        }
+    |   WORD UVAR %prec PREFER_SHIFT            {
+            string word($1);
+            string uvar($2);
+            free($1);
+            free($2);
+            $$ = desugarCallable(word, uvar, nullptr, nullptr, nullptr, nullptr, currentFile, yyloc.first_line, yyloc.first_column);
             SET_NODE_END($$);
         }
         // Test
