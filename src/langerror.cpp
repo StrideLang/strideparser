@@ -168,6 +168,18 @@ std::string LangError::getErrorText() {
                  errorTokens[0] + "' in " + errorTokens[1] + ":" +
                  errorTokens[2] + "]";
     break;
+  case UndeclaredFeature:
+    errorText += "Undeclared feature symbol '" + errorTokens[0] + "'";
+    break;
+  case InvalidFeatureVariant:
+    errorText += "'" + errorTokens[1] + "' is not a valid variant of feature '" + errorTokens[0] + "'";
+    break;
+  case NonExhaustiveProperty:
+    errorText += "Non-exhaustive conditional property value for '" + errorTokens[0] + "'";
+    break;
+  case AmbiguousProperty:
+    errorText += "Ambiguous conditional property value for '" + errorTokens[0] + "': multiple conditions matched";
+    break;
   case None:
     errorText += "Unknown error";
     break;
