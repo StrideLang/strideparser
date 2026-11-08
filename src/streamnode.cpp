@@ -103,9 +103,21 @@ std::string StreamNode::toText(int indentOffset, int indentSize,
   return outText;
 }
 
-void StreamNode::setLeft(ASTNode newLeft) { m_children.at(0) = newLeft; }
+void StreamNode::setLeft(ASTNode newLeft) {
+  if (!m_children.empty()) {
+    m_children.at(0) = newLeft;
+  } else {
+    m_children.push_back(newLeft);
+  }
+}
 
-void StreamNode::setRight(ASTNode newRight) { m_children.at(1) = newRight; }
+void StreamNode::setRight(ASTNode newRight) {
+  if (m_children.size() > 1) {
+    m_children.at(1) = newRight;
+  } else {
+    m_children.push_back(newRight);
+  }
+}
 
 ASTNode StreamNode::deepCopy() {
   std::shared_ptr<StreamNode> newStream = std::make_shared<StreamNode>(
