@@ -118,6 +118,8 @@ TEST(StrideReaderTest, SyntaxErrorDetection) {
     StrideReader r2(unclosedList);
     EXPECT_FALSE(r2.parse(h2));
     EXPECT_TRUE(r2.hasError());
+    EXPECT_NE(r2.getErrorMessage().find("column"), std::string::npos);
+    EXPECT_NE(r2.getErrorMessage().find("'}'"), std::string::npos);
 }
 
 // -----------------------------------------------------------------------------

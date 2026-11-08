@@ -52,9 +52,16 @@ std::string LangError::getErrorText() {
     errorText += "Warning: ";
   }
   switch (type) {
-  case Syntax:
-    errorText += "Syntax Error: Unexpected character '" + errorTokens[0] + "'";
-    break;
+  case Syntax: {
+    std::string token = (!errorTokens.empty() && !errorTokens[0].empty())
+                            ? errorTokens[0]
+                            : "UNKNOWN";
+    if (token.size() <= 1 && token != "UNKNOWN") {
+      errorText += "Syntax Error: Unexpected character '" + token + "'";
+    } else {
+      errorText += "Syntax Error: Unexpected token '" + token + "'";
+    }
+  } break;
   case UnknownType:
     errorText +=
         "Unknown Type Error. Type '" + errorTokens[0] + "' not recognized.";
@@ -104,7 +111,8 @@ std::string LangError::getErrorText() {
                  errorTokens[1] + "' " + errorTokens[2];
     break;
   case InvalidDataType:
-    errorText += "Invalid Data Type '" + errorTokens[0] + "'. " + errorTokens[1];
+    errorText +=
+        "Invalid Data Type '" + errorTokens[0] + "'. " + errorTokens[1];
     break;
   case InvalidLiteral:
     errorText += "Invalid literal '" + errorTokens[0] + "'. " + errorTokens[1];
@@ -144,11 +152,13 @@ std::string LangError::getErrorText() {
     break;
   case HeaderPortsWithPortsProperty:
     errorText += errorTokens[0] + " '" + errorTokens[1] +
-                 "' declares ports in its header and cannot also declare 'ports' in its body";
+                 "' declares ports in its header and cannot also declare "
+                 "'ports' in its body";
     break;
   case CodeWithEntitiesOrStreams:
     errorText += errorTokens[0] + " '" + errorTokens[1] +
-                 "' specifies 'code' and cannot also specify '" + errorTokens[2] + "' in its body";
+                 "' specifies 'code' and cannot also specify '" +
+                 errorTokens[2] + "' in its body";
     break;
   case UnsizedPort:
     errorText += "'" + errorTokens[0] + "()' takes the size of its " +
@@ -172,13 +182,16 @@ std::string LangError::getErrorText() {
     errorText += "Undeclared feature symbol '" + errorTokens[0] + "'";
     break;
   case InvalidFeatureVariant:
-    errorText += "'" + errorTokens[1] + "' is not a valid variant of feature '" + errorTokens[0] + "'";
+    errorText += "'" + errorTokens[1] +
+                 "' is not a valid variant of feature '" + errorTokens[0] + "'";
     break;
   case NonExhaustiveProperty:
-    errorText += "Non-exhaustive conditional property value for '" + errorTokens[0] + "'";
+    errorText += "Non-exhaustive conditional property value for '" +
+                 errorTokens[0] + "'";
     break;
   case AmbiguousProperty:
-    errorText += "Ambiguous conditional property value for '" + errorTokens[0] + "': multiple conditions matched";
+    errorText += "Ambiguous conditional property value for '" + errorTokens[0] +
+                 "': multiple conditions matched";
     break;
   case None:
     errorText += "Unknown error";

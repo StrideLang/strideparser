@@ -12,25 +12,12 @@
 using namespace std;
 using namespace strd;
 
-#ifdef __GNUC__
-    extern "C" int yylex();
-    extern "C" FILE *yyin;
-    extern "C" int yylineno;
-    extern "C" char * yytext;
-    extern "C" int errno;
-#else
-    extern "C" {
-        int yylex();
-        FILE *yyin;
-        char * yytext;
-//        int errno;        // THIS IS CAUSING A LINKING WARNING WITH MSVC 2015
-    }
-    extern int yylineno;
-#endif
-
+extern "C" int yylex();
+extern FILE *yyin;
+extern int yylineno;
+extern char *yytext;
 extern int yycolumn;
-
-extern void yyrestart (FILE *input_file );
+extern void yyrestart(FILE *input_file);
 
 std::vector<LangError> parseErrors;
 std::vector<SourceComment> parseComments;
@@ -2510,17 +2497,21 @@ void yyerror(const char *s){
     cout << "Parser reported error: " << s << endl;
 
     cout << "Unexpected token: ";
-    if (!yytext) {
+    if (!yytext || yytext[0] == '\0') {
         cout << "UNKNOWN";
     } else {
         cout << yytext;
     }
 
-    cout << " on line: " <<  yylineno <<  " in " << currentFile << endl;
+    cout << " on line: " <<  yylineno;
+    if (yylloc.first_column > 0) {
+        cout << ", column: " << yylloc.first_column;
+    }
+    cout <<  " in " << currentFile << endl;
 
     LangError newError;
     newError.type = LangError::Syntax;
-    if(yytext) {
+    if (yytext && yytext[0] != '\0') {
     newError.errorTokens.push_back(std::string(yytext));
     } else {
  newError.errorTokens.push_back(std::string());

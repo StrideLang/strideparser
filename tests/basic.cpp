@@ -1202,7 +1202,7 @@ TEST(Basic, PreciseSourceSpansAndErrors) {
   EXPECT_EQ(rightVal->getEndLine(), 5);
   EXPECT_EQ(rightVal->getEndColumn(), 19);
 
-  // Test error span
+  // Test error span and unexpected character error message
   ASTNode badTree = AST::parseFile(TESTS_SOURCE_DIR "basic/30_syntax_error_span.stride");
   auto badErrors = AST::getParseErrors();
   ASSERT_FALSE(badErrors.empty());
@@ -1210,6 +1210,17 @@ TEST(Basic, PreciseSourceSpansAndErrors) {
   EXPECT_GE(badErrors[0].columnNumber, 1);
   EXPECT_GE(badErrors[0].endLineNumber, 1);
   EXPECT_GE(badErrors[0].endColumnNumber, 1);
+  EXPECT_NE(badErrors[0].getErrorText().find("Line 3:15"), std::string::npos);
+  EXPECT_NE(badErrors[0].getErrorText().find("Syntax Error: Unexpected character ';'"), std::string::npos);
+
+  // Test unexpected token (text) error message
+  ASTNode badTokenTree = AST::parseFile(TESTS_SOURCE_DIR "basic/31_syntax_error_unexpected_token.stride");
+  auto badTokenErrors = AST::getParseErrors();
+  ASSERT_FALSE(badTokenErrors.empty());
+  EXPECT_EQ(badTokenErrors[0].lineNumber, 2);
+  EXPECT_GE(badTokenErrors[0].columnNumber, 1);
+  EXPECT_NE(badTokenErrors[0].getErrorText().find("Line 2:"), std::string::npos);
+  EXPECT_NE(badTokenErrors[0].getErrorText().find("Syntax Error: Unexpected token 'bar'"), std::string::npos);
 
   // Test copyLocationTo(LangError)
   LangError err;

@@ -115,6 +115,7 @@ private:
     struct Token {
         TokenType type{TokenType::EndOfFile};
         std::string_view strVal;
+        std::string_view rawText;
         int64_t intVal{0};
         double realVal{0.0};
         bool boolVal{false};
@@ -137,6 +138,7 @@ private:
     Token m_peekedToken;
 
     bool error(std::string_view msg, size_t line, size_t col);
+    bool unexpectedTokenError(std::string_view context, const Token& tok);
     void skipWhitespace();
     Token scanToken();
     Token peekToken();
@@ -161,6 +163,19 @@ inline StrideReader::StrideReader(std::string_view source)
       m_errorLine(1),
       m_errorCol(1),
       m_hasPeeked(false) {}
+
+inline bool StrideReader::unexpectedTokenError(std::string_view context, const Token& tok) {
+    std::string text(tok.rawText);
+    if (text.empty()) {
+        text = "<EOF>";
+    }
+    std::string msg = "Unexpected token '" + text + "' at line " + std::to_string(tok.line) +
+                      ", column " + std::to_string(tok.col);
+    if (!context.empty()) {
+        msg += " " + std::string(context);
+    }
+    return error(msg, tok.line, tok.col);
+}
 
 inline bool StrideReader::error(std::string_view msg, size_t line, size_t col) {
     m_hasError = true;
@@ -195,18 +210,20 @@ inline StrideReader::Token StrideReader::scanToken() {
     tok.line = m_line;
     tok.col = static_cast<size_t>(m_cur - m_lineStart) + 1;
 
+    const char* tokStart = m_cur;
     if (m_cur >= m_end) {
         tok.type = TokenType::EndOfFile;
+        tok.rawText = "<EOF>";
         return tok;
     }
 
     char c = *m_cur;
-    if (c == '{') { m_cur++; tok.type = TokenType::OpenBrace; return tok; }
-    if (c == '}') { m_cur++; tok.type = TokenType::CloseBrace; return tok; }
-    if (c == '[') { m_cur++; tok.type = TokenType::OpenBracket; return tok; }
-    if (c == ']') { m_cur++; tok.type = TokenType::CloseBracket; return tok; }
-    if (c == ':') { m_cur++; tok.type = TokenType::Colon; return tok; }
-    if (c == ',') { m_cur++; tok.type = TokenType::Comma; return tok; }
+    if (c == '{') { m_cur++; tok.type = TokenType::OpenBrace; tok.rawText = std::string_view(tokStart, m_cur - tokStart); return tok; }
+    if (c == '}') { m_cur++; tok.type = TokenType::CloseBrace; tok.rawText = std::string_view(tokStart, m_cur - tokStart); return tok; }
+    if (c == '[') { m_cur++; tok.type = TokenType::OpenBracket; tok.rawText = std::string_view(tokStart, m_cur - tokStart); return tok; }
+    if (c == ']') { m_cur++; tok.type = TokenType::CloseBracket; tok.rawText = std::string_view(tokStart, m_cur - tokStart); return tok; }
+    if (c == ':') { m_cur++; tok.type = TokenType::Colon; tok.rawText = std::string_view(tokStart, m_cur - tokStart); return tok; }
+    if (c == ',') { m_cur++; tok.type = TokenType::Comma; tok.rawText = std::string_view(tokStart, m_cur - tokStart); return tok; }
 
     // String literals
     if (c == '"' || c == '\'') {
@@ -225,6 +242,7 @@ inline StrideReader::Token StrideReader::scanToken() {
         if (m_cur < m_end && *m_cur == quote) {
             m_cur++;
         }
+        tok.rawText = std::string_view(tokStart, m_cur - tokStart);
         return tok;
     }
 
@@ -296,6 +314,7 @@ inline StrideReader::Token StrideReader::scanToken() {
             tok.type = TokenType::Int;
             tok.intVal = val;
         }
+        tok.rawText = std::string_view(tokStart, m_cur - tokStart);
         return tok;
     }
 
@@ -321,6 +340,7 @@ inline StrideReader::Token StrideReader::scanToken() {
             tok.type = TokenType::Identifier;
             tok.strVal = id;
         }
+        tok.rawText = std::string_view(tokStart, m_cur - tokStart);
         return tok;
     }
 
@@ -328,6 +348,7 @@ inline StrideReader::Token StrideReader::scanToken() {
     tok.type = TokenType::String;
     tok.strVal = std::string_view(m_cur, 1);
     m_cur++;
+    tok.rawText = std::string_view(tokStart, m_cur - tokStart);
     return tok;
 }
 
@@ -384,7 +405,7 @@ inline bool StrideReader::parse(StrideHandler& handler) {
                 handler.onProperty(typeName);
                 if (!parseValue(handler)) return false;
             } else {
-                return error("Unexpected token at top level", tok.line, tok.col);
+                return unexpectedTokenError("at top level", next);
             }
         } else {
             return error("Expected block or property at top level", tok.line, tok.col);
@@ -432,7 +453,7 @@ inline bool StrideReader::parseBlockBody(StrideHandler& handler) {
                 if (!parseBlockBody(handler)) return false;
                 handler.onBlockEnd();
             } else {
-                return error("Unexpected token in block", next.line, next.col);
+                return unexpectedTokenError("in block", next);
             }
         } else {
             return error("Expected property or block definition", tok.line, tok.col);
@@ -520,7 +541,7 @@ inline bool StrideReader::parseValue(StrideHandler& handler) {
         return true;
     }
 
-    return error("Unexpected value token", tok.line, tok.col);
+    return unexpectedTokenError("for value", tok);
 }
 
 } // namespace strd
