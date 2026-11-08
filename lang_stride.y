@@ -207,7 +207,7 @@ NullStream nstream;
      Name[](...), Name[] @x   the '(' or AT starts a functionDef, not a bundle
 */
 %nonassoc PREFER_SHIFT
-%nonassoc ON SEMICOLON AT '[' '{'
+%nonassoc ON SEMICOLON AT '[' '{' WITH
 
 %left STREAM
 %nonassoc DOTDOT
@@ -1494,20 +1494,20 @@ propertyType:
           $$ = $1;
           COUT << "Declaration as property value!" << ENDL;
         }
-    |   conditionalPropertyList {
+    |   conditionalPropertyList %prec PREFER_SHIFT {
             $$ = $1;
         }
     ;
 
 conditionalPropertyList:
-        withDef propertyValueItem withDef propertyValueItem {
+        withDef propertyValueItem {
             auto list = new ListNode(currentFile, yyloc.first_line, yyloc.first_column);
             auto item1 = std::shared_ptr<AST>($2);
             item1->setCompilerProperty("_feature_condition", std::shared_ptr<AST>($1));
             list->addChild(item1);
-            auto item2 = std::shared_ptr<AST>($4);
-            item2->setCompilerProperty("_feature_condition", std::shared_ptr<AST>($3));
-            list->addChild(item2);
+
+
+
             list->setCompilerProperty("_is_conditional_property", std::make_shared<ValueNode>(true, currentFile, yyloc.first_line, yyloc.first_column));
             $$ = list;
         }
@@ -1674,6 +1674,28 @@ valueList:
             COUT << "Generator range in value list ..." << ENDL;
             COUT << "New list item ... " << ENDL;
         }
+    |   valueList COMMA withDef valueExp {
+            $4->setCompilerProperty("_feature_condition", std::shared_ptr<AST>($3));
+            ListNode *list = new ListNode(NULL, currentFile, yyloc.first_line, yyloc.first_column);
+            list->stealMembers($1);
+            ListNode *oldList = $1;
+            delete oldList;
+            list->addChild(std::shared_ptr<AST>($4));
+            $$ = list;
+        }
+    |   valueList COMMA withDef entityDef {
+            $4->setCompilerProperty("_feature_condition", std::shared_ptr<AST>($3));
+            ListNode *list = new ListNode(NULL, currentFile, yyloc.first_line, yyloc.first_column);
+            list->stealMembers($1);
+            ListNode *oldList = $1;
+            delete oldList;
+            list->addChild(std::shared_ptr<AST>($4));
+            $$ = list;
+        }
+    |   withDef valueExp {
+            $2->setCompilerProperty("_feature_condition", std::shared_ptr<AST>($1));
+            $$ = new ListNode(std::shared_ptr<AST>($2), currentFile, yyloc.first_line, yyloc.first_column);
+        }
     |   valueExp DOTDOT valueExp DOTDOT valueExp {
             auto genNode = std::make_shared<GeneratorRangeNode>(std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), std::shared_ptr<AST>($5), currentFile, yyloc.first_line);
             $$ = new ListNode(genNode, currentFile, yyloc.first_line);
@@ -1766,6 +1788,10 @@ entityListBlock:
             list->addChild(std::shared_ptr<AST>($4));
             $$ = list;
         }
+    |   withDef entityDef {
+            $2->setCompilerProperty("_feature_condition", std::shared_ptr<AST>($1));
+            $$ = new ListNode(std::shared_ptr<AST>($2), currentFile, yyloc.first_line, yyloc.first_column);
+        }
     |   entityListBlock SEMICOLON {
             $$ = $1;
         }
@@ -1785,6 +1811,22 @@ entityListValue:
             $$ = list;
             COUT << "Value expression in  list ... " << ENDL;
             COUT << "New list item ... " << ENDL;
+        }
+    |   entityListBlock COMMA withDef valueExp {
+            $4->setCompilerProperty("_feature_condition", std::shared_ptr<AST>($3));
+            ListNode *list = new ListNode(NULL, currentFile, yyloc.first_line, yyloc.first_column);
+            list->stealMembers($1);
+            delete $1;
+            list->addChild(std::shared_ptr<AST>($4));
+            $$ = list;
+        }
+    |   entityListValue COMMA withDef valueExp {
+            $4->setCompilerProperty("_feature_condition", std::shared_ptr<AST>($3));
+            ListNode *list = new ListNode(NULL, currentFile, yyloc.first_line, yyloc.first_column);
+            list->stealMembers($1);
+            delete $1;
+            list->addChild(std::shared_ptr<AST>($4));
+            $$ = list;
         }
     |   entityListValue COMMA valueExp {
             ListNode *list = new ListNode(NULL, currentFile, yyloc.first_line, yyloc.first_column);
