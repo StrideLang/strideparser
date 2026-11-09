@@ -246,6 +246,10 @@ start:
             $2->setCompilerProperty("_feature_condition", std::shared_ptr<AST>($1));
             tree_head->addChild(std::shared_ptr<StreamNode>($2));
         }
+    |   withDef importDef {
+            $2->setCompilerProperty("_feature_condition", std::shared_ptr<AST>($1));
+            tree_head->addChild(std::shared_ptr<ImportNode>($2));
+        }
     |   withDef '{' startGroup '}' {
             auto outerCond = std::shared_ptr<AST>($1);
             if ($3) {
@@ -314,11 +318,18 @@ startItem:
     |   streamDef {
             $$ = $1;
         }
+    |   importDef {
+            $$ = $1;
+        }
     |   withDef entityDef {
             $2->setCompilerProperty("_feature_condition", std::shared_ptr<AST>($1));
             $$ = $2;
         }
     |   withDef streamDef {
+            $2->setCompilerProperty("_feature_condition", std::shared_ptr<AST>($1));
+            $$ = $2;
+        }
+    |   withDef importDef {
             $2->setCompilerProperty("_feature_condition", std::shared_ptr<AST>($1));
             $$ = $2;
         }

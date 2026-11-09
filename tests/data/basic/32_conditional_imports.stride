@@ -1,0 +1,16 @@
+feature Extra
+feature Other
+
+@with(Extra)
+import Foo
+
+@with(Extra)
+import Bar as B
+
+@with(!Extra)
+import Fallback
+
+@with(Extra && Other) {
+  import Baz
+  import Qux as Q
+}

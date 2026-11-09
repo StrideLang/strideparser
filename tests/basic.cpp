@@ -1230,3 +1230,46 @@ TEST(Basic, PreciseSourceSpansAndErrors) {
   EXPECT_EQ(err.endLineNumber, 5);
   EXPECT_EQ(err.endColumnNumber, 12);
 }
+
+TEST(Basic, ConditionalImports) {
+  ASTNode tree = AST::parseFile(TESTS_SOURCE_DIR "basic/32_conditional_imports.stride");
+  ASSERT_TRUE(tree != nullptr);
+
+  std::vector<ASTNode> imports;
+  for (const auto &child : tree->getChildren()) {
+    if (child && child->getNodeType() == AST::Import) {
+      imports.push_back(child);
+    }
+  }
+  ASSERT_EQ(imports.size(), 5u);
+
+  // 1: @with(Extra) import Foo
+  auto imp0 = std::static_pointer_cast<ImportNode>(imports[0]);
+  EXPECT_EQ(imp0->importName(), "Foo");
+  EXPECT_EQ(imp0->importAlias(), "");
+  EXPECT_TRUE(imp0->getCompilerProperty("_feature_condition") != nullptr);
+
+  // 2: @with(Extra) import Bar as B
+  auto imp1 = std::static_pointer_cast<ImportNode>(imports[1]);
+  EXPECT_EQ(imp1->importName(), "Bar");
+  EXPECT_EQ(imp1->importAlias(), "B");
+  EXPECT_TRUE(imp1->getCompilerProperty("_feature_condition") != nullptr);
+
+  // 3: @with(!Extra) import Fallback
+  auto imp2 = std::static_pointer_cast<ImportNode>(imports[2]);
+  EXPECT_EQ(imp2->importName(), "Fallback");
+  EXPECT_EQ(imp2->importAlias(), "");
+  EXPECT_TRUE(imp2->getCompilerProperty("_feature_condition") != nullptr);
+
+  // 4: inside @with(Extra && Other) { import Baz; import Qux as Q; }
+  auto imp3 = std::static_pointer_cast<ImportNode>(imports[3]);
+  EXPECT_EQ(imp3->importName(), "Baz");
+  EXPECT_EQ(imp3->importAlias(), "");
+  EXPECT_TRUE(imp3->getCompilerProperty("_feature_condition") != nullptr);
+
+  auto imp4 = std::static_pointer_cast<ImportNode>(imports[4]);
+  EXPECT_EQ(imp4->importName(), "Qux");
+  EXPECT_EQ(imp4->importAlias(), "Q");
+  EXPECT_TRUE(imp4->getCompilerProperty("_feature_condition") != nullptr);
+}
+
