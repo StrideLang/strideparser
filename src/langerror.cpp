@@ -40,7 +40,7 @@ using namespace strd;
 
 LangError::LangError() {}
 
-std::string LangError::getErrorText() {
+std::string LangError::getErrorText() const {
   std::string errorText = "In file " + filename + ":\n    ";
   std::stringstream lineNumString;
   lineNumString << lineNumber;
@@ -193,8 +193,15 @@ std::string LangError::getErrorText() {
     errorText += "Ambiguous conditional property value for '" + errorTokens[0] +
                  "': multiple conditions matched";
     break;
+  case InvalidCrossDomainAccess:
+    errorText += "Signal '" + errorTokens[0] + "' in domain '" +
+                 errorTokens[1] + "' cannot be accessed from domain '" +
+                 errorTokens[2] +
+                 "': domains do not share a common parent domain or connection";
+    break;
   case InheritedFinalType:
-    errorText += "Type '" + errorTokens[0] + "' is final and cannot be inherited from";
+    errorText +=
+        "Type '" + errorTokens[0] + "' is final and cannot be inherited from";
     break;
   case None:
     errorText += "Unknown error";

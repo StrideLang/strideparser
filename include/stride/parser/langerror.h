@@ -79,6 +79,7 @@ public:
     NonExhaustiveProperty,
     AmbiguousProperty,
     InheritedFinalType,
+    InvalidCrossDomainAccess,
     None
   } ErrorType;
 
@@ -93,7 +94,8 @@ public:
   int columnNumber{-1};
   int endLineNumber{-1};
   int endColumnNumber{-1};
-  std::string getErrorText();
+
+  std::string getErrorText() const;
 };
 } // namespace strd
 
