@@ -175,7 +175,7 @@ By implementing state tracking in a `StrideHandler`, data can be parsed directly
 
 | Construct | Syntax Example | Notes |
 |---|---|---|
-| **Blocks** | `gameUnit Unit_1 { ... }` or `levelSection { ... }` | Supports named and anonymous blocks |
+| **Entities** | `gameUnit Unit_1 { ... }` or `levelSection { ... }` | Supports named and anonymous entities |
 | **Properties** | `key: value` | Keys are unquoted identifiers |
 | **Strings** | `"Hello"` or `'World'` | Double or single quotes with `\` escapes |
 | **Integers** | `42`, `-10`, `0x2A` (hex), `0b1010` (binary) | Parsed via `std::from_chars` |
