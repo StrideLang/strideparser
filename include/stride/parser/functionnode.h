@@ -49,8 +49,8 @@ public:
                const char *filename, int line, int column = -1);
   ~FunctionNode();
 
-  virtual void addChild(ASTNode t) override;
-  virtual void setChildren(const std::vector<ASTNode> &newChildren) override;
+  void addChild(ASTNode t) override;
+  void setChildren(const std::vector<ASTNode> &newChildren) override;
   //    virtual void deleteChildren() override;
 
   std::string getName() const { return m_name; }
@@ -64,12 +64,12 @@ public:
   ASTNode getDomain();
   void setDomainString(std::string domain);
 
-  virtual std::string toText(int indentOffset = 0, int indentSize = 2,
-                             bool newLine = true) const override;
+  std::string toText(int indentOffset = 0, int indentSize = 2,
+                     bool newLine = true) const override;
 
-  virtual void resolveScope(ASTNode scope) override;
+  void resolveScope(ASTNode scope) override;
 
-  virtual ASTNode deepCopy() override;
+  ASTNode deepCopy() override;
 
   // FIXME We should move domain and rates out of the parser and into the code
   // generator

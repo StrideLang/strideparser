@@ -53,8 +53,8 @@ public:
   const std::string &fullPackageName() const;
   const std::vector<std::string> &packageSegments() const;
 
-  virtual void resolveScope(ASTNode scope) override;
-  virtual ASTNode deepCopy() override;
+  void resolveScope(ASTNode scope) override;
+  ASTNode deepCopy() override;
 
   std::string toText(int indentOffset = 0, int indentSize = 2,
                      bool newLine = true) const override;

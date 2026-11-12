@@ -62,8 +62,8 @@ public:
 
   ASTNode deepCopy() override;
 
-  virtual std::string toText(int indentOffset = 0, int indentSize = 2,
-                             bool newLine = true) const override;
+  std::string toText(int indentOffset = 0, int indentSize = 2,
+                     bool newLine = true) const override;
 
 private:
   int m_minorVersion;

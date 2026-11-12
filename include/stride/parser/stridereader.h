@@ -141,12 +141,28 @@ private:
     bool unexpectedTokenError(std::string_view context, const Token& tok);
     void skipWhitespace();
     Token scanToken();
+    void scanString(Token& tok);
+    void scanNumber(Token& tok);
+    bool skipRealSuffix();
+    void scanIdentifier(Token& tok);
+    void skipDigits();
+    static bool isDigit(char c) { return c >= '0' && c <= '9'; }
+    static bool isHexDigit(char c) {
+        return isDigit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
+    }
+    static bool isIdentStart(char c) {
+        return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_';
+    }
+    static bool punctuationType(char c, TokenType& type);
+    bool startsNumber(char c) const;
     Token peekToken();
     Token nextToken();
     void consumeToken();
 
     bool parseBlockBody(StrideHandler& handler);
     bool parseValue(StrideHandler& handler);
+    bool parseList(StrideHandler& handler, const Token& open);
+    bool parseIdentifierValue(StrideHandler& handler, const Token& tok);
 };
 
 
@@ -204,6 +220,124 @@ inline void StrideReader::skipWhitespace() {
     }
 }
 
+inline bool StrideReader::punctuationType(char c, TokenType& type) {
+    switch (c) {
+    case '{': type = TokenType::OpenBrace; return true;
+    case '}': type = TokenType::CloseBrace; return true;
+    case '[': type = TokenType::OpenBracket; return true;
+    case ']': type = TokenType::CloseBracket; return true;
+    case ':': type = TokenType::Colon; return true;
+    case ',': type = TokenType::Comma; return true;
+    default: return false;
+    }
+}
+
+inline bool StrideReader::startsNumber(char c) const {
+    if (isDigit(c)) return true;
+    if ((c == '-' || c == '+') && m_cur + 1 < m_end) {
+        char n = *(m_cur + 1);
+        return isDigit(n) || n == '.';
+    }
+    return false;
+}
+
+inline void StrideReader::skipDigits() {
+    while (m_cur < m_end && isDigit(*m_cur)) {
+        m_cur++;
+    }
+}
+
+inline void StrideReader::scanString(Token& tok) {
+    char quote = *m_cur;
+    m_cur++;
+    const char* strStart = m_cur;
+    while (m_cur < m_end && *m_cur != quote && *m_cur != '\n') {
+        if (*m_cur == '\\' && m_cur + 1 < m_end) {
+            m_cur += 2;
+        } else {
+            m_cur++;
+        }
+    }
+    tok.type = TokenType::String;
+    tok.strVal = std::string_view(strStart, m_cur - strStart);
+    if (m_cur < m_end && *m_cur == quote) {
+        m_cur++;
+    }
+}
+
+// Scans the fraction and exponent of a decimal number. Returns true if either was present.
+inline bool StrideReader::skipRealSuffix() {
+    bool isReal = false;
+    if (m_cur < m_end && *m_cur == '.' && (m_cur + 1 >= m_end || *(m_cur + 1) != '.')) {
+        isReal = true;
+        m_cur++;
+        skipDigits();
+    }
+    if (m_cur < m_end && (*m_cur == 'e' || *m_cur == 'E')) {
+        isReal = true;
+        m_cur++;
+        if (m_cur < m_end && (*m_cur == '+' || *m_cur == '-')) m_cur++;
+        skipDigits();
+    }
+    return isReal;
+}
+
+inline void StrideReader::scanNumber(Token& tok) {
+    const char* numStart = m_cur;
+    int base = 10;
+    bool isReal = false;
+
+    if (*m_cur == '+' || *m_cur == '-') m_cur++;
+
+    char prefix = (m_cur + 1 < m_end && *m_cur == '0') ? *(m_cur + 1) : '\0';
+    if (prefix == 'x' || prefix == 'X') {
+        base = 16;
+        m_cur += 2;
+        while (m_cur < m_end && isHexDigit(*m_cur)) m_cur++;
+    } else if (prefix == 'b' || prefix == 'B') {
+        base = 2;
+        m_cur += 2;
+        while (m_cur < m_end && (*m_cur == '0' || *m_cur == '1')) m_cur++;
+    } else {
+        skipDigits();
+        isReal = skipRealSuffix();
+    }
+
+    const char* numEnd = m_cur;
+    if (isReal) {
+        double val = 0.0;
+        std::from_chars(numStart, numEnd, val);
+        tok.type = TokenType::Real;
+        tok.realVal = val;
+    } else {
+        int64_t val = 0;
+        // Prefixed (0x / 0b) literals skip the two prefix characters.
+        std::from_chars(base == 10 ? numStart : numStart + 2, numEnd, val, base);
+        tok.type = TokenType::Int;
+        tok.intVal = val;
+    }
+}
+
+inline void StrideReader::scanIdentifier(Token& tok) {
+    const char* idStart = m_cur;
+    while (m_cur < m_end && (isIdentStart(*m_cur) || isDigit(*m_cur))) {
+        m_cur++;
+    }
+    std::string_view id(idStart, m_cur - idStart);
+    if (id == "on" || id == "true") {
+        tok.type = TokenType::Bool;
+        tok.boolVal = true;
+    } else if (id == "off" || id == "false") {
+        tok.type = TokenType::Bool;
+        tok.boolVal = false;
+    } else if (id == "none") {
+        tok.type = TokenType::None;
+    } else {
+        tok.type = TokenType::Identifier;
+        tok.strVal = id;
+    }
+}
+
 inline StrideReader::Token StrideReader::scanToken() {
     skipWhitespace();
     Token tok;
@@ -218,136 +352,20 @@ inline StrideReader::Token StrideReader::scanToken() {
     }
 
     char c = *m_cur;
-    if (c == '{') { m_cur++; tok.type = TokenType::OpenBrace; tok.rawText = std::string_view(tokStart, m_cur - tokStart); return tok; }
-    if (c == '}') { m_cur++; tok.type = TokenType::CloseBrace; tok.rawText = std::string_view(tokStart, m_cur - tokStart); return tok; }
-    if (c == '[') { m_cur++; tok.type = TokenType::OpenBracket; tok.rawText = std::string_view(tokStart, m_cur - tokStart); return tok; }
-    if (c == ']') { m_cur++; tok.type = TokenType::CloseBracket; tok.rawText = std::string_view(tokStart, m_cur - tokStart); return tok; }
-    if (c == ':') { m_cur++; tok.type = TokenType::Colon; tok.rawText = std::string_view(tokStart, m_cur - tokStart); return tok; }
-    if (c == ',') { m_cur++; tok.type = TokenType::Comma; tok.rawText = std::string_view(tokStart, m_cur - tokStart); return tok; }
-
-    // String literals
-    if (c == '"' || c == '\'') {
-        char quote = c;
+    if (punctuationType(c, tok.type)) {
         m_cur++;
-        const char* strStart = m_cur;
-        while (m_cur < m_end && *m_cur != quote && *m_cur != '\n') {
-            if (*m_cur == '\\' && m_cur + 1 < m_end) {
-                m_cur += 2;
-            } else {
-                m_cur++;
-            }
-        }
+    } else if (c == '"' || c == '\'') {
+        scanString(tok);
+    } else if (startsNumber(c)) {
+        scanNumber(tok);
+    } else if (isIdentStart(c)) {
+        scanIdentifier(tok);
+    } else {
+        // Fallback unknown token
         tok.type = TokenType::String;
-        tok.strVal = std::string_view(strStart, m_cur - strStart);
-        if (m_cur < m_end && *m_cur == quote) {
-            m_cur++;
-        }
-        tok.rawText = std::string_view(tokStart, m_cur - tokStart);
-        return tok;
+        tok.strVal = std::string_view(m_cur, 1);
+        m_cur++;
     }
-
-    // Numbers: integer or floating point
-    if ((c >= '0' && c <= '9') ||
-        ((c == '-' || c == '+') && m_cur + 1 < m_end &&
-         ((*(m_cur + 1) >= '0' && *(m_cur + 1) <= '9') || *(m_cur + 1) == '.'))) {
-        const char* numStart = m_cur;
-        bool isHex = false;
-        bool isBin = false;
-        bool isReal = false;
-
-        if (c == '+' || c == '-') m_cur++;
-
-        if (m_cur + 1 < m_end && *m_cur == '0' && (*(m_cur + 1) == 'x' || *(m_cur + 1) == 'X')) {
-            isHex = true;
-            m_cur += 2;
-            while (m_cur < m_end && ((*m_cur >= '0' && *m_cur <= '9') ||
-                                     (*m_cur >= 'a' && *m_cur <= 'f') ||
-                                     (*m_cur >= 'A' && *m_cur <= 'F'))) {
-                m_cur++;
-            }
-        } else if (m_cur + 1 < m_end && *m_cur == '0' && (*(m_cur + 1) == 'b' || *(m_cur + 1) == 'B')) {
-            isBin = true;
-            m_cur += 2;
-            while (m_cur < m_end && (*m_cur == '0' || *m_cur == '1')) {
-                m_cur++;
-            }
-        } else {
-            while (m_cur < m_end && (*m_cur >= '0' && *m_cur <= '9')) {
-                m_cur++;
-            }
-            if (m_cur < m_end && *m_cur == '.' && (m_cur + 1 >= m_end || *(m_cur + 1) != '.')) {
-                isReal = true;
-                m_cur++;
-                while (m_cur < m_end && (*m_cur >= '0' && *m_cur <= '9')) {
-                    m_cur++;
-                }
-            }
-            if (m_cur < m_end && (*m_cur == 'e' || *m_cur == 'E')) {
-                isReal = true;
-                m_cur++;
-                if (m_cur < m_end && (*m_cur == '+' || *m_cur == '-')) m_cur++;
-                while (m_cur < m_end && (*m_cur >= '0' && *m_cur <= '9')) {
-                    m_cur++;
-                }
-            }
-        }
-
-        const char* numEnd = m_cur;
-        if (isHex) {
-            int64_t val = 0;
-            std::from_chars(numStart + 2, numEnd, val, 16);
-            tok.type = TokenType::Int;
-            tok.intVal = val;
-        } else if (isBin) {
-            int64_t val = 0;
-            std::from_chars(numStart + 2, numEnd, val, 2);
-            tok.type = TokenType::Int;
-            tok.intVal = val;
-        } else if (isReal) {
-            double val = 0.0;
-            std::from_chars(numStart, numEnd, val);
-            tok.type = TokenType::Real;
-            tok.realVal = val;
-        } else {
-            int64_t val = 0;
-            std::from_chars(numStart, numEnd, val, 10);
-            tok.type = TokenType::Int;
-            tok.intVal = val;
-        }
-        tok.rawText = std::string_view(tokStart, m_cur - tokStart);
-        return tok;
-    }
-
-    // Identifiers or boolean/none keywords
-    if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_') {
-        const char* idStart = m_cur;
-        while (m_cur < m_end && ((*m_cur >= 'a' && *m_cur <= 'z') ||
-                                 (*m_cur >= 'A' && *m_cur <= 'Z') ||
-                                 (*m_cur >= '0' && *m_cur <= '9') ||
-                                 *m_cur == '_')) {
-            m_cur++;
-        }
-        std::string_view id(idStart, m_cur - idStart);
-        if (id == "on" || id == "true") {
-            tok.type = TokenType::Bool;
-            tok.boolVal = true;
-        } else if (id == "off" || id == "false") {
-            tok.type = TokenType::Bool;
-            tok.boolVal = false;
-        } else if (id == "none") {
-            tok.type = TokenType::None;
-        } else {
-            tok.type = TokenType::Identifier;
-            tok.strVal = id;
-        }
-        tok.rawText = std::string_view(tokStart, m_cur - tokStart);
-        return tok;
-    }
-
-    // Fallback unknown token
-    tok.type = TokenType::String;
-    tok.strVal = std::string_view(m_cur, 1);
-    m_cur++;
     tok.rawText = std::string_view(tokStart, m_cur - tokStart);
     return tok;
 }
@@ -462,86 +480,89 @@ inline bool StrideReader::parseBlockBody(StrideHandler& handler) {
     return true;
 }
 
+inline bool StrideReader::parseList(StrideHandler& handler, const Token& open) {
+    consumeToken();
+    handler.onListStart();
+    while (!m_hasError) {
+        Token item = peekToken();
+        if (item.type == TokenType::CloseBracket) {
+            consumeToken();
+            handler.onListEnd();
+            return true;
+        }
+        if (item.type == TokenType::Comma) {
+            consumeToken();
+            continue;
+        }
+        if (item.type == TokenType::EndOfFile) {
+            return error("Unclosed list, expected ']'", item.line, item.col);
+        }
+        if (!parseValue(handler)) return false;
+        Token after = peekToken();
+        if (after.type == TokenType::Comma) {
+            consumeToken();
+        }
+    }
+    return error("Unclosed list, expected ']'", open.line, open.col);
+}
+
+inline bool StrideReader::parseIdentifierValue(StrideHandler& handler, const Token& tok) {
+    consumeToken();
+    std::string_view typeName = tok.strVal;
+    Token next = peekToken();
+    if (next.type == TokenType::OpenBrace) {
+        consumeToken();
+        handler.onBlockStart(typeName, "");
+        if (!parseBlockBody(handler)) return false;
+        handler.onBlockEnd();
+        return true;
+    }
+    if (next.type == TokenType::Identifier) {
+        Token nameTok = nextToken();
+        Token braceTok = nextToken();
+        if (braceTok.type != TokenType::OpenBrace) {
+            return error("Expected '{' for block value", braceTok.line, braceTok.col);
+        }
+        handler.onBlockStart(typeName, nameTok.strVal);
+        if (!parseBlockBody(handler)) return false;
+        handler.onBlockEnd();
+        return true;
+    }
+    // Bare identifier treated as string value
+    handler.onString(typeName);
+    return true;
+}
+
 inline bool StrideReader::parseValue(StrideHandler& handler) {
     Token tok = peekToken();
-    if (tok.type == TokenType::String) {
+    switch (tok.type) {
+    case TokenType::String:
         consumeToken();
         handler.onString(tok.strVal);
         return true;
-    }
-    if (tok.type == TokenType::Int) {
+    case TokenType::Int:
         consumeToken();
         handler.onInt(tok.intVal);
         return true;
-    }
-    if (tok.type == TokenType::Real) {
+    case TokenType::Real:
         consumeToken();
         handler.onReal(tok.realVal);
         return true;
-    }
-    if (tok.type == TokenType::Bool) {
+    case TokenType::Bool:
         consumeToken();
         handler.onBool(tok.boolVal);
         return true;
-    }
-    if (tok.type == TokenType::None) {
+    case TokenType::None:
         consumeToken();
         handler.onNone();
         return true;
+    case TokenType::OpenBracket:
+        return parseList(handler, tok);
+    case TokenType::Identifier:
+        return parseIdentifierValue(handler, tok);
+    default:
+        return unexpectedTokenError("for value", tok);
     }
-    if (tok.type == TokenType::OpenBracket) {
-        consumeToken();
-        handler.onListStart();
-        while (!m_hasError) {
-            Token item = peekToken();
-            if (item.type == TokenType::CloseBracket) {
-                consumeToken();
-                handler.onListEnd();
-                return true;
-            }
-            if (item.type == TokenType::Comma) {
-                consumeToken();
-                continue;
-            }
-            if (item.type == TokenType::EndOfFile) {
-                return error("Unclosed list, expected ']'", item.line, item.col);
-            }
-            if (!parseValue(handler)) return false;
-            Token after = peekToken();
-            if (after.type == TokenType::Comma) {
-                consumeToken();
-            }
-        }
-        return error("Unclosed list, expected ']'", tok.line, tok.col);
-    }
-    if (tok.type == TokenType::Identifier) {
-        consumeToken();
-        std::string_view typeName = tok.strVal;
-        Token next = peekToken();
-        if (next.type == TokenType::OpenBrace) {
-            consumeToken();
-            handler.onBlockStart(typeName, "");
-            if (!parseBlockBody(handler)) return false;
-            handler.onBlockEnd();
-            return true;
-        }
-        if (next.type == TokenType::Identifier) {
-            Token nameTok = nextToken();
-            Token braceTok = nextToken();
-            if (braceTok.type == TokenType::OpenBrace) {
-                handler.onBlockStart(typeName, nameTok.strVal);
-                if (!parseBlockBody(handler)) return false;
-                handler.onBlockEnd();
-                return true;
-            }
-            return error("Expected '{' for block value", braceTok.line, braceTok.col);
-        }
-        // Bare identifier treated as string value
-        handler.onString(typeName);
-        return true;
-    }
-
-    return unexpectedTokenError("for value", tok);
 }
 
 } // namespace strd

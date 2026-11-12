@@ -50,9 +50,9 @@ public:
   std::string getEntity() const { return m_entity; }
   std::string getPropertyName() const { return m_propertyName; }
 
-  virtual ASTNode deepCopy() override;
-  virtual std::string toText(int indentOffset = 0, int indentSize = 2,
-                             bool newLine = true) const override;
+  ASTNode deepCopy() override;
+  std::string toText(int indentOffset = 0, int indentSize = 2,
+                     bool newLine = true) const override;
 
 private:
   std::string m_entity;

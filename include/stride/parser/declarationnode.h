@@ -78,9 +78,9 @@ public:
   std::string getEntityType() const;
   void setEntityType(const std::string &entityType);
 
-  virtual std::string toText(int indentOffset = 0, int indentSize = 2,
-                             bool newLine = true) const override;
-  virtual ASTNode deepCopy() override;
+  std::string toText(int indentOffset = 0, int indentSize = 2,
+                  bool newLine = true) const override;
+  ASTNode deepCopy() override;
 
 private:
   std::string m_name;

@@ -57,9 +57,9 @@ public:
   std::string importAlias() const;
   void setImportAlias(const std::string &importAlias);
 
-  virtual void resolveScope(ASTNode scope) override;
+  void resolveScope(ASTNode scope) override;
 
-  virtual ASTNode deepCopy() override;
+  ASTNode deepCopy() override;
 
   std::string toText(int indentOffset = 0, int indentSize = 2,
                      bool newLine = true) const override;

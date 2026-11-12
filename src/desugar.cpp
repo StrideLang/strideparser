@@ -75,6 +75,173 @@ static ASTNode createAutoSizedEntityDecl(
   return newDecl;
 }
 
+static bool isDeclarationLike(const ASTNode &node) {
+  return node->getNodeType() == AST::Declaration ||
+         node->getNodeType() == AST::ArrayDeclaration;
+}
+
+static bool hasChildren(const ASTNode &node) {
+  return node && !node->getChildren().empty();
+}
+
+namespace {
+// Result of scanning the properties declared in a callable's body.
+struct BodyScan {
+  std::shared_ptr<PropertyNode> portsProp;
+  std::shared_ptr<PropertyNode> codeProp;
+  std::shared_ptr<PropertyNode> conflictingEntityOrStreamProp;
+  std::vector<ASTNode> passthroughChildren;
+};
+} // namespace
+
+static BodyScan scanBodyProperties(const ASTNode &bodyProperties) {
+  BodyScan scan;
+  if (!bodyProperties) {
+    return scan;
+  }
+  for (const auto &child : bodyProperties->getChildren()) {
+    if (!child) continue;
+    if (child->getNodeType() != AST::Property) {
+      scan.passthroughChildren.push_back(child);
+      continue;
+    }
+    auto prop = std::static_pointer_cast<PropertyNode>(child);
+    const std::string &pName = prop->getName();
+    if (pName == "ports") {
+      scan.portsProp = prop;
+    } else if (pName == "code") {
+      scan.codeProp = prop;
+    } else {
+      if ((pName == "entities" || pName == "streams") &&
+          !scan.conflictingEntityOrStreamProp) {
+        scan.conflictingEntityOrStreamProp = prop;
+      }
+      scan.passthroughChildren.push_back(prop);
+    }
+  }
+  return scan;
+}
+
+static void reportCallableError(LangError::ErrorType type,
+                                std::vector<std::string> tokens,
+                                const PropertyNode &prop,
+                                const char *filename, int line) {
+  LangError err;
+  err.type = type;
+  err.errorTokens = std::move(tokens);
+  err.filename = prop.getFilename().empty() ? filename : prop.getFilename();
+  err.lineNumber = prop.getLine() > 0 ? prop.getLine() : line;
+  err.columnNumber = prop.getColumn();
+  parseErrors.push_back(err);
+}
+
+// Adds an entity to the entities list, replacing it by an auto-sized
+// declaration when it is marked with _autoPortSize.
+static void addPortEntity(const ASTNode &entity, const std::string &portName,
+                          ListNode &entitiesList) {
+  bool isAutoSized = entity->getCompilerProperty("_autoPortSize") != nullptr;
+  if (isAutoSized && isDeclarationLike(entity)) {
+    entitiesList.addChild(createAutoSizedEntityDecl(
+        std::static_pointer_cast<DeclarationNode>(entity), portName,
+        entity->getFilename(), entity->getLine(), entity->getColumn()));
+  } else {
+    entitiesList.addChild(entity);
+  }
+}
+
+// Lowers header main inputs/outputs to port declarations plus entities.
+static void lowerMainPorts(const ASTNode &items, const std::string &portType,
+                           ListNode &portsList, ListNode &entitiesList) {
+  if (!items) return;
+  for (const auto &item : items->getChildren()) {
+    if (!item || !isDeclarationLike(item)) continue;
+    std::string eName = std::static_pointer_cast<DeclarationNode>(item)->getName();
+    std::string pName = synthesizePortName(eName);
+
+    auto portProps = std::make_shared<AST>();
+    auto entityNode = std::make_shared<EntityNode>(
+        eName, item->getFilename().c_str(), item->getLine(), item->getColumn());
+    portProps->addChild(std::make_shared<PropertyNode>(
+        "entity", entityNode, item->getFilename().c_str(), item->getLine(), item->getColumn()));
+    portsList.addChild(std::make_shared<DeclarationNode>(
+        pName, portType, portProps, item->getFilename().c_str(), item->getLine(), item->getColumn()));
+
+    addPortEntity(item, pName, entitiesList);
+  }
+}
+
+// Builds the signal declaration implied by a plain `name: value` property port.
+static ASTNode makeDefaultSignalDecl(const std::string &eName,
+                                     const ASTNode &value,
+                                     const ASTNode &propItem) {
+  auto defaultProp = std::make_shared<PropertyNode>(
+      "default", value, propItem->getFilename().c_str(),
+      propItem->getLine(), propItem->getColumn());
+  auto props = std::make_shared<AST>();
+  props->addChild(defaultProp);
+  return std::make_shared<DeclarationNode>(
+      eName, "signal", props, propItem->getFilename().c_str(),
+      propItem->getLine(), propItem->getColumn());
+}
+
+static std::string capitalizeFirst(std::string name) {
+  if (!name.empty() && name[0] >= 'a' && name[0] <= 'z') {
+    name[0] = static_cast<char>(name[0] - 'a' + 'A');
+  }
+  return name;
+}
+
+// Lowers header property ports to port declarations plus entities.
+static void lowerPropertyPorts(const ASTNode &propertyPorts,
+                               ListNode &portsList, ListNode &entitiesList) {
+  if (!propertyPorts) return;
+  for (const auto &propItem : propertyPorts->getChildren()) {
+    if (!propItem || propItem->getNodeType() != AST::Property) continue;
+    auto propNode = std::static_pointer_cast<PropertyNode>(propItem);
+    std::string propName = propNode->getName();
+    ASTNode entityDeclNode = propNode->getValue();
+    if (!entityDeclNode) continue;
+
+    std::string eName;
+    if (isDeclarationLike(entityDeclNode)) {
+      eName = std::static_pointer_cast<DeclarationNode>(entityDeclNode)->getName();
+    } else {
+      eName = capitalizeFirst(propName);
+      entityDeclNode = makeDefaultSignalDecl(eName, entityDeclNode, propItem);
+    }
+    std::string pName = synthesizePortName(eName);
+
+    const char *file = propItem->getFilename().c_str();
+    auto portProps = std::make_shared<AST>();
+    auto nameVal = std::make_shared<ValueNode>(
+        propName, file, propItem->getLine(), propItem->getColumn());
+    portProps->addChild(std::make_shared<PropertyNode>(
+        "name", nameVal, file, propItem->getLine(), propItem->getColumn()));
+    auto entityNode = std::make_shared<EntityNode>(
+        eName, file, propItem->getLine(), propItem->getColumn());
+    portProps->addChild(std::make_shared<PropertyNode>(
+        "entity", entityNode, file, propItem->getLine(), propItem->getColumn()));
+    portsList.addChild(std::make_shared<DeclarationNode>(
+        pName, "propertyInputPort", portProps, file, propItem->getLine(), propItem->getColumn()));
+
+    addPortEntity(entityDeclNode, pName, entitiesList);
+  }
+}
+
+// Splits the contents of a `code:` property into entities and streams.
+static void partitionCode(const std::shared_ptr<PropertyNode> &codeProp,
+                          ListNode &entitiesList, ListNode &streamsList) {
+  if (!codeProp || !codeProp->getValue()) return;
+  for (const auto &item : codeProp->getValue()->getChildren()) {
+    if (!item) continue;
+    if (isDeclarationLike(item)) {
+      entitiesList.addChild(item);
+    } else if (item->getNodeType() == AST::Stream) {
+      streamsList.addChild(item);
+    }
+  }
+}
+
 DeclarationNode *desugarCallable(
     const std::string &callableType,
     const std::string &name,
@@ -86,64 +253,24 @@ DeclarationNode *desugarCallable(
     int line,
     int column) {
 
-  const bool hasHeaderPorts =
-      ((mainInputs && !mainInputs->getChildren().empty()) ||
-       (propertyPorts && !propertyPorts->getChildren().empty()) ||
-       (mainOutputs && !mainOutputs->getChildren().empty()));
+  const bool hasHeaderPorts = hasChildren(mainInputs) ||
+                              hasChildren(propertyPorts) ||
+                              hasChildren(mainOutputs);
 
-  std::shared_ptr<PropertyNode> bodyPortsProp = nullptr;
-  std::shared_ptr<PropertyNode> bodyCodeProp = nullptr;
-  std::shared_ptr<PropertyNode> conflictingEntityOrStreamProp = nullptr;
-
-  std::vector<ASTNode> passthroughChildren;
-
-  if (bodyProperties) {
-    for (const auto &child : bodyProperties->getChildren()) {
-      if (child && child->getNodeType() == AST::Property) {
-        auto prop = std::static_pointer_cast<PropertyNode>(child);
-        const std::string &pName = prop->getName();
-        if (pName == "ports") {
-          bodyPortsProp = prop;
-        } else if (pName == "code") {
-          bodyCodeProp = prop;
-        } else if (pName == "entities" || pName == "streams") {
-          if (!conflictingEntityOrStreamProp) {
-            conflictingEntityOrStreamProp = prop;
-          }
-          passthroughChildren.push_back(prop);
-        } else {
-          passthroughChildren.push_back(prop);
-        }
-      } else if (child) {
-        passthroughChildren.push_back(child);
-      }
-    }
-  }
+  BodyScan body = scanBodyProperties(bodyProperties);
 
   // Mutual-exclusivity validation 1: Header Ports vs. ports: property
-  if (hasHeaderPorts && bodyPortsProp) {
-    LangError err;
-    err.type = LangError::HeaderPortsWithPortsProperty;
-    err.errorTokens = {callableType, name};
-    err.filename = bodyPortsProp->getFilename().empty() ? filename : bodyPortsProp->getFilename();
-    err.lineNumber = bodyPortsProp->getLine() > 0 ? bodyPortsProp->getLine() : line;
-    err.columnNumber = bodyPortsProp->getColumn();
-    parseErrors.push_back(err);
+  if (hasHeaderPorts && body.portsProp) {
+    reportCallableError(LangError::HeaderPortsWithPortsProperty,
+                        {callableType, name}, *body.portsProp, filename, line);
   }
 
   // Mutual-exclusivity validation 2: code: vs. entities:/streams:
-  if (bodyCodeProp && conflictingEntityOrStreamProp) {
-    LangError err;
-    err.type = LangError::CodeWithEntitiesOrStreams;
-    err.errorTokens = {callableType, name, conflictingEntityOrStreamProp->getName()};
-    err.filename = conflictingEntityOrStreamProp->getFilename().empty()
-                       ? filename
-                       : conflictingEntityOrStreamProp->getFilename();
-    err.lineNumber = conflictingEntityOrStreamProp->getLine() > 0
-                         ? conflictingEntityOrStreamProp->getLine()
-                         : line;
-    err.columnNumber = conflictingEntityOrStreamProp->getColumn();
-    parseErrors.push_back(err);
+  if (body.codeProp && body.conflictingEntityOrStreamProp) {
+    reportCallableError(
+        LangError::CodeWithEntitiesOrStreams,
+        {callableType, name, body.conflictingEntityOrStreamProp->getName()},
+        *body.conflictingEntityOrStreamProp, filename, line);
   }
 
   auto result = new DeclarationNode(name, callableType, nullptr,
@@ -153,164 +280,33 @@ DeclarationNode *desugarCallable(
   auto entitiesList = std::make_shared<ListNode>(filename, line, column);
   auto streamsList = std::make_shared<ListNode>(filename, line, column);
 
-  // Lower header main inputs
-  if (mainInputs) {
-    for (const auto &item : mainInputs->getChildren()) {
-      if (!item) continue;
-      std::string eName;
-      if (item->getNodeType() == AST::Declaration ||
-          item->getNodeType() == AST::ArrayDeclaration) {
-        eName = std::static_pointer_cast<DeclarationNode>(item)->getName();
-      } else {
-        continue;
-      }
-      std::string pName = synthesizePortName(eName);
-
-      auto portProps = std::make_shared<AST>();
-      auto entityNode = std::make_shared<EntityNode>(
-          eName, item->getFilename().c_str(), item->getLine(), item->getColumn());
-      portProps->addChild(std::make_shared<PropertyNode>(
-          "entity", entityNode, item->getFilename().c_str(), item->getLine(), item->getColumn()));
-      auto portDecl = std::make_shared<DeclarationNode>(
-          pName, "mainInputPort", portProps, item->getFilename().c_str(), item->getLine(), item->getColumn());
-      portsList->addChild(portDecl);
-
-      bool isAutoSized = (item->getCompilerProperty("_autoPortSize") != nullptr);
-      if (isAutoSized && (item->getNodeType() == AST::Declaration ||
-                          item->getNodeType() == AST::ArrayDeclaration)) {
-        entitiesList->addChild(createAutoSizedEntityDecl(
-            std::static_pointer_cast<DeclarationNode>(item), pName,
-            item->getFilename(), item->getLine(), item->getColumn()));
-      } else {
-        entitiesList->addChild(item);
-      }
-    }
-  }
-
-  // Lower header property ports
-  if (propertyPorts) {
-    for (const auto &propItem : propertyPorts->getChildren()) {
-      if (!propItem || propItem->getNodeType() != AST::Property) continue;
-      auto propNode = std::static_pointer_cast<PropertyNode>(propItem);
-      std::string propName = propNode->getName();
-      ASTNode entityDeclNode = propNode->getValue();
-      if (!entityDeclNode) continue;
-
-      std::string eName;
-      if (entityDeclNode->getNodeType() == AST::Declaration ||
-          entityDeclNode->getNodeType() == AST::ArrayDeclaration) {
-        eName = std::static_pointer_cast<DeclarationNode>(entityDeclNode)->getName();
-      } else {
-        std::string capName = propName;
-        if (!capName.empty() && capName[0] >= 'a' && capName[0] <= 'z') {
-          capName[0] = static_cast<char>(capName[0] - 'a' + 'A');
-        }
-        eName = capName;
-        auto defaultProp = std::make_shared<PropertyNode>(
-            "default", entityDeclNode, propItem->getFilename().c_str(),
-            propItem->getLine(), propItem->getColumn());
-        auto props = std::make_shared<AST>();
-        props->addChild(defaultProp);
-        entityDeclNode = std::make_shared<DeclarationNode>(
-            eName, "signal", props, propItem->getFilename().c_str(),
-            propItem->getLine(), propItem->getColumn());
-      }
-      std::string pName = synthesizePortName(eName);
-
-      auto portProps = std::make_shared<AST>();
-      auto nameVal = std::make_shared<ValueNode>(
-          propName, propItem->getFilename().c_str(), propItem->getLine(), propItem->getColumn());
-      portProps->addChild(std::make_shared<PropertyNode>(
-          "name", nameVal, propItem->getFilename().c_str(), propItem->getLine(), propItem->getColumn()));
-      auto entityNode = std::make_shared<EntityNode>(
-          eName, propItem->getFilename().c_str(), propItem->getLine(), propItem->getColumn());
-      portProps->addChild(std::make_shared<PropertyNode>(
-          "entity", entityNode, propItem->getFilename().c_str(), propItem->getLine(), propItem->getColumn()));
-      auto portDecl = std::make_shared<DeclarationNode>(
-          pName, "propertyInputPort", portProps, propItem->getFilename().c_str(), propItem->getLine(), propItem->getColumn());
-      portsList->addChild(portDecl);
-
-      bool isAutoSized = (entityDeclNode->getCompilerProperty("_autoPortSize") != nullptr);
-      if (isAutoSized && (entityDeclNode->getNodeType() == AST::Declaration ||
-                          entityDeclNode->getNodeType() == AST::ArrayDeclaration)) {
-        entitiesList->addChild(createAutoSizedEntityDecl(
-            std::static_pointer_cast<DeclarationNode>(entityDeclNode), pName,
-            entityDeclNode->getFilename(), entityDeclNode->getLine(), entityDeclNode->getColumn()));
-      } else {
-        entitiesList->addChild(entityDeclNode);
-      }
-    }
-  }
-
-  // Lower header main outputs
-  if (mainOutputs) {
-    for (const auto &item : mainOutputs->getChildren()) {
-      if (!item) continue;
-      std::string eName;
-      if (item->getNodeType() == AST::Declaration ||
-          item->getNodeType() == AST::ArrayDeclaration) {
-        eName = std::static_pointer_cast<DeclarationNode>(item)->getName();
-      } else {
-        continue;
-      }
-      std::string pName = synthesizePortName(eName);
-
-      auto portProps = std::make_shared<AST>();
-      auto entityNode = std::make_shared<EntityNode>(
-          eName, item->getFilename().c_str(), item->getLine(), item->getColumn());
-      portProps->addChild(std::make_shared<PropertyNode>(
-          "entity", entityNode, item->getFilename().c_str(), item->getLine(), item->getColumn()));
-      auto portDecl = std::make_shared<DeclarationNode>(
-          pName, "mainOutputPort", portProps, item->getFilename().c_str(), item->getLine(), item->getColumn());
-      portsList->addChild(portDecl);
-
-      bool isAutoSized = (item->getCompilerProperty("_autoPortSize") != nullptr);
-      if (isAutoSized && (item->getNodeType() == AST::Declaration ||
-                          item->getNodeType() == AST::ArrayDeclaration)) {
-        entitiesList->addChild(createAutoSizedEntityDecl(
-            std::static_pointer_cast<DeclarationNode>(item), pName,
-            item->getFilename(), item->getLine(), item->getColumn()));
-      } else {
-        entitiesList->addChild(item);
-      }
-    }
-  }
-
-  // Partition code: property
-  if (bodyCodeProp && bodyCodeProp->getValue()) {
-    for (const auto &item : bodyCodeProp->getValue()->getChildren()) {
-      if (!item) continue;
-      if (item->getNodeType() == AST::Declaration ||
-          item->getNodeType() == AST::ArrayDeclaration) {
-        entitiesList->addChild(item);
-      } else if (item->getNodeType() == AST::Stream) {
-        streamsList->addChild(item);
-      }
-    }
-  }
+  lowerMainPorts(mainInputs, "mainInputPort", *portsList, *entitiesList);
+  lowerPropertyPorts(propertyPorts, *portsList, *entitiesList);
+  lowerMainPorts(mainOutputs, "mainOutputPort", *portsList, *entitiesList);
+  partitionCode(body.codeProp, *entitiesList, *streamsList);
 
   // Add ports property
   if (hasHeaderPorts) {
     result->addProperty(
         std::make_shared<PropertyNode>("ports", portsList, filename, line, column));
-  } else if (bodyPortsProp) {
-    result->addProperty(bodyPortsProp);
+  } else if (body.portsProp) {
+    result->addProperty(body.portsProp);
   }
 
   // Add entities property if we have entities from header or code, or if code: was specified
-  if (bodyCodeProp || !entitiesList->getChildren().empty()) {
+  if (body.codeProp || !entitiesList->getChildren().empty()) {
     result->addProperty(
         std::make_shared<PropertyNode>("entities", entitiesList, filename, line, column));
   }
 
   // Add streams property if we have streams from code, or if code: was specified
-  if (bodyCodeProp || !streamsList->getChildren().empty()) {
+  if (body.codeProp || !streamsList->getChildren().empty()) {
     result->addProperty(
         std::make_shared<PropertyNode>("streams", streamsList, filename, line, column));
   }
 
   // Add remaining passthrough properties and children
-  for (const auto &child : passthroughChildren) {
+  for (const auto &child : body.passthroughChildren) {
     if (child->getNodeType() == AST::Property) {
       result->addProperty(std::static_pointer_cast<PropertyNode>(child));
     } else {

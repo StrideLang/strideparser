@@ -52,9 +52,9 @@ public:
   ~EntityNode() override;
 
   std::string getName() const;
-  virtual std::string toText(int indentOffset = 0, int indentSize = 2,
-                             bool newLine = true) const override;
-  virtual ASTNode deepCopy() override;
+  std::string toText(int indentOffset = 0, int indentSize = 2,
+                     bool newLine = true) const override;
+  ASTNode deepCopy() override;
 
 private:
   void resolveScope(ASTNode scope) override;

@@ -164,7 +164,6 @@ std::shared_ptr<StreamNode> StreamNodeBuilder::build() {
   std::shared_ptr<StreamNode> stream;
   std::shared_ptr<StreamNode> streamHead;
   for (int i = 0; i < mStreamNodes.size() - 1; i++) {
-
     auto newStream = std::make_shared<StreamNode>(mStreamNodes[i], nullptr,
                                                   __FILE__, __LINE__);
     if (streamHead) {

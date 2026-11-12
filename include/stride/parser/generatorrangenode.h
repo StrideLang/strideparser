@@ -47,9 +47,9 @@ public:
   ASTNode startIndex() const;
   ASTNode stepIndex() const;
   ASTNode endIndex() const;
-  virtual ASTNode deepCopy() override;
-  virtual std::string toText(int indentOffset = 0, int indentSize = 2,
-                             bool newLine = true) const override;
+  ASTNode deepCopy() override;
+  std::string toText(int indentOffset = 0, int indentSize = 2,
+                     bool newLine = true) const override;
 };
 } // namespace strd
 

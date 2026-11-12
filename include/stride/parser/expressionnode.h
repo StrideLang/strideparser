@@ -73,7 +73,7 @@ public:
 
   ExpressionType getExpressionType() const;
   std::string getExpressionTypeString() const;
-  virtual ASTNode deepCopy() override;
+  ASTNode deepCopy() override;
 
   std::string toText(int indentOffset = 0, int indentSize = 2,
                      bool newLine = true) const override;
