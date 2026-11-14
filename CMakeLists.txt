@@ -70,10 +70,25 @@ if (WIN32)
   # Previous procedure appears to be broken. This now works:
   # Download winflexbison from:
   # https://sourceforge.net/projects/winflexbison/files/win_flex_bison-2.5.24.zip/download
-  # Point the following variables to the extracted fodler and binaries
-
-  set(BISON_EXECUTABLE "C:/Users/Andres/source/repos/win_flex_bison/win_bison.exe")
-  set(FLEX_EXECUTABLE "C:/Users/Andres/source/repos/win_flex_bison/win_flex.exe")
+  # and extract it. It is found on PATH, in the folder the WINFLEXBISON_DIR
+  # environment variable names, or in a win_flex_bison folder beside the
+  # top-level project. Otherwise set BISON_EXECUTABLE and FLEX_EXECUTABLE
+  # (-DBISON_EXECUTABLE=.../win_bison.exe -DFLEX_EXECUTABLE=.../win_flex.exe).
+  set(_winflexbison_hints
+      "$ENV{WINFLEXBISON_DIR}"
+      "${CMAKE_SOURCE_DIR}/../win_flex_bison")
+  find_program(BISON_EXECUTABLE NAMES win_bison bison
+               HINTS ${_winflexbison_hints}
+               DOC "Bison (win_bison.exe from winflexbison)")
+  find_program(FLEX_EXECUTABLE NAMES win_flex flex
+               HINTS ${_winflexbison_hints}
+               DOC "Flex (win_flex.exe from winflexbison)")
+  if (NOT EXISTS "${BISON_EXECUTABLE}" OR NOT EXISTS "${FLEX_EXECUTABLE}")
+    message(FATAL_ERROR "Bison and flex were not found. Install winflexbison "
+            "and set WINFLEXBISON_DIR, or pass -DBISON_EXECUTABLE=... and "
+            "-DFLEX_EXECUTABLE=... (see the comment in ${CMAKE_CURRENT_LIST_FILE})")
+  endif()
+  message(STATUS "Bison: ${BISON_EXECUTABLE}, flex: ${FLEX_EXECUTABLE}")
 
   set(FLEX_MyScanner_OUTPUTS "${CMAKE_CURRENT_BINARY_DIR}/lang_stride.lexer.cpp")
   set(BISON_MyParser_OUTPUTS "${CMAKE_CURRENT_BINARY_DIR}/lang_stride.parser.cpp")
