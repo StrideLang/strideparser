@@ -2340,6 +2340,12 @@ streamComp:
             COUT << "Annotated Array: " << bundle->getName() << ENDL;
             COUT << "Streaming ... " << ENDL;
         }
+    |   portPropertyDef {
+            // A member written to or read mid-stream: 0 >> RootDomain.status
+            $$ = $1;
+            COUT << "Member access" << ENDL;
+            COUT << "Streaming ... " << ENDL;
+        }
     |   anonymousDeclDef     {
             COUT << "Resolving anonymous declaration ... " << ENDL;
             COUT << "Streaming ... " << ENDL;
