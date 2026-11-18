@@ -80,6 +80,7 @@ public:
     AmbiguousProperty,
     InheritedFinalType,
     InvalidCrossDomainAccess,
+    ScalarCallToArray,
     None
   } ErrorType;
 

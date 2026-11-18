@@ -148,6 +148,13 @@ static std::string portErrorText(LangError::ErrorType type,
     errorText += "Stream size mismatch. '" + errorTokens[1] + "' provides " +
                  errorTokens[0] + "outs , " + errorTokens[2] + " expected.";
     break;
+  case LangError::ScalarCallToArray:
+    errorText += "Single-output call '" + errorTokens[0] +
+                 "()' feeds array '" + errorTokens[1] + "' (" +
+                 errorTokens[2] +
+                 " elements) without iterating; use a loop with an iterator "
+                 "to fill each element.";
+    break;
   default:
     break;
   }
