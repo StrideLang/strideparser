@@ -211,7 +211,8 @@ static void lowerPropertyPorts(const ASTNode &propertyPorts,
     }
     std::string pName = synthesizePortName(eName);
 
-    const char *file = propItem->getFilename().c_str();
+    const std::string fileStr = propItem->getFilename();
+    const char *file = fileStr.c_str();
     auto portProps = std::make_shared<AST>();
     auto nameVal = std::make_shared<ValueNode>(
         propName, file, propItem->getLine(), propItem->getColumn());
