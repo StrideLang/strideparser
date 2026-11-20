@@ -71,6 +71,9 @@ std::string EntityNode::toText(int indentOffset, int indentSize,
   (void)indentOffset;
   (void)indentSize;
   std::string outText;
+  if (m_rootQualified) {
+    outText += "::";
+  }
   auto nsList = getNamespaceList();
   if (nsList.size() > 0) {
     for (const auto &ns : nsList) {
@@ -94,6 +97,7 @@ std::string EntityNode::toText(int indentOffset, int indentSize,
 
 void EntityNode::resolveScope(ASTNode scope) {
   if (scope) {
+    m_rootQualified = scope->isRootQualified();
     for (unsigned int i = 0; i < scope->getChildren().size(); i++) {
       assert(scope->getChildren().at(i)->getNodeType() == AST::Scope);
       m_scope.push_back(
@@ -107,6 +111,7 @@ ASTNode EntityNode::deepCopy() {
   std::shared_ptr<EntityNode> newNode =
       std::make_shared<EntityNode>(m_name, m_filename.data(), m_line, m_column, m_scope);
   copyLocationTo(newNode);
+  newNode->setRootQualified(m_rootQualified);
   if (this->m_CompilerProperties) {
     newNode->m_CompilerProperties = std::static_pointer_cast<ListNode>(
         this->m_CompilerProperties->deepCopy());

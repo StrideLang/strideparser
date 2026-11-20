@@ -1072,6 +1072,11 @@ scopeDef:
             scope->addChild(std::shared_ptr<AST>($2));
             $$ = scope;
         }
+    |   COLONCOLON      {
+            AST *temp = new AST();
+            temp->setRootQualified(true);
+            $$ = temp;
+        }
     |   scope           {
             AST *temp = new AST();
             temp->addChild(std::shared_ptr<AST>($1));

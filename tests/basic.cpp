@@ -623,6 +623,36 @@ TEST(Basic, PackageDeclaration) {
   EXPECT_EQ(segs[1], "Filters");
 }
 
+TEST(Basic, RootQualifiedIdentifiers) {
+  ASTNode tree = AST::parseFile(TESTS_SOURCE_DIR "basic/33_root_qualified.stride");
+  ASSERT_TRUE(tree != nullptr);
+
+  std::vector<ASTNode> nodes = tree->getChildren();
+  ASSERT_EQ(nodes.size(), 1);
+  ASSERT_EQ(nodes.at(0)->getNodeType(), AST::Stream);
+  auto stream = std::static_pointer_cast<StreamNode>(nodes.at(0));
+
+  auto left = stream->getLeft();
+  ASSERT_EQ(left->getNodeType(), AST::Entity);
+  EXPECT_TRUE(left->isRootQualified());
+  EXPECT_TRUE(left->getNamespaceList().empty());
+
+  auto right = stream->getRight();
+  ASSERT_EQ(right->getNodeType(), AST::Stream);
+  auto stream2 = std::static_pointer_cast<StreamNode>(right);
+  auto func = stream2->getLeft();
+  ASSERT_EQ(func->getNodeType(), AST::Function);
+  EXPECT_TRUE(func->isRootQualified());
+  ASSERT_EQ(func->getNamespaceList().size(), 2u);
+  EXPECT_EQ(func->getNamespaceList()[0], "Control");
+  EXPECT_EQ(func->getNamespaceList()[1], "Foc");
+
+  auto out = stream2->getRight();
+  ASSERT_EQ(out->getNodeType(), AST::Entity);
+  EXPECT_TRUE(out->isRootQualified());
+  EXPECT_TRUE(out->getNamespaceList().empty());
+}
+
 TEST(Basic, GeneratorSyntax) {
   ASTNode tree = AST::parseFile(TESTS_SOURCE_DIR "basic/25_generator.stride");
   ASSERT_TRUE(tree != nullptr);

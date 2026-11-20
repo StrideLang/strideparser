@@ -159,6 +159,7 @@ bool FunctionNode::replacePropertyValue(std::string propertyName,
 
 void FunctionNode::resolveScope(ASTNode scope) {
   if (scope) {
+    m_rootQualified = scope->isRootQualified();
     for (unsigned int i = 0; i < scope->getChildren().size(); i++) {
       assert(scope->getChildren().at(i)->getNodeType() == AST::Scope);
       m_scope.push_back(
@@ -172,7 +173,14 @@ std::string FunctionNode::toText(int indentOffset, int indentSize,
                                  bool newLine) const {
   (void)indentOffset;
   (void)indentSize;
-  std::string outText = m_name;
+  std::string outText;
+  if (m_rootQualified) {
+    outText += "::";
+  }
+  for (const auto &ns : getNamespaceList()) {
+    outText += ns + "::";
+  }
+  outText += m_name;
   auto atProp = getCompilerProperty("_at");
   if (atProp) {
     if (atProp->getNodeType() == AST::String) {
@@ -201,6 +209,7 @@ ASTNode FunctionNode::deepCopy() {
       std::make_shared<FunctionNode>(m_name, newProps, m_filename.data(),
                                      m_line, m_column);
   copyLocationTo(newFunctionNode);
+  newFunctionNode->setRootQualified(m_rootQualified);
   for (unsigned int i = 0; i < this->getScopeLevels(); i++) {
     newFunctionNode->addScope(this->getScopeAt(i));
   }

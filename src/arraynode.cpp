@@ -118,6 +118,7 @@ std::vector<size_t> ArrayNode::getIndices() {
 
 void ArrayNode::resolveScope(ASTNode scope) {
   if (scope) {
+    m_rootQualified = scope->isRootQualified();
     for (unsigned int i = 0; i < scope->getChildren().size(); i++) {
       assert(scope->getChildren().at(i)->getNodeType() == AST::Scope);
       m_scope.push_back(
@@ -134,6 +135,7 @@ ASTNode ArrayNode::deepCopy() {
         m_name, std::static_pointer_cast<ListNode>(index()->deepCopy()),
         m_filename.data(), m_line, m_column);
     copyLocationTo(newArray);
+    newArray->setRootQualified(m_rootQualified);
     for (unsigned int i = 0; i < this->getScopeLevels(); i++) {
       newArray->addScope(this->getScopeAt(i));
     }

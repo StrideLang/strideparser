@@ -149,6 +149,8 @@ public:
 
   std::vector<std::string> getNamespaceList() const;
   void setNamespaceList(std::vector<std::string> list);
+  bool isRootQualified() const { return m_rootQualified; }
+  void setRootQualified(bool rootQualified) { m_rootQualified = rootQualified; }
 
   void setCompilerProperty(std::string propertyName, ASTNode value);
   ASTNode getCompilerProperty(std::string propertyName) const;
@@ -181,6 +183,7 @@ protected:
   int m_endLine{-1};
   int m_endColumn{-1};
   std::vector<std::string> m_scope;
+  bool m_rootQualified{false};
   std::shared_ptr<ListNode> m_CompilerProperties;
 };
 } // namespace strd
