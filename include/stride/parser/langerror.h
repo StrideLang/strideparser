@@ -81,6 +81,8 @@ public:
     InheritedFinalType,
     InvalidCrossDomainAccess,
     ScalarCallToArray,
+    InvalidHardware, // a gpioPin or board doesn't fit the hardware: the
+                     // message is errorTokens[0]
     None
   } ErrorType;
 

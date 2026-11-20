@@ -200,6 +200,10 @@ static std::string symbolErrorText(LangError::ErrorType type,
                  errorTokens[0] + "' in " + errorTokens[1] + ":" +
                  errorTokens[2] + "]";
     break;
+  case LangError::InvalidHardware:
+    errorText += errorTokens.empty() ? std::string("Invalid hardware")
+                                     : errorTokens[0];
+    break;
   case LangError::UndeclaredFeature:
     errorText += "Undeclared feature symbol '" + errorTokens[0] + "'";
     break;
