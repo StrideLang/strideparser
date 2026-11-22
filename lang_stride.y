@@ -2338,13 +2338,6 @@ streamComp:
             COUT << "Resolving indexed bundle ..." << ENDL;
             COUT << "Streaming ... " << ENDL;
         }
-    |   bundleDef atDef {
-            ArrayNode *bundle = $1;
-            bundle->setCompilerProperty("_at", std::shared_ptr<AST>($2));
-            $$ = bundle;
-            COUT << "Annotated Array: " << bundle->getName() << ENDL;
-            COUT << "Streaming ... " << ENDL;
-        }
     |   portPropertyDef {
             // A member written to or read mid-stream: 0 >> RootDomain.status
             $$ = $1;
@@ -2473,12 +2466,6 @@ streamComp:
     |   bundleDef       {
             $$ = $1;
             COUT << "Resolving indexed array ..." << ENDL;
-        }
-    |   bundleDef atDef {
-            ArrayNode *bundle = $1;
-            bundle->setCompilerProperty("_at", std::shared_ptr<AST>($2));
-            $$ = bundle;
-            COUT << "Annotated Array: " << bundle->getName() << ENDL;
         }
     |   functionDef %prec PREFER_SHIFT {
             $$ = $1;

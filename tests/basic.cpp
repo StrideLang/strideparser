@@ -1303,3 +1303,31 @@ TEST(Basic, ConditionalImports) {
   EXPECT_TRUE(imp4->getCompilerProperty("_feature_condition") != nullptr);
 }
 
+TEST(Basic, ArrayDeclarationsCannotHaveAt) {
+  // `_at` (Name@Domain) is for single entities; an array declaration with it
+  // is a syntax error, whichever side of the size it is written on.
+  for (const char *file :
+       {TESTS_SOURCE_DIR "basic/34_array_declaration_at.stride",
+        TESTS_SOURCE_DIR "basic/35_array_declaration_at_after_index.stride"}) {
+    ASTNode tree = AST::parseFile(file);
+    EXPECT_FALSE(AST::getParseErrors().empty()) << file;
+    if (tree) {
+      for (const auto &node : tree->getChildren()) {
+        if (node->getNodeType() == AST::ArrayDeclaration) {
+          EXPECT_EQ(node->getCompilerProperty("_at"), nullptr) << file;
+        }
+      }
+    }
+  }
+}
+
+TEST(Basic, ArrayReferencesCannotHaveAt) {
+  // Only entities and calls select a variant with @: an array can't be a
+  // variant, so Arr[i]@Tag could never resolve and is a syntax error.
+  for (const char *file :
+       {TESTS_SOURCE_DIR "basic/36_annotated_array_target.stride",
+        TESTS_SOURCE_DIR "basic/37_annotated_array_value.stride"}) {
+    AST::parseFile(file);
+    EXPECT_FALSE(AST::getParseErrors().empty()) << file;
+  }
+}
