@@ -250,6 +250,10 @@ start:
             $2->setCompilerProperty("_feature_condition", std::shared_ptr<AST>($1));
             tree_head->addChild(std::shared_ptr<ImportNode>($2));
         }
+    |   withDef systemDef {
+            $2->setCompilerProperty("_feature_condition", std::shared_ptr<AST>($1));
+            tree_head->addChild(std::shared_ptr<SystemNode>($2));
+        }
     |   withDef '{' startGroup '}' {
             auto outerCond = std::shared_ptr<AST>($1);
             if ($3) {
