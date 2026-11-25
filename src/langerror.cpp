@@ -225,6 +225,28 @@ static std::string symbolErrorText(LangError::ErrorType type,
                  errorTokens[2] +
                  "': domains do not share a common parent domain or connection";
     break;
+  case LangError::MissingDomainResource:
+    errorText += "'" + errorTokens[0] + "' requires resource '" +
+                 errorTokens[1] + "', which is not provided by domain '" +
+                 errorTokens[2] + "'";
+    break;
+  case LangError::ExclusiveResourceConflict:
+    errorText += "Exclusive resource '" + errorTokens[0] +
+                 "' cannot be claimed by both '" + errorTokens[1] + "' and '" +
+                 errorTokens[2] + "'";
+    break;
+  case LangError::ResourceInstanceLimitExceeded:
+    errorText += "Resource '" + errorTokens[0] + "' allows at most " +
+                 errorTokens[1] + " instance(s), but " + errorTokens[2] +
+                 " were requested";
+    break;
+  case LangError::PioInstructionOverflow:
+    errorText += "PIO domain '" + errorTokens[0] + "' requires " +
+                 errorTokens[1] +
+                 " instructions, exceeding the 32-instruction hardware limit "
+                 "of '" +
+                 errorTokens[2] + "'";
+    break;
   case LangError::None:
     errorText += "Unknown error";
     break;

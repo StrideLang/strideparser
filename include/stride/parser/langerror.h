@@ -83,6 +83,10 @@ public:
     ScalarCallToArray,
     InvalidHardware, // a gpioPin or board doesn't fit the hardware: the
                      // message is errorTokens[0]
+    MissingDomainResource,
+    ExclusiveResourceConflict,
+    ResourceInstanceLimitExceeded,
+    PioInstructionOverflow,
     None
   } ErrorType;
 
