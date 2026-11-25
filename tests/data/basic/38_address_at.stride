@@ -1,0 +1,12 @@
+# A hex value after @ is an address, e.g. a peripheral's base address.
+
+usart USART2 @ 0x40004400 {
+    ip: "stm32.usart.v1"
+}
+
+device Chip {
+    peripherals: [
+        usart USART1 @ 0x4001_1000 { ip: "stm32.usart.v1" },
+        spi SPI1 @ 0xE000E010 { ip: "stm32.spi.v1" }
+    ]
+}

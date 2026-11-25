@@ -1331,3 +1331,35 @@ TEST(Basic, ArrayReferencesCannotHaveAt) {
     EXPECT_FALSE(AST::getParseErrors().empty()) << file;
   }
 }
+
+TEST(Basic, DeclarationAtHexAddress) {
+  // Name @ 0x... gives a declaration an address (a peripheral's base). It is
+  // stored as an Int in `_at`, at the top level and inside property lists.
+  ASTNode tree = AST::parseFile(TESTS_SOURCE_DIR "basic/38_address_at.stride");
+  ASSERT_NE(tree, nullptr);
+  EXPECT_TRUE(AST::getParseErrors().empty());
+
+  auto addressOf = [](const ASTNode &node) -> int64_t {
+    auto at = node ? node->getCompilerProperty("_at") : nullptr;
+    if (!at || at->getNodeType() != AST::Int) {
+      return -1;
+    }
+    return std::static_pointer_cast<ValueNode>(at)->getIntValue();
+  };
+
+  const auto &nodes = tree->getChildren();
+  ASSERT_EQ(nodes.size(), 2u);
+  auto usart = std::static_pointer_cast<DeclarationNode>(nodes.at(0));
+  EXPECT_EQ(usart->getEntityType(), "usart");
+  EXPECT_EQ(usart->getName(), "USART2");
+  EXPECT_EQ(addressOf(usart), 0x40004400);
+
+  auto device = std::static_pointer_cast<DeclarationNode>(nodes.at(1));
+  auto list = device->getPropertyValue("peripherals");
+  ASSERT_NE(list, nullptr);
+  ASSERT_EQ(list->getChildren().size(), 2u);
+  EXPECT_EQ(addressOf(list->getChildren().at(0)), 0x40011000);
+  EXPECT_EQ(addressOf(list->getChildren().at(1)), 0xE000E010);
+  // The address survives a deep copy (the hardware resolver copies layers).
+  EXPECT_EQ(addressOf(list->getChildren().at(1)->deepCopy()), 0xE000E010);
+}

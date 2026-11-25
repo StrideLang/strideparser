@@ -563,6 +563,24 @@ entityDef:
             SET_NODE_END($$);
         }
     |
+        WORD UVAR AT HEX entityType               {
+            /* An address, e.g. a peripheral's base: usart USART2 @ 0x40004400 { } */
+            string word;
+            word.append($1); /* string constructor leaks otherwise! */
+            string uvar;
+            uvar.append($2); /* string constructor leaks otherwise! */
+            char *end;
+            int64_t address = strtoll($4, &end, 16);
+
+            DeclarationNode *decl = new DeclarationNode(uvar, word, std::shared_ptr<AST>($5), currentFile, yyloc.first_line, yyloc.first_column);
+            decl->setCompilerProperty("_at", std::make_shared<ValueNode>(address, currentFile, yyloc.first_line, yyloc.first_column));
+            $$ = decl;
+            free($1);
+            free($2);
+            free($4);
+            SET_NODE_END($$);
+        }
+    |
         WORD UVAR AT UVAR entityType               {
             string word;
             word.append($1); /* string constructor leaks otherwise! */
